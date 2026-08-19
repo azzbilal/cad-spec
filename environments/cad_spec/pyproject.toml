@@ -1,0 +1,22 @@
+[project]
+name = "cad-spec"
+description = "Write CadQuery from a dimensioned mechanical spec. Scored by executing the code and measuring the resulting solid: per-requirement PASS/FAIL on dimensions, hole count, diameter, and pattern position, behind anti-reward-hacking gates (single solid, through holes, volume consistency). Reward is the fraction of requirements met on a [0,1] scale, with a 0.05 floor for runnable-but-wrong code. 7 train / 3 held-out plate specs."
+tags = ["cad", "engineering", "code-generation", "cadquery", "geometry", "train", "eval"]
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "verifiers>=0.3.0",
+    "cadquery>=2.8",
+    "datasets",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["cad_spec"]
+
+[tool.verifiers.eval]
+num_examples = 3
+rollouts_per_example = 5
