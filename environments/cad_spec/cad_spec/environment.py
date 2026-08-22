@@ -98,29 +98,21 @@ def _build_eval_dataset() -> Dataset:
 def spec_reward(completion, answer="", info=None, **kwargs) -> float:
     """Single reward on a clean [0, 1] scale.
 
-    reward = max(fraction of requirements met, PARSE_FLOOR if the code ran)
+    reward = max(fraction of the 7 requirements met, PARSE_FLOOR if code ran)
 
-    1.0    every requirement met
-    k/n    partial compliance (gates permitting)
-    0.05   runnable CadQuery that satisfies nothing / fails a gate
-    0.0    code that does not execute, or no code at all
+    1.0    all seven requirements met
+    k/7    partial compliance (gates permitting)
+    0.05   runnable CadQuery that satisfies nothing or fails a gate
+           (the floor also reaches gated-out cheats - they DID build)
+    0.0    code that does not execute, times out, or no code at all
     """
     spec = _spec_for(answer, info)
     if spec is None:
         return 0.0
 
     text = _completion_text(completion)
-    compliance = score(text, spec).reward
-
-    from .measure import BuildError, build, extract_code
-
-    try:
-        build(extract_code(text))
-        parses = True
-    except BuildError:
-        parses = False
-
-    return max(compliance, PARSE_FLOOR if parses else 0.0)
+    report = score(text, spec)
+    return max(report.reward, PARSE_FLOOR) if report.parsed else 0.0
 
 
 def load_environment(**kwargs) -> vf.Environment:
