@@ -1,14 +1,17 @@
 [project]
 name = "cad-spec"
-description = "Write CadQuery from a dimensioned mechanical spec. Scored by executing the code and measuring the resulting solid: per-requirement PASS/FAIL on dimensions, hole count, diameter, and pattern position, behind anti-reward-hacking gates (single solid, through holes, volume consistency). Reward is the fraction of requirements met on a [0,1] scale, with a 0.05 floor for runnable-but-wrong code. 7 train / 3 held-out plate specs."
+description = "Write CadQuery from a dimensioned mechanical spec. Scored by executing the code and measuring the resulting solid in an isolated worker with an execution timeout: 7-requirement k/7 partial credit (dimensions, hole count/diameter/pattern, material volume) behind anti-reward-hacking gates. Seeded parametric dataset of 200 train / 30 held-out plate specs."
 tags = ["cad", "engineering", "code-generation", "cadquery", "geometry", "train", "eval"]
-version = "0.1.0"
+version = "0.2.0"
 requires-python = ">=3.11"
 dependencies = [
     "verifiers>=0.3.0",
     "cadquery>=2.8",
     "datasets",
 ]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.8", "mypy>=1.11"]
 
 [build-system]
 requires = ["hatchling"]
@@ -20,3 +23,21 @@ packages = ["cad_spec"]
 [tool.verifiers.eval]
 num_examples = 3
 rollouts_per_example = 5
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "SIM", "RUF"]
+
+[tool.mypy]
+# Parse target 3.12: current numpy/py3.12 stubs use `type` statements that a
+# 3.11 parser rejects; package code itself stays 3.11-compatible.
+python_version = "3.12"
+ignore_missing_imports = true
+check_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["slow: long-running geometry checks"]

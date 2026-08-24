@@ -24,15 +24,19 @@ environment as **v0.2.0**. Full execution blueprint:
 
 **Gate:** ✅ 19/19 green; timeout kill 3.0s; respawn+rebuild ok; side-effects contained in worker tempdir
 
-## Phase 2 — Scaffolding *(→ ~9.0)*
-- [ ] Parametric sampler in `tasks.py`: seeded RNG, 200 train / 30 stratified eval specs
-- [ ] Wire datasets in `environment.py` (`make_splits()`, delete `EVAL_SPEC_IDS`)
-- [ ] pytest suite: canonical-harness wrapper, measure units incl. timeout test,
+## Phase 2 — Scaffolding *(→ ~9.0)* — **DONE 2026-08-24**
+- [x] Parametric sampler in `tasks.py`: seeded RNG, 200 train / 30 stratified eval specs
+- [x] Wire datasets in `environment.py` (`make_splits()`, delete `EVAL_SPEC_IDS`)
+- [x] pytest suite: canonical-harness wrapper, measure units incl. timeout test,
       env tests, reference-solution auto-verification across seeds
-- [ ] pyproject: version 0.2.0, dev extras, ruff + mypy config
-- [ ] GitHub Actions CI: ubuntu+windows × py3.11/3.12
+- [x] pyproject: version 0.2.0, dev extras, ruff + mypy config
+- [x] GitHub Actions CI: ubuntu+windows × py3.11/3.12
 
-**Gate:** `pytest -q`, `ruff check .`, `mypy cad_spec` all green locally
+**Gate:** ✅ `pytest -q` 36/36; `ruff check .` clean; `mypy cad_spec` clean.
+Refinements vs blueprint: worker now announces readiness *after* warming the kernel, so
+`CAD_SPEC_EXEC_TIMEOUT` measures model code only (tight budgets usable right after respawn);
+sampler margin grid uses an inclusive ceil/floor half-mm range (no empty-`randrange` edge);
+mypy parse target 3.12 (numpy stubs use `type` statements a 3.11 parser rejects).
 
 ## Phase 3 — Docs Reconciliation *(→ ~9.25)*
 - [ ] Root README: k/7 reward table; honest 0.05-floor footnote for gated-but-runnable code;

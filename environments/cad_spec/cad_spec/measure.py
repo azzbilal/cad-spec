@@ -83,9 +83,10 @@ def build(code: str) -> Any:
     import cadquery as cq
 
     namespace: dict[str, Any] = {"cq": cq, "cadquery": cq, "math": math}
+    # Executing model code IS the task; containment happens in the worker.
     try:
-        exec(compile(code, "<model>", "exec"), namespace)  # noqa: S102 - the task IS model code
-    except Exception as exc:  # noqa: BLE001 - any failure is a build failure
+        exec(compile(code, "<model>", "exec"), namespace)
+    except Exception as exc:
         raise BuildError(f"execution failed: {type(exc).__name__}: {exc}") from exc
 
     obj = namespace.get("result")
@@ -94,7 +95,7 @@ def build(code: str) -> Any:
 
     try:
         solid = obj.val() if hasattr(obj, "val") else obj
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         raise BuildError(f"could not resolve result to a shape: {exc}") from exc
 
     if not hasattr(solid, "Volume"):
@@ -165,7 +166,7 @@ def measure(solid: Any) -> Measurements:
         bb = solid.BoundingBox()
         volume = solid.Volume()
         solids = solid.Solids()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         raise BuildError(f"shape could not be measured: {exc}") from exc
 
     if volume <= 0:
@@ -196,12 +197,20 @@ def _exec_timeout() -> float:
     return float(os.environ.get("CAD_SPEC_EXEC_TIMEOUT", "10"))
 
 
+# Fixed window for a fresh worker to spawn, import the kernel and announce
+# readiness. Deliberately independent of CAD_SPEC_EXEC_TIMEOUT.
+_STARTUP_TIMEOUT = 120.0
+
+
 def _inproc_requested() -> bool:
     return os.environ.get("CAD_SPEC_INPROC", "") == "1"
 
 
 def _worker_main(conn: Any) -> None:
     os.chdir(tempfile.mkdtemp(prefix="cad-spec-worker-"))
+    import cadquery  # noqa: F401 - warm the kernel BEFORE announcing readiness
+
+    conn.send(("ready", None))
     while True:
         try:
             kind, payload = conn.recv()
@@ -214,7 +223,7 @@ def _worker_main(conn: Any) -> None:
             conn.send(("ok", _measure_code(payload)))
         except BuildError as exc:
             conn.send(("error", str(exc)))
-        except Exception as exc:  # noqa: BLE001 - report faults before dying
+        except Exception as exc:  # report faults before dying
             conn.send(("error", f"worker fault: {type(exc).__name__}: {exc}"))
 
 
@@ -226,6 +235,18 @@ class _Worker:
         self.proc.start()
         child_conn.close()
         self.conn = parent_conn
+        # Interpreter spawn + kernel warm-up wait on a generous fixed window,
+        # NOT the per-build budget: CAD_SPEC_EXEC_TIMEOUT must measure model
+        # code only, so a tight budget stays usable right after a respawn.
+        if not self.conn.poll(_STARTUP_TIMEOUT):
+            self.kill()
+            raise BuildError(f"scorer worker did not start within {_STARTUP_TIMEOUT:g}s")
+        try:
+            status, _payload = self.conn.recv()
+        except EOFError as exc:
+            raise BuildError("scorer worker died during startup") from exc
+        if status != "ready":
+            raise BuildError("scorer worker sent an unexpected startup message")
 
     @property
     def alive(self) -> bool:
@@ -291,6 +312,6 @@ def build_and_measure(completion: str) -> Measurements:
         return _get_worker().call(code)
     except BuildError:
         raise
-    except Exception as exc:  # noqa: BLE001 - anything else means the worker is unwell
+    except Exception as exc:  # anything else means the worker is unwell
         shutdown_worker()
         raise BuildError(f"isolated scorer failed: {type(exc).__name__}: {exc}") from exc

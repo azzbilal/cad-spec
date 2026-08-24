@@ -22,7 +22,6 @@ from dataclasses import dataclass
 from .measure import BuildError, Hole, Measurements, build_and_measure
 from .tasks import Spec
 
-
 LINEAR_TOL = 0.5      # mm, on overall dimensions
 HOLE_TOL = 0.2        # mm, on hole diameter
 POSITION_TOL = 0.5    # mm, on hole centres

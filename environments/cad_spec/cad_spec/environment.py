@@ -9,14 +9,14 @@ which are plain Python and testable without verifiers, a model, or an account.
 
 from __future__ import annotations
 
+import verifiers as vf
 from datasets import Dataset
 
-import verifiers as vf
-
 from .rubric import score
-from .tasks import TASKS, Spec
+from .tasks import Spec, make_splits
 
-SPECS: dict[str, Spec] = {s.id: s for s in TASKS}
+TRAIN_SPECS, EVAL_SPECS = make_splits()
+SPECS: dict[str, Spec] = {s.id: s for s in TRAIN_SPECS + EVAL_SPECS}
 
 SYSTEM_PROMPT = """\
 You are a mechanical design engineer who writes CadQuery.
@@ -30,11 +30,6 @@ Build solids with the Workplane API, for example cq.Workplane("XY").box(l, w, h)
 # in as a floor (rather than an additive weighted term) keeps the reward scale
 # exactly [0, 1] regardless of how any verifiers version combines functions.
 PARSE_FLOOR = 0.05
-
-# Held-out specs: never trained on, used to measure generalization.
-# Chosen to cover the size extremes (largest and smallest plates) and a
-# mid-range case.
-EVAL_SPEC_IDS = {"plate-08", "plate-09", "plate-10"}
 
 
 def _completion_text(completion) -> str:
@@ -52,10 +47,7 @@ def _completion_text(completion) -> str:
 
     parts: list[str] = []
     for message in completion:
-        if isinstance(message, dict):
-            content = message.get("content")
-        else:
-            content = getattr(message, "content", None)
+        content = message.get("content") if isinstance(message, dict) else getattr(message, "content", None)
         if isinstance(content, str):
             parts.append(content)
         elif isinstance(content, list):
@@ -88,11 +80,11 @@ def _rows(specs) -> list[dict]:
 
 
 def _build_dataset() -> Dataset:
-    return Dataset.from_list(_rows(s for s in TASKS if s.id not in EVAL_SPEC_IDS))
+    return Dataset.from_list(_rows(TRAIN_SPECS))
 
 
 def _build_eval_dataset() -> Dataset:
-    return Dataset.from_list(_rows(s for s in TASKS if s.id in EVAL_SPEC_IDS))
+    return Dataset.from_list(_rows(EVAL_SPECS))
 
 
 def spec_reward(completion, answer="", info=None, **kwargs) -> float:

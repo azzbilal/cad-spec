@@ -7,7 +7,8 @@ rectangular pitch, inset from each corner by an equal edge margin.
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass, asdict
+import random
+from dataclasses import asdict, dataclass
 
 
 @dataclass(frozen=True)
@@ -98,3 +99,59 @@ result = (
     .hole({spec.hole_diameter})
 )
 """
+
+
+SAMPLE_SEED = 20260813
+N_TRAIN = 200
+N_EVAL = 30
+
+
+def sample_spec(rng: random.Random, idx: int) -> Spec:
+    """Draw one feasible plate from the family distribution, on a half-mm grid.
+
+    Feasibility rules keep every sampled spec buildable and plate-like:
+    bores clear the edges (margin >= radius + 2 mm, capped at 25 mm), the
+    pitch always leaves >= 4 mm of web between bore walls and the rim, and
+    stock is at most a fifth of the smaller face dimension. The margin range
+    uses an inclusive half-mm grid that can never collapse to an empty
+    randrange() call.
+    """
+    for _ in range(200):
+        length = rng.randrange(80, 441) / 2.0        # 40..220 mm, 0.5 grid
+        width = rng.randrange(60, 321) / 2.0         # 30..160 mm
+        thickness = rng.randrange(6, 29) / 2.0       # 3..14 mm
+        d_max = min(13.0, width / 2 - 6)
+        hole_diameter = rng.randrange(8, int(d_max * 2)) / 2.0
+        m_min = max(5.0, hole_diameter / 2 + 2)
+        m_max = min(25.0, (length - hole_diameter - 4) / 2, (width - hole_diameter - 4) / 2)
+        if m_max < m_min or thickness > min(length, width) / 5:
+            continue
+        lo = math.ceil(m_min * 2 - 1e-9)
+        hi = math.floor(m_max * 2 + 1e-9)
+        if hi < lo:
+            continue
+        margin = rng.randrange(lo, hi + 1) / 2.0
+        return Spec(f"gen-{idx:04d}", length, width, thickness, hole_diameter, margin)
+    raise RuntimeError("infeasible sampler run")
+
+
+def make_splits(seed: int = SAMPLE_SEED) -> tuple[list[Spec], list[Spec]]:
+    """Deterministic train/eval split. Eval stratifies size extremes by area.
+
+    Eval takes the 10 smallest-area specs, the 10 largest, and 10 evenly
+    spaced mid-range specs; the remaining 200 form the shuffled train set.
+    Same seed in, same splits out - on any platform, any Python.
+    """
+    rng = random.Random(seed)
+    pool = [sample_spec(rng, i) for i in range(N_TRAIN + N_EVAL)]
+    pool.sort(key=lambda s: s.length * s.width)
+    third = N_EVAL // 3
+    eval_specs = (
+        pool[:third]
+        + pool[-third:]
+        + pool[third:-third:N_TRAIN // third][: N_EVAL - 2 * third]
+    )
+    eval_ids = {s.id for s in eval_specs}
+    train_specs = [s for s in pool if s.id not in eval_ids]
+    rng.shuffle(train_specs)
+    return train_specs, eval_specs
