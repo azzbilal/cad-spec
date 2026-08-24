@@ -5,10 +5,11 @@ This module is deliberately dumb about specs. It answers one question:
 Everything spec-related lives in rubric.py.
 
 Hole detection uses exact surface geometry, not bounding-box guesses: the
-cylinder radius and axis come from the kernel, a point-membership probe
-separates internal bores from external rounds and fillets, and coaxial faces
-are grouped so counterbores and seam-split cylinders are handled explicitly
-rather than by luck.
+cylinder radius and axis come from the kernel, a just-inside-the-surface
+membership probe rejects convex rounds and shell walls, a full-cylinder
+area check rejects concave corner fillets, and coaxial faces are grouped
+so counterbores and seam-split cylinders are handled explicitly rather
+than by luck.
 
 Execution safety: model code runs inside a persistent worker PROCESS so a
 hung or side-effecting rollout can neither wedge the scorer nor dirty the
@@ -38,6 +39,21 @@ CODE_BLOCK = re.compile(r"```(?:python)?\s*(.*?)```", re.DOTALL)
 AXIS_TOL = 1e-6
 # Decimal places used when grouping coaxial cylindrical faces into features.
 COAXIAL_DP = 3
+# Fraction of the cylinder radius (dimensionless) to back off FROM THE SURFACE
+# before probing membership, floored at PROBE_INSET_MIN_MM so hairline bores
+# still probe strictly inside their own air channel. Asking "does material
+# continue immediately inward of this surface" stays correct on hollow parts;
+# probes deeper toward the axis lie there - a shelled box's outer-fillet axis
+# sits in open cavity, so halfway-to-axis air reads as a phantom bore.
+PROBE_INSET_FRACTION = 0.05
+# Absolute floor for the surface-inset probe distance, in millimetres.
+PROBE_INSET_MIN_MM = 1e-3
+# Minimum covered fraction (dimensionless) of a FULL cylinder - summed
+# cylindrical face area in mm^2 vs pi * d * h over the group's Z extent -
+# for a coaxial group to count as a drilled bore. Separates closed bores
+# from concave corner fillets, which probe like bores but cover only ~0.25
+# as quarter arcs; seam-split bores still reach ~1.0 across their halves.
+AREA_COMPLETENESS_MIN = 0.99
 
 
 class BuildError(Exception):
@@ -126,11 +142,23 @@ def _z_aligned_cylinders(solid: Any) -> list[tuple[float, float, float, Any]]:
 def _extract_holes(solid: Any) -> list[Hole]:
     """Internal bores only. Fillets, external rounds and bosses are excluded.
 
-    A cylindrical face counts as a bore when material does NOT continue
-    radially inward from its surface toward its own axis - probed with a
-    solid classifier halfway between surface point and axis. Grouping by
-    axis position merges seam-split halves into one feature and exposes
-    coaxial stacks (counterbores) as separate diameters per position.
+    Two independent discriminators, because hollow geometry defeats either
+    alone:
+
+    1. Membership probed JUST INSIDE the cylindrical surface: material there
+       means the face is convex - an external round, a boss, or the outer
+       wall of a shell - and the face is rejected. Probes deeper toward the
+       axis ask "is the axis buried in material", which is the wrong
+       question on hollow parts and answers "no" for phantom reasons.
+    2. Completeness: a coaxial group must cover AREA_COMPLETENESS_MIN of the
+       full cylinder pi*d*h over its Z extent. Concave corner fillets pass
+       discriminator 1 honestly (material really does continue outward) yet
+       are quarter arcs, locally indistinguishable from bores; only closed-
+       cylinder area separates them.
+
+    Grouping by axis position merges seam-split halves into one feature,
+    exposes coaxial stacks (counterbores) as separate diameters per position,
+    and gives discriminator 2 its per-group face-area sum.
     """
     from OCP.BRepClass3d import BRepClass3d_SolidClassifier
     from OCP.gp import gp_Pnt
@@ -138,24 +166,29 @@ def _extract_holes(solid: Any) -> list[Hole]:
 
     classifier = BRepClass3d_SolidClassifier(solid.wrapped)
 
-    # position -> {diameter -> max depth seen}
-    features: dict[tuple[float, float], dict[float, float]] = {}
+    # position -> {diameter -> [summed cylindrical face area mm^2, deepest face height mm]}
+    features: dict[tuple[float, float], dict[float, list[float]]] = {}
     for radius, cx, cy, face in _z_aligned_cylinders(solid):
         fbb = face.BoundingBox()
         if fbb.zlen <= 0:
             continue
-        probe = gp_Pnt(cx + radius * 0.5, cy, (fbb.zmin + fbb.zmax) / 2)
+        inset = max(radius * PROBE_INSET_FRACTION, PROBE_INSET_MIN_MM)
+        probe = gp_Pnt(cx + (radius - inset), cy, (fbb.zmin + fbb.zmax) / 2)
         classifier.Perform(probe, 1e-6)
         if classifier.State() == TopAbs_State.TopAbs_IN:
-            continue  # material toward the axis => convex round/fillet/boss
+            continue  # material immediately inward => convex round/fillet/boss/wall
         key = (round(cx, COAXIAL_DP), round(cy, COAXIAL_DP))
         diameter = round(2 * radius, 4)
-        depths = features.setdefault(key, {})
-        depths[diameter] = max(depths.get(diameter, 0.0), round(fbb.zlen, 4))
+        entry = features.setdefault(key, {}).setdefault(diameter, [0.0, 0.0])
+        entry[0] += face.Area()
+        entry[1] = max(entry[1], round(fbb.zlen, 4))
 
     holes: list[Hole] = []
     for (x, y), diameters in sorted(features.items()):
-        for diameter, depth in sorted(diameters.items()):
+        for diameter, (area, depth) in sorted(diameters.items()):
+            full_cylinder_area = math.pi * diameter * depth
+            if area < AREA_COMPLETENESS_MIN * full_cylinder_area:
+                continue  # partial arc (corner fillet etc.), not a closed bore
             holes.append(Hole(diameter=diameter, x=round(x, 4), y=round(y, 4), depth=depth))
     return holes
 
