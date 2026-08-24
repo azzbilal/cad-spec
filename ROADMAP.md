@@ -6,10 +6,19 @@ environment as **v0.2.0**. Full execution blueprint:
 
 ## Current State
 
-- Audit complete; all technical risks de-risked against the installed venv
-  (OCP exact-cylinder classification validated: bores vs fillets vs counterbores).
-- Execution-ready plan drafted — no further research needed.
-- Nothing implemented yet.
+- Phases 0–2 implemented and committed; Phase 3 docs reconciliation done.
+- Hole detection runs TWO independent discriminators, validated against the
+  installed venv; neither alone is sufficient:
+  - *surface-inset membership probe* — rejects CONVEX cylinders (external
+    rounds, bosses, shell outer walls) by asking whether material continues
+    immediately inward of the surface. Cannot catch inner corner fillets:
+    those genuinely are concave cylinders with material outside them.
+  - *full-cylinder area completeness check* — rejects concave PARTIAL
+    cylinders (inner corner fillets ≈ quarter arcs, ~25% coverage) by asking
+    whether the coaxial group closes into a full bore. Cannot catch convex
+    bosses: a boss is a complete cylinder.
+- Adversarial harness (`scripts/test_rubric.py`): **20 cases**, including a
+  hollow-geometry fixture pinning that shelled parts score 0.0 raw.
 
 ## Phase 0 — Unlock *(prerequisite)*
 - [x] Exit plan mode / approve edit permissions for this workspace
@@ -22,7 +31,7 @@ environment as **v0.2.0**. Full execution blueprint:
       *(refinement: R6 compares against measured-envelope minus nominal bores, so R1–R3 own dimensions)*
 - [x] `environment.py`: single execution per rollout via `Report.parsed`
 
-**Gate:** ✅ 19/19 green; timeout kill 3.0s; respawn+rebuild ok; side-effects contained in worker tempdir
+**Gate:** ✅ 19/19 green at the time (harness has since grown to 20 cases — see Current State); timeout kill 3.0s; respawn+rebuild ok; side-effects contained in worker tempdir
 
 ## Phase 2 — Scaffolding *(→ ~9.0)* — **DONE 2026-08-24**
 - [x] Parametric sampler in `tasks.py`: seeded RNG, 200 train / 30 stratified eval specs
@@ -38,11 +47,19 @@ Refinements vs blueprint: worker now announces readiness *after* warming the ker
 sampler margin grid uses an inclusive ceil/floor half-mm range (no empty-`randrange` edge);
 mypy parse target 3.12 (numpy stubs use `type` statements a 3.11 parser rejects).
 
-## Phase 3 — Docs Reconciliation *(→ ~9.25)*
-- [ ] Root README: k/7 reward table; honest 0.05-floor footnote for gated-but-runnable code;
+## Phase 3 — Docs Reconciliation *(→ ~9.25)* — **DONE 2026-08-24**
+- [x] Root README: k/7 reward table; honest 0.05-floor footnote for gated-but-runnable code;
       updated gate table
-- [ ] Env README: parametric dataset description; baseline-refresh marker
-- [ ] `eval_local.py`: fix stale "verifiers 0.1.14" docstring → 0.3.x reality
+- [x] Env README: parametric dataset description; baseline-refresh marker
+- [x] `eval_local.py`: fix stale "verifiers 0.1.14" docstring → 0.3.x reality
+
+**Gate:** ✅ harness 20/20 (added `shelled_filleted_box`, the hollow-geometry detector guard);
+`pytest -q` 40 passed; `ruff check .` clean; `mypy cad_spec` clean.
+Beyond plan §9: two-discriminator detection structure written into both READMEs + roadmap
+Current State (inset probe catches convex, cannot catch corner fillets; area completeness
+catches partial cylinders, cannot catch bosses); measure.py module docstring now names the
+silent-drop limitation (intersecting/breakout/pocket bores are scored as MISSED, not misplaced);
+harness-count quotes updated everywhere (19→20); `.gitignore` covers `.opencode/ out.txt probe_check.py`.
 
 ## Phase 4 — Ship *(→ 9.5)*
 - [ ] Commit + push → CI green on GitHub

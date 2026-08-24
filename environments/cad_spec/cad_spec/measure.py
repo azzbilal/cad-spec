@@ -4,12 +4,36 @@ This module is deliberately dumb about specs. It answers one question:
 "given a piece of code, what geometry actually came out?"
 Everything spec-related lives in rubric.py.
 
-Hole detection uses exact surface geometry, not bounding-box guesses: the
-cylinder radius and axis come from the kernel, a just-inside-the-surface
-membership probe rejects convex rounds and shell walls, a full-cylinder
-area check rejects concave corner fillets, and coaxial faces are grouped
-so counterbores and seam-split cylinders are handled explicitly rather
-than by luck.
+Hole detection uses exact surface geometry, not bounding-box guesses. Two
+independent discriminators decide whether a cylindrical face is a drilled
+bore, because each alone admits a false-positive class the other exists to
+catch:
+
+  * A membership probe placed just inside the surface asks whether material
+    continues immediately inward. It rejects CONVEX cylinders - external
+    rounds, bosses, the outer wall of a shell - but cannot reject concave
+    partial cylinders such as inner corner fillets: those genuinely have
+    material on their outside, which is precisely what the probe defines a
+    bore to be.
+  * An area completeness check asks whether the coaxial group closes into a
+    full cylinder (pi*d*h over its Z extent). It rejects concave PARTIAL
+    cylinders - an inner corner fillet is a quarter arc covering ~25% of
+    its full cylinder - but cannot reject convex geometry: a boss is a
+    complete cylinder.
+
+Coaxial faces are grouped by axis position, so counterbores and seam-split
+cylinders are handled explicitly rather than by luck.
+
+Known limitation, stated plainly because it shapes scores: the completeness
+check silently drops any bore that does not close into a full cylinder -
+a hole intersecting another hole, breaking out through a side wall, or
+opening into a pocket is returned as fewer holes, with nothing said. The
+scoring consequence is asymmetric: a model that places a hole too close to
+an edge is scored as having MISSED that hole rather than misplaced it,
+losing hole count as well as position and pattern - two-plus requirements
+for one mistake. The check is kept anyway because partial cylinders are
+exactly how corner fillets masquerade as bores; anyone comparing model
+scores should know the asymmetry is there.
 
 Execution safety: model code runs inside a persistent worker PROCESS so a
 hung or side-effecting rollout can neither wedge the scorer nor dirty the

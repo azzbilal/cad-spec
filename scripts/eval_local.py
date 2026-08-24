@@ -10,7 +10,7 @@
 What you are looking for is NOT a high score. It is spread. If every rollout
 scores identically, the rubric is not discriminating and training will flatline.
 
-verifiers 0.1.14 returns {"metadata": ..., "outputs": [ {...}, {...} ]} where
+verifiers 0.3.x returns {"metadata": ..., "outputs": [ {...}, {...} ]} where
 each output dict carries reward, completion, error, and the per-function scores.
 """
 

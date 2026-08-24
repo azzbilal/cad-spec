@@ -4,7 +4,7 @@ Every entry below is a hand-written answer with a known correct score.
 If this file passes, the rubric is trustworthy enough to put a model behind.
 Run:  python scripts/test_rubric.py
 
-19 cases on the k/7 scale (7 requirements: R1-R3 dimensions, R4a/R4b holes,
+20 cases on the k/7 scale (7 requirements: R1-R3 dimensions, R4a/R4b holes,
 R5 pattern, R6 material). Note the environment-level reward folds runnable
 code into a 0.05 parse floor; these expectations are raw-rubric scores.
 """
@@ -142,6 +142,22 @@ import cadquery as cq
 result = (cq.Workplane("XY").box(80, 60, 6)
           .faces(">Z").workplane().rect(60, 40, forConstruction=True)
           .vertices().cboreHole(6.5, 11, 2))
+""")
+
+# --- hollow geometry: keeps the hole DETECTOR honest, not the scorer ---
+#
+# A shelled box has no through bores, so gate:simple_through_holes zeroes it
+# and the raw rubric reward is 0.0 either way - including if a discriminator
+# regresses and phantom bores come back, because mixed diameters and depths
+# still fail the gates. This case therefore pins the SCORING contract for
+# hollow geometry; the detector itself is guarded by the direct hole-list
+# assertions in tests/test_measure.py.
+
+CASES["shelled_filleted_box"] = ("0.0", """
+import cadquery as cq
+result = (cq.Workplane("XY").box(80, 60, 20)
+          .edges("|Z").fillet(3)
+          .faces(">Z").shell(-1.0))
 """)
 
 CASES["BROKEN_syntax"] = ("0.0", "result = cq.Workplane('XY'.box(1,2,3)")

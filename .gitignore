@@ -11,3 +11,9 @@ build/
 outputs/
 *.step
 *.stl
+
+# session-local planning workspace (contains node_modules)
+.opencode/
+# scratch outputs
+out.txt
+probe_check.py
