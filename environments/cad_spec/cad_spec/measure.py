@@ -54,10 +54,14 @@ import multiprocessing
 import os
 import re
 import tempfile
+import textwrap
 from dataclasses import dataclass, field
 from typing import Any
 
-CODE_BLOCK = re.compile(r"```(?:python)?\s*(.*?)```", re.DOTALL)
+# The newline after the fence is REQUIRED and not part of the capture: a bare
+# \s* swallows it plus the first code line's leading indentation, which orphans
+# every following line and raises IndentationError on otherwise valid code.
+CODE_BLOCK = re.compile(r"```(?:python)?[ \t]*\r?\n(.*?)```", re.DOTALL)
 
 # A drilled bore is a cylinder whose axis is parallel to Z.
 AXIS_TOL = 1e-6
@@ -107,11 +111,19 @@ class Measurements:
 
 
 def extract_code(completion: str) -> str:
-    """Pull python out of a model response. Falls back to the raw text."""
+    """Pull python out of a model response. Falls back to the raw text.
+
+    Indentation is load-bearing, so the block is dedented BEFORE it is
+    stripped: a uniformly indented fenced block (a model echoing an indented
+    template) dedents to runnable module-level code, while a block already at
+    column zero is left untouched. Stripping first would delete the first
+    line's indentation, destroy the common prefix, and turn dedent into a
+    no-op.
+    """
     blocks = CODE_BLOCK.findall(completion)
     if blocks:
-        return max(blocks, key=len).strip()
-    return completion.strip()
+        return textwrap.dedent(max(blocks, key=len)).strip()
+    return textwrap.dedent(completion).strip()
 
 
 def build(code: str) -> Any:

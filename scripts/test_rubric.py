@@ -4,7 +4,7 @@ Every entry below is a hand-written answer with a known correct score.
 If this file passes, the rubric is trustworthy enough to put a model behind.
 Run:  python scripts/test_rubric.py
 
-20 cases on the k/7 scale (7 requirements: R1-R3 dimensions, R4a/R4b holes,
+21 cases on the k/7 scale (7 requirements: R1-R3 dimensions, R4a/R4b holes,
 R5 pattern, R6 material). Note the environment-level reward folds runnable
 code into a 0.05 parse floor; these expectations are raw-rubric scores.
 """
@@ -159,6 +159,18 @@ result = (cq.Workplane("XY").box(80, 60, 20)
           .edges("|Z").fillet(3)
           .faces(">Z").shell(-1.0))
 """)
+
+# A fenced block indented four spaces, the way a model echoes an indented
+# template. Extraction must dedent it back to runnable module-level code, so
+# this scores exactly like the reference solution. Guarded here, at the
+# scoring level, and not only in measure.py units: the 0.2.0 baseline lost 59
+# rollouts to an IndentationError that no rubric case would have caught.
+CASES["fenced_and_indented"] = (
+    "7/7",
+    "Here you go:\n\n```python\n"
+    + "".join("    " + line + "\n" for line in reference_solution(SPEC).strip().splitlines())
+    + "```\n",
+)
 
 CASES["BROKEN_syntax"] = ("0.0", "result = cq.Workplane('XY'.box(1,2,3)")
 CASES["BROKEN_no_result"] = ("0.0", "import cadquery as cq\npart = cq.Workplane('XY').box(1,2,3)")

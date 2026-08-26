@@ -52,23 +52,24 @@ REQUIREMENTS
 
 TEMPLATE (replace each ??? with the correct number; change nothing else):
 
-    import cadquery as cq
-    result = (
-        cq.Workplane("XY")
-        .box(???, ???, ???)
-        .faces(">Z").workplane()
-        .rect(???, ???, forConstruction=True)
-        .vertices()
-        .hole(???)
-    )
+import cadquery as cq
+result = (
+    cq.Workplane("XY")
+    .box(???, ???, ???)
+    .faces(">Z").workplane()
+    .rect(???, ???, forConstruction=True)
+    .vertices()
+    .hole(???)
+)
 
 box() takes (length_x, width_y, thickness_z). rect() takes the hole pattern
 centre distances (pitch_x, pitch_y). hole() takes a DIAMETER, not a radius.
 The plate is centred on the origin.
 
-The completed template is the ENTIRE answer. Output exactly those lines with
-numbers substituted. Do not add loops, extra holes, extra features, comments,
-or any further operations after the closing parenthesis.
+The completed template is the ENTIRE answer: a runnable Python module, with
+`import` and `result` at column zero exactly as shown above. Substitute the
+numbers and change nothing else. Do not add loops, extra holes, extra
+features, comments, or any further operations after the closing parenthesis.
 """
 
 

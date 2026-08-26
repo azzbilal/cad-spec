@@ -76,6 +76,46 @@ def test_extract_code_prefers_largest_block():
     assert "result = 1" not in code
 
 
+def test_extract_code_dedents_uniformly_indented_block():
+    """A fenced block indented four spaces must come out runnable.
+
+    This is the defect that zeroed most of the 0.2.0 baseline: the old
+    `\\s*` after the fence ate the newline AND the first line's indentation,
+    leaving line 1 at column zero and every later line indented -> a module
+    that raises IndentationError before cadquery is ever touched.
+    """
+    body = "".join("    " + line + "\n" for line in PLATE.strip().splitlines())
+    code = extract_code("```python\n" + body + "```")
+    assert code.startswith("import cadquery as cq")
+    assert "\n    " not in code.split("(", 1)[0]  # no orphaned indent on line 2
+    compile(code, "<test>", "exec")  # the real assertion: it is runnable
+    assert measure(build(code)).hole_count == 4
+
+
+def test_extract_code_leaves_column_zero_block_unchanged():
+    code = extract_code("```python\n" + PLATE.strip() + "\n```")
+    assert code == PLATE.strip()
+    compile(code, "<test>", "exec")
+
+
+def test_unfenced_half_indented_completion_still_fails():
+    """Genuinely broken input, and it must stay broken.
+
+    An unfenced answer whose first line sits at column zero while the rest is
+    indented has no common prefix, so textwrap.dedent is correctly a no-op.
+    Nothing in extract_code can repair it without guessing at the model's
+    intent. The fix lives upstream, in tasks.PROMPT_TEMPLATE, which no longer
+    presents the example indented or asks for those exact lines back.
+    """
+    lines = PLATE.strip().splitlines()
+    completion = lines[0] + "\n" + "".join("    " + ln + "\n" for ln in lines[1:])
+    code = extract_code(completion)
+    with pytest.raises(IndentationError):
+        compile(code, "<test>", "exec")
+    with pytest.raises(BuildError, match="IndentationError"):
+        build(code)
+
+
 def test_plain_plate_has_four_bores():
     m = measure(build(PLATE))
     assert len(m.holes) == 4
