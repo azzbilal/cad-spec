@@ -9,11 +9,14 @@ which are plain Python and testable without verifiers, a model, or an account.
 
 from __future__ import annotations
 
+from collections.abc import Callable, Sequence
+from functools import lru_cache
+
 import verifiers as vf
 from datasets import Dataset
 
-from .rubric import score
-from .tasks import Spec, make_splits
+from .rubric import Report, score
+from .tasks import TIERS, Spec, make_splits, prompt_for
 
 TRAIN_SPECS, EVAL_SPECS = make_splits()
 SPECS: dict[str, Spec] = {s.id: s for s in TRAIN_SPECS + EVAL_SPECS}
@@ -68,32 +71,48 @@ def _spec_for(answer, info) -> Spec | None:
     return SPECS.get(spec_id)
 
 
-def _rows(specs) -> list[dict]:
+def _tiers(tier: str | Sequence[str]) -> list[str]:
+    tiers = [tier] if isinstance(tier, str) else list(tier)
+    for t in tiers:
+        if t not in TIERS:
+            raise ValueError(f"unknown tier {t!r}; expected one of {TIERS}")
+    return tiers
+
+
+def _rows(specs: Sequence[Spec], tiers: Sequence[str], split: str) -> list[dict]:
     return [
         {
-            "question": spec.to_prompt(),
+            "question": prompt_for(spec, t, split),
             "answer": spec.id,
-            "info": {"spec_id": spec.id},
+            "info": {"spec_id": spec.id, "tier": t},
+            "task": f"cad-spec-{t}",
         }
+        for t in tiers
         for spec in specs
     ]
 
 
-def _build_dataset() -> Dataset:
-    return Dataset.from_list(_rows(TRAIN_SPECS))
+def _build_dataset(tiers: Sequence[str] = ("L0",)) -> Dataset:
+    return Dataset.from_list(_rows(TRAIN_SPECS, tiers, "train"))
 
 
-def _build_eval_dataset() -> Dataset:
-    return Dataset.from_list(_rows(EVAL_SPECS))
+def _build_eval_dataset(tiers: Sequence[str] = ("L0",)) -> Dataset:
+    return Dataset.from_list(_rows(EVAL_SPECS, tiers, "eval"))
+
+
+@lru_cache(maxsize=4096)
+def _report(text: str, spec_id: str) -> Report:
+    """One build per rollout, however many reward/metric functions read it."""
+    return score(text, SPECS[spec_id])
 
 
 def spec_reward(completion, answer="", info=None, **kwargs) -> float:
     """Single reward on a clean [0, 1] scale.
 
-    reward = max(fraction of the 7 requirements met, PARSE_FLOOR if code ran)
+    reward = max(fraction of the 8 requirements met, PARSE_FLOOR if code ran)
 
-    1.0    all seven requirements met
-    k/7    partial compliance (gates permitting)
+    1.0    all eight requirements met (R1-R3, R4a, R4b, R5, R6, R7)
+    k/8    partial compliance (gates permitting)
     0.05   runnable CadQuery that satisfies nothing or fails a gate
            (the floor also reaches gated-out cheats - they DID build)
     0.0    code that does not execute, times out, or no code at all
@@ -102,16 +121,74 @@ def spec_reward(completion, answer="", info=None, **kwargs) -> float:
     if spec is None:
         return 0.0
 
-    text = _completion_text(completion)
-    report = score(text, spec)
+    report = _report(_completion_text(completion), spec.id)
     return max(report.reward, PARSE_FLOOR) if report.parsed else 0.0
 
 
-def load_environment(**kwargs) -> vf.Environment:
-    rubric = vf.Rubric(funcs=[spec_reward], weights=[1.0])
-    kwargs.setdefault("eval_dataset", _build_eval_dataset())
+def _check_metric(check_name: str) -> Callable[..., float]:
+    """Zero-weight diagnostic: 1.0 if the named check passed on this rollout."""
+
+    def metric(completion, answer="", info=None, **kwargs) -> float:
+        spec = _spec_for(answer, info)
+        if spec is None:
+            return 0.0
+        report = _report(_completion_text(completion), spec.id)
+        return float(any(c.name == check_name and c.passed for c in report.checks))
+
+    metric.__name__ = "m_" + check_name.replace(":", "_")
+    return metric
+
+
+def built(completion, answer="", info=None, **kwargs) -> float:
+    """Zero-weight diagnostic: 1.0 if the code executed and produced a solid."""
+    spec = _spec_for(answer, info)
+    return float(spec is not None and _report(_completion_text(completion), spec.id).parsed)
+
+
+def gates_passed(completion, answer="", info=None, **kwargs) -> float:
+    """Zero-weight diagnostic: 1.0 if every anti-hacking gate passed."""
+    spec = _spec_for(answer, info)
+    if spec is None:
+        return 0.0
+    report = _report(_completion_text(completion), spec.id)
+    gates = [c for c in report.checks if c.name.startswith("gate:")]
+    return float(bool(gates) and all(c.passed for c in gates))
+
+
+CHECK_NAMES = (
+    "R1:length", "R2:width", "R3:thickness", "R4a:hole_count",
+    "R4b:hole_diameter", "R5:hole_pattern", "R6:material", "R7:edge_margin",
+)
+
+
+def load_environment(
+    tier: str | Sequence[str] = "L0",
+    eval_tier: str | Sequence[str] | None = None,
+    metrics: bool = True,
+    **kwargs,
+) -> vf.Environment:
+    """Build the environment.
+
+    tier       prompt tier(s) for the training set, see tasks.TIERS.
+               Default "L0" reproduces the 0.2 template task.
+    eval_tier  prompt tier(s) for the eval set; defaults to `tier`. Pass
+               several to get one eval over all of them, each row tagged
+               with info["tier"] so results can be split per tier.
+    metrics    add zero-weight per-check diagnostics (built, gates, R1..R7).
+               They reuse the cached report: no extra builds.
+    """
+    train_tiers = _tiers(tier)
+    eval_tiers = _tiers(eval_tier) if eval_tier is not None else train_tiers
+    funcs: list[Callable[..., float]] = [spec_reward]
+    weights = [1.0]
+    if metrics:
+        extra = [built, gates_passed] + [_check_metric(n) for n in CHECK_NAMES]
+        funcs += extra
+        weights += [0.0] * len(extra)
+    rubric = vf.Rubric(funcs=funcs, weights=weights)
+    kwargs.setdefault("eval_dataset", _build_eval_dataset(eval_tiers))
     return vf.SingleTurnEnv(
-        dataset=_build_dataset(),
+        dataset=_build_dataset(train_tiers),
         system_prompt=SYSTEM_PROMPT,
         rubric=rubric,
         **kwargs,

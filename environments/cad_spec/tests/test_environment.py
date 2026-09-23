@@ -87,3 +87,67 @@ def test_reference_solutions_verify_across_seeds(seed):
         spec = sample_spec(rng, i)
         report = score(reference_solution(spec), spec)
         assert report.reward == 1.0, f"{spec.id} {report.summary}"
+
+
+# --- 0.3.0: tiers and diagnostics --------------------------------------------
+
+from cad_spec.environment import CHECK_NAMES, _report  # noqa: E402
+from cad_spec.tasks import TIERS, edit_source, is_feasible, prompt_for  # noqa: E402
+
+
+def test_every_tier_builds_a_dataset():
+    env = load_environment(tier=list(TIERS), eval_tier=list(TIERS))
+    assert len(env.dataset) == N_TRAIN * len(TIERS)
+    assert len(env.eval_dataset) == N_EVAL * len(TIERS)
+
+
+def test_unknown_tier_is_rejected():
+    with pytest.raises(ValueError):
+        load_environment(tier="L9")
+
+
+def test_l2_hides_the_pitch_and_l1_shows_it():
+    spec = EVAL_SPECS[0]
+    assert f"{spec.pitch_x} mm x {spec.pitch_y} mm" in prompt_for(spec, "L1")
+    assert f"{spec.pitch_x} mm x {spec.pitch_y} mm" not in prompt_for(spec, "L2")
+    assert "???" not in prompt_for(spec, "L1")
+
+
+def test_l3_eval_wording_never_appears_in_train():
+    from cad_spec.tasks import _PROSE, _PROSE_EVAL, _PROSE_TRAIN
+
+    assert set(_PROSE_TRAIN).isdisjoint(_PROSE_EVAL)
+    heads = {i: _PROSE[i][:40] for i in range(len(_PROSE))}
+    train_text = {prompt_for(s, "L3", "train")[:40] for s in TRAIN_SPECS}
+    for i in _PROSE_EVAL:
+        assert all(not t.startswith(heads[i][:25]) for t in train_text)
+
+
+def test_l4_rev_a_is_feasible_and_differs():
+    for spec in EVAL_SPECS + TRAIN_SPECS[:50]:
+        source = edit_source(spec)
+        assert is_feasible(source)
+        assert (source.length, source.width, source.thickness, source.hole_diameter, source.edge_margin) != (
+            spec.length, spec.width, spec.thickness, spec.hole_diameter, spec.edge_margin)
+
+
+def test_l4_rev_a_code_does_not_score_as_rev_b():
+    spec = EVAL_SPECS[0]
+    assert score(reference_solution(edit_source(spec)), spec).reward < 1.0
+
+
+def test_metrics_reuse_one_build():
+    spec = EVAL_SPECS[0]
+    _report.cache_clear()
+    env = load_environment()
+    code = reference_solution(spec)
+    names = env.rubric._get_reward_func_names()
+    weights = env.rubric._get_reward_weights()
+    ours = [f for f, n in zip(env.rubric._get_reward_funcs(), names, strict=True)
+            if n == "spec_reward" or n == "built" or n == "gates_passed" or n.startswith("m_R")]
+    assert len(ours) == 2 + len(CHECK_NAMES) + 1 == 11
+    assert weights[names.index("spec_reward")] == 1.0
+    assert all(weights[names.index(n)] == 0.0 for n in names if n.startswith("m_R"))
+    for func in ours:
+        assert func(code, spec.id, {"spec_id": spec.id}) == 1.0
+    assert _report.cache_info().misses == 1

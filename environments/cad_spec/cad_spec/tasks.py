@@ -1,14 +1,28 @@
-"""One part family, parameter variation. Not many part types.
+"""One part family, five prompt tiers. Not many part types (yet).
 
 Family: a rectangular mounting plate with a 4-hole bolt pattern, holes on a
 rectangular pitch, inset from each corner by an equal edge margin.
+
+Tiers are separate tasks over the SAME geometry and the SAME scorer, so a
+score difference between tiers isolates how the requirement was stated, not
+what was built. Report them separately; never average them together.
+
+  L0 template   fill ??? in a given CadQuery template (numeric copy task)
+  L1 spec       requirement table incl. pitch, no template, no operations
+  L2 derive     requirement table WITHOUT pitch: derive it from the margin
+  L3 prose      free-text request, drawing-note or email style; eval uses
+                wording templates that never appear in train (held-out phrasing)
+  L4 edit       an existing rev-A model plus an engineering change order;
+                output the full rev-B model (controlled edit)
 """
 
 from __future__ import annotations
 
 import math
 import random
-from dataclasses import asdict, dataclass
+import zlib
+from dataclasses import asdict, dataclass, replace
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -156,3 +170,156 @@ def make_splits(seed: int = SAMPLE_SEED) -> tuple[list[Spec], list[Spec]]:
     train_specs = [s for s in pool if s.id not in eval_ids]
     rng.shuffle(train_specs)
     return train_specs, eval_specs
+
+
+# --- tiers -------------------------------------------------------------------
+
+TIERS = ("L0", "L1", "L2", "L3", "L4")
+
+
+def is_feasible(spec: Spec) -> bool:
+    """The sampler's own feasibility rules, as a predicate (used for edits)."""
+    r = spec.hole_diameter / 2
+    return (
+        spec.edge_margin >= max(5.0, r + 2) - 1e-9
+        and spec.edge_margin <= 25.0 + 1e-9
+        and spec.pitch_x - spec.hole_diameter >= 4 - 1e-9
+        and spec.pitch_y - spec.hole_diameter >= 4 - 1e-9
+        and spec.thickness <= min(spec.length, spec.width) / 5 + 1e-9
+        and spec.hole_diameter >= 4.0
+    )
+
+
+def _fmt(x: float) -> str:
+    """80.0 -> '80', 6.5 -> '6.5'. Prose reads like a drawing, not a repr."""
+    return f"{x:g}"
+
+
+_SPEC_TABLE = """\
+Write a CadQuery Python module that builds the part below and binds the
+finished solid to a variable named `result`.
+
+REQUIREMENTS
+  R1  Overall length (X):        {length} mm
+  R2  Overall width (Y):         {width} mm
+  R3  Plate thickness (Z):       {thickness} mm
+  R4  Fastener holes:            {hole_count} off, through, {hole_diameter} mm diameter
+{pitch_line}  R6  Edge margin:               {edge_margin} mm from hole centre to each nearest edge
+
+The plate is centred on the origin with its thickness along Z.
+"""
+
+_PITCH_LINE = "  R5  Hole pattern:              rectangular, {pitch_x} mm x {pitch_y} mm centres\n"
+_DERIVE_LINE = "  R5  Hole pattern:              rectangular, one hole near each corner\n"
+
+# Wording templates for L3. Indices in _PROSE_TRAIN never appear in eval and
+# vice versa: eval measures unseen PHRASING, not only unseen numbers.
+_PROSE = (
+    # 0 casual request
+    "I need a flat mounting plate, {L} by {W} mm and {T} mm thick. Put a "
+    "{D} mm through hole near each of the four corners, with every hole "
+    "centre {M} mm in from both of its nearest edges. Keep it centred on the "
+    "origin. Write it in CadQuery and assign the part to `result`.",
+    # 1 drawing title block + notes
+    "DRAWING NOTES\nPLATE {L} x {W} x {T} THK (MM)\n4X \u00d8{D} THRU\n"
+    "HOLE CENTRES {M} FROM ADJACENT EDGES, TYP 4 PL\nPART CENTRED ON ORIGIN, "
+    "THICKNESS ALONG Z\n\nModel this in CadQuery; the solid must be bound to `result`.",
+    # 2 bolt-pattern first
+    "Model a rectangular bolt plate in CadQuery. The four holes are {D} mm "
+    "clearance holes, drilled all the way through, on a {PX} x {PY} mm "
+    "rectangular pattern centred on the origin. The plate itself is {L} mm "
+    "along X, {W} mm along Y and {T} mm along Z. Store the solid in `result`.",
+    # 3 purchasing-style spec
+    "Supplier spec: bracket plate, material thickness {T} mm, blank size "
+    "{L} mm (X) x {W} mm (Y). Four plain holes, diameter {D} mm, through all, "
+    "one per corner at {M} mm edge distance in both directions. Origin at the "
+    "blank centre. Provide CadQuery with the part in `result`.",
+    # 4 HELD OUT: email from a colleague, pitch given, margin implied
+    "Hi, could you knock up the adapter plate in CadQuery? Stock is {T} mm "
+    "plate cut to {W} mm wide (Y) and {L} mm long (X). It needs four {D} mm "
+    "holes straight through, spaced {PX} mm apart along the length and {PY} mm "
+    "apart across the width, pattern centred on the plate, plate centred on "
+    "the origin. Please leave the finished body in a variable called result.",
+    # 5 HELD OUT: inspection-sheet style, radius instead of diameter
+    "Inspection criteria for part to be modelled in CadQuery (bind to "
+    "`result`): envelope {L} x {W} x {T} mm, centred at (0, 0, 0). Qty 4 "
+    "through bores of radius {R} mm. Each bore axis lies {M} mm from the two "
+    "closest outer edges. No other features.",
+)
+_PROSE_TRAIN = (0, 1, 2, 3)
+_PROSE_EVAL = (4, 5)
+
+
+def _stable_pick(key: str, choices: tuple[int, ...]) -> int:
+    return choices[zlib.crc32(key.encode()) % len(choices)]
+
+
+def _prose(spec: Spec, split: str) -> str:
+    idx = _stable_pick(spec.id, _PROSE_EVAL if split == "eval" else _PROSE_TRAIN)
+    return _PROSE[idx].format(
+        L=_fmt(spec.length), W=_fmt(spec.width), T=_fmt(spec.thickness),
+        D=_fmt(spec.hole_diameter), R=_fmt(spec.hole_diameter / 2),
+        M=_fmt(spec.edge_margin), PX=_fmt(spec.pitch_x), PY=_fmt(spec.pitch_y),
+    )
+
+
+_EDIT_FIELDS = ("length", "width", "thickness", "hole_diameter", "edge_margin")
+_EDIT_LABEL = {
+    "length": "overall length (X)",
+    "width": "overall width (Y)",
+    "thickness": "plate thickness (Z)",
+    "hole_diameter": "hole diameter",
+    "edge_margin": "edge margin (hole centre to nearest edges)",
+}
+
+
+def edit_source(target: Spec) -> Spec:
+    """Rev A for an L4 edit task: `target` with one or two fields changed.
+
+    Deterministic per spec id. Rev A is always feasible, so the starting
+    model the prompt shows is itself a valid part.
+    """
+    rng = random.Random(zlib.crc32(("edit:" + target.id).encode()))
+    for _ in range(200):
+        fields = rng.sample(_EDIT_FIELDS, rng.choice((1, 2)))
+        changes: dict[str, Any] = {}
+        for f in fields:
+            base = getattr(target, f)
+            step = rng.choice((-1, 1)) * rng.choice((0.1, 0.15, 0.2, 0.25)) * base
+            changes[f] = max(0.5, round((base + step) * 2) / 2)
+        source = replace(target, id=target.id + "-revA", **changes)
+        if source != replace(target, id=source.id) and is_feasible(source):
+            return source
+    raise RuntimeError(f"no feasible rev A for {target.id}")
+
+
+def _edit_prompt(target: Spec) -> str:
+    source = edit_source(target)
+    lines = [
+        f"  - change {_EDIT_LABEL[f]} from {_fmt(getattr(source, f))} mm to {_fmt(getattr(target, f))} mm"
+        for f in _EDIT_FIELDS
+        if getattr(source, f) != getattr(target, f)
+    ]
+    return (
+        "Below is the current CadQuery model of a mounting plate (rev A).\n\n"
+        "```python\n" + reference_solution(source).strip() + "\n```\n\n"
+        "ENGINEERING CHANGE ORDER, rev A -> rev B:\n" + "\n".join(lines) + "\n"
+        "Every other characteristic stays exactly as in rev A: four through holes, "
+        "one per corner, each hole centre at the stated edge margin from its two "
+        "nearest edges, part centred on the origin.\n\n"
+        "Return the complete rev B CadQuery module with the part bound to `result`."
+    )
+
+
+def prompt_for(spec: Spec, tier: str, split: str = "train") -> str:
+    """The prompt text for `spec` at `tier`. `split` selects held-out wording (L3)."""
+    if tier == "L0":
+        return spec.to_prompt()
+    if tier in ("L1", "L2"):
+        pitch = _PITCH_LINE.format(pitch_x=spec.pitch_x, pitch_y=spec.pitch_y) if tier == "L1" else _DERIVE_LINE
+        return _SPEC_TABLE.format(**asdict(spec), pitch_line=pitch)
+    if tier == "L3":
+        return _prose(spec, split)
+    if tier == "L4":
+        return _edit_prompt(spec)
+    raise ValueError(f"unknown tier {tier!r}; expected one of {TIERS}")
