@@ -42,6 +42,7 @@ select = ["E", "F", "W", "I", "N", "UP", "B", "SIM", "RUF"]
 # Parse target 3.12: current numpy/py3.12 stubs use `type` statements that a
 # 3.11 parser rejects; package code itself stays 3.11-compatible.
 python_version = "3.12"
+platform = "linux"
 ignore_missing_imports = true
 check_untyped_defs = true
 
