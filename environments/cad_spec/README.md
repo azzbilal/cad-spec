@@ -1,89 +1,56 @@
-# cad-spec
+# cad-spec (environment package)
 
-An RL environment where a model reads a dimensioned engineering spec and writes
-CadQuery to satisfy it. Scoring is not text similarity: the code is executed,
-the resulting solid is measured, and each requirement is checked against the
-measurement the way an inspection report would check a machined part.
+RL reward environment: write CadQuery for a dimensioned mounting plate; the
+built solid is measured and scored against 8 requirements behind 4
+anti-cheat gates. Full documentation, evidence and limits are in the
+[repository README](https://github.com/azzbilal/cad-spec#readme).
 
-Part family: rectangular mounting plate, four-hole bolt pattern, parameterised
-over length, width, thickness, hole diameter and edge margin. Specs come from
-a seeded parametric sampler (`tasks.py`, `SAMPLE_SEED`): 200 training specs
-and 30 held-out for eval, stratified by plate area - the 10 smallest, the 10
-largest, and 10 evenly spaced mid-range - so eval scores measure
-generalization across the size range, not memorization.
+## Load
+
+```python
+from cad_spec import load_environment
+
+env = load_environment()                                  # L0 template task, as in 0.2
+env = load_environment(tier=["L1", "L2", "L3"],           # train on harder tiers
+                       eval_tier=["L0", "L1", "L2", "L3", "L4"])
+```
+
+| Argument | Default | Meaning |
+|---|---|---|
+| `tier` | `"L0"` | training tier(s): L0 template, L1 table, L2 derive pitch, L3 prose, L4 change order |
+| `eval_tier` | same as `tier` | eval tier(s); rows carry `info["tier"]` so results split per tier |
+| `metrics` | `True` | zero-weight diagnostics `built`, `gates_passed`, `m_R1_length` ... `m_R7_edge_margin` |
+
+200 train and 30 held-out specs per tier. L3 eval prompts use wording
+templates that never appear in train.
 
 ## Reward
 
-Single function, scale exactly [0, 1]:
-
 ```
-1.0    every requirement met
-k/7    partial compliance (R1-R3 dimensions, R4 hole count/diameter,
-       R5 pattern position, R6 material volume vs nominal ±3%)
-0.05   runnable CadQuery that satisfies nothing or fails a gate
-0.0    code that does not execute, or no code at all
+1.0    all 8 requirements met
+k/8    partial compliance, gates permitting
+0.05   code builds but fails a gate or meets nothing
+0.0    code does not build, times out, or is absent
 ```
 
-The 0.05 is exactly what its name says: the reward a runnable-but-gated
-script earns. It gives a near-zero baseline model a first rung to climb.
+Scorer version: `cad_spec.rubric.SCORER_VERSION` (0.3.0). Scores from
+different scorer versions are not comparable.
 
-Model code never runs in the trainer process: each rollout executes inside an
-isolated worker process with an execution timeout (`CAD_SPEC_EXEC_TIMEOUT`,
-default 10 s).
+## Execution
 
-## Why the scoring is built this way
+Each rollout runs in a forked, rlimited, env-scrubbed child on Linux/macOS
+(`CAD_SPEC_SANDBOX=fork`, about 60 ms overhead); Windows uses a persistent
+worker (`reuse`) that does not isolate state between rollouts.
+`CAD_SPEC_EXEC_TIMEOUT` (default 10 s) and `CAD_SPEC_MEM_MB` (default 2048)
+bound each rollout. See `SECURITY.md` in the repository before running
+untrusted output outside Prime's sandbox.
 
-Dimensional checks alone are trivially gameable — a solid block with no holes
-satisfies every overall-dimension requirement. So the rubric has two layers.
+## Scorer-only use
 
-**Gates** zero the reward. Each exists because of a specific cheat:
+`import cad_spec` does not import verifiers. With only cadquery installed:
 
-| Gate | Cheat it kills |
-|---|---|
-| `single_solid` | four loose corner tabs that share the bounding box |
-| `simple_through_holes` | blind dimples that measure like fastener holes from above; also coaxial steps - counterbores are a different fastener interface than specified plain through holes |
-| `hole_count_sane` | swiss-cheesing the plate to hit a volume target |
-| `is_plate` | a shell, hollow box, or ellipse extrusion with the right bbox |
-
-`is_plate` compares measured volume against volume predicted from the *measured*
-geometry within a wide identity band (±12%), not against the spec volume.
-Gating on the spec would zero any dimensional error and destroy the partial
-credit RL needs to climb.
-
-Hole detection runs two independent discriminators: a surface-inset
-membership probe rejects convex cylinders (external rounds, bosses, shell
-outer walls) but cannot reject inner corner fillets, which genuinely are
-concave cylinders with material outside them; a full-cylinder area check
-rejects those quarter-arc partial cylinders but cannot reject bosses, which
-close completely. Neither test alone is sufficient.
-
-**Requirements** give partial credit: reward is the fraction of the seven
-requirements met.
-
-All of this is enforced by a 20-case adversarial harness
-(`scripts/test_rubric.py` in the source repo) covering hand-written correct,
-partially-wrong, and deliberately cheating answers — including domain cheats
-like counterbored holes where plain through holes were specified, offset
-patterns with correct pitch, parts built in inches, and a hollow-geometry
-fixture that keeps the hole detector honest.
-
-## Baseline
-
-qwen2.5-coder:1.5b (local, CPU): mean 0.24–0.42 across runs on the held-out
-specs, with individual rollouts spanning the full range 0.0 to 1.0 and strong
-within-group variance — well inside the trainable band. Dominant failure mode:
-the model completes the template correctly, then keeps writing and destroys the
-part with invented API calls. Exactly the behavior RL should remove.
-
-*(Numbers predate v0.2.0 — k/6 reward scale, 10-spec dataset, halfway-probe
-hole detection. To be refreshed after 0.2.0.)*
-
-## Layout
-
-```
-cad_spec/measure.py      build model code, extract geometry. knows nothing about specs
-cad_spec/tasks.py        the part family, prompt template, reference solutions
-cad_spec/rubric.py       gates and requirements. the file that matters
-cad_spec/environment.py  verifiers wrapper. the only API-coupled file
-tests/                   pytest suite: harness wrapper, detector units incl. timeout, cross-seed reference checks
+```python
+from cad_spec.rubric import score
+from cad_spec.tasks import TASKS
+print(score(open("answer.py").read(), TASKS[0]).summary)
 ```
