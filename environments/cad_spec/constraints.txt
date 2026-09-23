@@ -1,0 +1,12 @@
+# Verified dependency set for published results (Linux, Python 3.12).
+# Install with:  pip install -c constraints.txt -e ".[env,dev]"
+# Results files record the scorer version and git revision; record this file's
+# hash too if you publish numbers produced with a different set.
+cadquery==2.8.0
+cadquery-ocp==7.9.3.1.1
+numpy==2.5.3
+verifiers==0.3.1
+datasets==5.0.1
+pytest==9.1.1
+ruff==0.16.8
+mypy==2.3.1
