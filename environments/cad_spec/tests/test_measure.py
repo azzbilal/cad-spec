@@ -172,3 +172,139 @@ def test_timeout_kills_runaway_code_and_worker_respawns(monkeypatch):
         build_and_measure("while True: pass")
     m = build_and_measure(PLATE)
     assert m.solid_count == 1
+
+
+# --- 0.3.0: datums, merged bore depth, partial bores -------------------------
+
+from cad_spec.measure import _merge_intervals, sandbox_info  # noqa: E402
+
+SYMMETRIC_CUTTER = """
+import cadquery as cq
+base = cq.Workplane("XY").box(80, 60, 6)
+cutters = (cq.Workplane("XY")
+           .pushPoints([(-30, -20), (-30, 20), (30, -20), (30, 20)])
+           .circle(6.5 / 2).extrude(10, both=True))
+result = base.cut(cutters)
+"""
+
+SHIFTED_STOCK = """
+import cadquery as cq
+result = (cq.Workplane("XY").box(80, 60, 6).translate((2, 0, 0))
+          .faces(">Z").workplane()
+          .rect(60, 40, forConstruction=True).vertices().hole(6.5))
+"""
+
+BREAKOUT = """
+import cadquery as cq
+result = (cq.Workplane("XY").box(80, 60, 6)
+          .faces(">Z").workplane()
+          .pushPoints([(38.5, -20), (-30, -20), (-30, 20), (30, 20)]).hole(6.5))
+"""
+
+
+def test_merge_intervals():
+    assert _merge_intervals([(0, 3), (-3, 0)]) == [(-3, 3)]
+    assert _merge_intervals([(0, 1), (2, 3)]) == [(0, 1), (2, 3)]
+    assert _merge_intervals([(0, 2), (1, 3), (3, 4)]) == [(0, 4)]
+    assert _merge_intervals([]) == []
+
+
+def test_split_bore_wall_measures_full_depth():
+    """P0-2: two stacked 3 mm faces are ONE 6 mm through bore."""
+    m = measure(build(SYMMETRIC_CUTTER))
+    assert len(m.holes) == 4
+    for h in m.holes:
+        assert h.depth == 6.0 and h.segments == 1
+        assert (h.z_min, h.z_max) == (-3.0, 3.0)
+
+
+def test_blind_bore_is_one_short_segment():
+    m = measure(build(BLIND_DIMPLES))
+    assert all(h.segments == 1 and h.z_max == 3.0 and h.z_min == 2.0 for h in m.holes)
+
+
+def test_envelope_datums_are_recorded():
+    """P0-1: sizes are translation-invariant; datums are not."""
+    m = measure(build(SHIFTED_STOCK))
+    assert (m.x_min, m.x_max) == (-38.0, 42.0)
+    assert m.centre == (2.0, 0.0, 0.0)
+    assert m.length == 80.0
+
+
+def test_breakout_is_reported_not_silently_dropped():
+    m = measure(build(BREAKOUT))
+    assert m.hole_count == 3
+    assert len(m.partial_bores) == 1
+    pb = m.partial_bores[0]
+    assert (pb.x, pb.y) == (38.5, -20.0)
+    assert 0.3 < pb.coverage < 0.99
+
+
+def test_fillets_are_not_reported_as_partial_bores():
+    """Quarter-arc fillets sit below PARTIAL_REPORT_MIN: noise, not bores."""
+    assert measure(build(FILLETED)).partial_bores == []
+
+
+def test_whole_workplane_stack_is_measured():
+    """Four loose tabs on the stack are four solids, not one tab."""
+    code = """
+import cadquery as cq
+result = (cq.Workplane("XY")
+          .pushPoints([(-35, -25), (35, -25), (-35, 25), (35, 25)])
+          .box(10, 10, 6, combine=False))
+"""
+    m = measure(build(code))
+    assert m.solid_count == 4
+    assert (m.length, m.width) == (80.0, 60.0)
+
+
+# --- 0.3.0: sandbox -----------------------------------------------------------
+
+posix_only = pytest.mark.skipif(sandbox_info().get("mode") != "fork", reason="fork sandbox is POSIX-only")
+
+TINY = "import cadquery as cq\nresult = cq.Workplane('XY').box(1, 1, 1)\n"
+
+
+@posix_only
+def test_rollouts_cannot_leak_python_state():
+    """Rollout A sabotages cadquery; rollout B must not inherit it."""
+    with pytest.raises(BuildError):
+        build_and_measure("import cadquery as cq\ncq.Workplane.box = None\n" + TINY)
+    assert build_and_measure(PLATE).hole_count == 4
+
+
+@posix_only
+def test_rollout_environment_is_scrubbed(monkeypatch):
+    from cad_spec.measure import shutdown_worker
+
+    monkeypatch.setenv("CAD_SPEC_TEST_SECRET", "hunter2")
+    shutdown_worker()  # respawn so the worker inherits the secret
+    try:
+        build_and_measure("import os\nassert 'CAD_SPEC_TEST_SECRET' not in os.environ\n" + TINY)
+    finally:
+        shutdown_worker()
+
+
+@posix_only
+def test_relative_writes_land_in_a_deleted_temp_dir(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    build_and_measure("open('side_effect.txt', 'w').write('x')\n" + TINY)
+    assert not (tmp_path / "side_effect.txt").exists()
+
+
+@posix_only
+def test_memory_bomb_is_contained():
+    with pytest.raises(BuildError, match=r"MemoryError|memory|crashed"):
+        build_and_measure("x = bytearray(64 * 1024 ** 3)\n")
+    assert build_and_measure(PLATE).hole_count == 4
+
+
+@posix_only
+def test_file_size_limit():
+    with pytest.raises(BuildError):
+        build_and_measure("open('big.bin', 'wb').write(b'0' * (64 << 20))\n" + TINY)
+
+
+def test_sandbox_info_describes_mode(monkeypatch):
+    monkeypatch.setenv("CAD_SPEC_INPROC", "1")
+    assert sandbox_info() == {"mode": "inproc", "isolated": False}

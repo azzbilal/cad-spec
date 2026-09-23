@@ -8,10 +8,18 @@ Design notes:
   * Gates run first and zero the score. They exist because dimensional checks
     alone are trivially gameable: a solid block with no holes passes R1-R3.
   * Each layer tests exactly one thing: gates test part identity, R1-R3 own
-    overall dimensions, R4-R5 own the holes, R6 owns material consistency.
-    R6 therefore compares against volume predicted from the MEASURED envelope
-    minus NOMINAL bores - decoupled from dimension errors, so a thickness
-    miss costs R3 alone rather than also torching R6.
+    overall dimensions, R4-R5 own the holes, R6 owns material consistency,
+    R7 owns hole-to-edge margins. R6 therefore compares against volume
+    predicted from the MEASURED envelope minus NOMINAL bores - decoupled from
+    dimension errors, so a thickness miss costs R3 alone rather than also
+    torching R6. "Material" means volume consistency only: not alloy,
+    strength, fit, or manufacturability.
+  * Two datums, stated so nobody has to guess: R5 references hole centres
+    to the ORIGIN (the prompt fixes the plate centred on it), R7 references
+    them to the part's own EDGES. A plate slid off its holes fails R7; a
+    whole part translated off the origin fails R5. Before 0.3.0 only sizes
+    were checked, which are translation-invariant, and a plate shifted 2 mm
+    against nominal holes scored 1.0.
 """
 
 from __future__ import annotations
@@ -28,6 +36,11 @@ POSITION_TOL = 0.5    # mm, on hole centres
 GATE_VOLUME_BAND = 0.12  # identity band: measured vs bbox-predicted volume
 MATERIAL_TOL = 0.03   # fraction, R6: material vs envelope-minus-nominal-bores
 DEPTH_TOL = 0.01      # mm, hole depth vs stock thickness
+MARGIN_TOL = 0.5      # mm, hole centre to nearest edge (R7); same class as POSITION_TOL
+
+# Bump on ANY change that can move a score. Recorded in every results file so
+# numbers from different scorer revisions are never silently compared.
+SCORER_VERSION = "0.3.0"
 
 
 @dataclass
@@ -81,9 +94,13 @@ def _gates(m: Measurements, spec: Spec) -> list[Check]:
     for h in m.holes:
         by_position.setdefault((h.x, h.y), []).append(h)
 
+    # Through = one uninterrupted wall spanning the stock's actual bottom and
+    # top faces (datums), not "the tallest face is as tall as the plate".
     simple_through = bool(m.holes) and all(
         len({h.diameter for h in group}) == 1
-        and _close(group[0].depth, m.thickness, DEPTH_TOL)
+        and group[0].segments == 1
+        and _close(group[0].z_min, m.z_min, DEPTH_TOL)
+        and _close(group[0].z_max, m.z_max, DEPTH_TOL)
         for group in by_position.values()
     )
 
@@ -157,6 +174,21 @@ def _requirements(m: Measurements, spec: Spec) -> list[Check]:
         "R6:material",
         expected_material > 0 and _close(m.volume, expected_material, MATERIAL_TOL * expected_material),
         f"{m.volume:.1f} vs {expected_material:.1f} mm3 for this envelope",
+    ))
+
+    # R7: hole centre to its nearest X edge and nearest Y edge, measured from
+    # the part's actual envelope. Owns placement relative to the stock; R5
+    # owns placement relative to the origin datum.
+    worst = 0.0
+    for h in m.holes:
+        dx = min(h.x - m.x_min, m.x_max - h.x)
+        dy = min(h.y - m.y_min, m.y_max - h.y)
+        worst = max(worst, abs(dx - spec.edge_margin), abs(dy - spec.edge_margin))
+    checks.append(Check(
+        "R7:edge_margin",
+        bool(m.holes) and worst <= MARGIN_TOL,
+        f"worst deviation {worst:.2f} mm from {spec.edge_margin} mm margin"
+        if m.holes else "no bores to measure",
     ))
 
     return checks
