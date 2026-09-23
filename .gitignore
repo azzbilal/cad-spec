@@ -17,3 +17,5 @@ outputs/
 # scratch outputs
 out.txt
 probe_check.py
+.opencode/
+out.txt
