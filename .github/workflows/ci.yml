@@ -1,22 +1,25 @@
-name: rubric-harness
-
-on:
-  push:
-  pull_request:
-
+name: ci
+on: [push, pull_request]
 jobs:
-  test-rubric:
-    runs-on: ubuntu-latest
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ["3.11", "3.12"]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: environments/cad_spec
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
-          cache: pip
-
-      - name: Install the cad_spec environment
-        run: pip install -e environments/cad_spec
-
-      - name: Run the adversarial rubric harness
+          python-version: ${{ matrix.python }}
+      - run: pip install -e ".[dev]"
+      - run: ruff check .
+      - run: mypy cad_spec
+      - run: pytest -q
+      - name: Adversarial rubric harness
+        working-directory: .
         run: python scripts/test_rubric.py
