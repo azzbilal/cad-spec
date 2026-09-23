@@ -1,17 +1,24 @@
 [project]
 name = "cad-spec"
-description = "Write CadQuery from a dimensioned mechanical spec. Scored by executing the code and measuring the resulting solid in an isolated worker with an execution timeout: 7-requirement k/7 partial credit (dimensions, hole count/diameter/pattern, material volume) behind anti-reward-hacking gates. Seeded parametric dataset of 200 train / 30 held-out plate specs."
+description = "RL reward environment: write CadQuery from a dimensioned plate spec, scored by measuring the built B-rep. 8 requirements (dimensions, hole count/diameter, pattern vs origin, material volume, edge margin) behind anti-reward-hacking gates; per-rollout sandboxed execution; five prompt tiers (template, table, derived pitch, held-out prose, change order); mutation-validated scorer. 200 train / 30 held-out specs per tier."
 tags = ["cad", "engineering", "code-generation", "cadquery", "geometry", "train", "eval"]
-version = "0.2.0"
+version = "0.3.0"
 requires-python = ">=3.11"
+license = { text = "MIT" }
+# verifiers/datasets stay in the core set because `prime env push` installs the
+# package's own dependencies. The scorer itself needs only cadquery, and
+# `import cad_spec` no longer imports verifiers (see cad_spec/__init__.py).
 dependencies = [
-    "verifiers>=0.3.0",
-    "cadquery>=2.8",
+    "verifiers>=0.3.0,<0.4",
+    "cadquery>=2.8,<2.9",
     "datasets",
 ]
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "ruff>=0.8", "mypy>=1.11"]
+
+[project.scripts]
+cad-spec = "cad_spec.__main__:main"
 
 [build-system]
 requires = ["hatchling"]
@@ -35,6 +42,7 @@ select = ["E", "F", "W", "I", "N", "UP", "B", "SIM", "RUF"]
 # Parse target 3.12: current numpy/py3.12 stubs use `type` statements that a
 # 3.11 parser rejects; package code itself stays 3.11-compatible.
 python_version = "3.12"
+platform = "linux"
 ignore_missing_imports = true
 check_untyped_defs = true
 

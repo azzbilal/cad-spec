@@ -1,0 +1,9 @@
+# Lint config for the repo-level scripts. The package has its own config in
+# environments/cad_spec/pyproject.toml, which takes precedence there.
+line-length = 120
+target-version = "py311"
+
+[lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "SIM", "RUF"]
+# Scripts put the source checkout on sys.path before importing cad_spec and
+# say so with a file-level `# ruff: noqa: E402` directive.

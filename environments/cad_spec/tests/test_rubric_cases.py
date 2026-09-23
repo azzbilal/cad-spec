@@ -2,7 +2,8 @@
 
 The zero-dependency harness stays the single source of truth for rubric
 expectations (runnable with nothing but cadquery installed); this wrapper
-brings the same 19 cases into pytest so CI runs them on every push.
+brings every case into pytest so CI runs them on every push. Each case pins
+its reward AND its exact set of failed checks.
 """
 
 import importlib.util
@@ -17,13 +18,12 @@ _mod = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_mod)
 
 
-def _parse(expr: str) -> float:
-    num, _, den = expr.partition("/")
-    return float(num) / float(den) if den else float(expr)
-
-
 @pytest.mark.parametrize("name", sorted(_mod.CASES))
 def test_case(name: str):
-    expected, code = _mod.CASES[name]
-    report = _mod.score(code, _mod.SPEC)
-    assert report.reward == pytest.approx(_parse(expected), abs=1e-3), report.summary
+    ok, msg = _mod.check_case(name, _mod.CASES[name])
+    assert ok, msg
+
+
+def test_harness_has_the_audit_regressions():
+    for name in ("shifted_stock", "symmetric_cutter", "whole_part_off_origin", "LIMIT_hole_breakout"):
+        assert name in _mod.CASES

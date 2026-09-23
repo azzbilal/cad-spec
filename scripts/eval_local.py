@@ -7,6 +7,10 @@
   Anthropic (your API credits, useful for checking the task is solvable at all):
       py scripts/eval_local.py --provider anthropic --model claude-haiku-4-5-20251001
 
+This goes through the Verifiers environment (the path Prime uses). For
+per-tier numbers with full provenance and confidence intervals, prefer
+scripts/run_baseline.py + scripts/summarize_results.py.
+
 What you are looking for is NOT a high score. It is spread. If every rollout
 scores identically, the rubric is not discriminating and training will flatline.
 
@@ -24,7 +28,7 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "environments" / "cad_spec"))
 
 from verifiers.types import ClientConfig
 
@@ -42,6 +46,7 @@ def main() -> int:
     ap.add_argument("--num-examples", type=int, default=5)
     ap.add_argument("--rollouts", type=int, default=1)
     ap.add_argument("--show", type=int, default=1, help="how many rollouts to print in full")
+    ap.add_argument("--tier", nargs="+", default=["L0"], help="prompt tier(s): L0 L1 L2 L3 L4")
     args = ap.parse_args()
 
     base_url, key_var, fallback = PROVIDERS[args.provider]
@@ -59,7 +64,7 @@ def main() -> int:
 
     from cad_spec.environment import load_environment
 
-    env = load_environment()
+    env = load_environment(tier=args.tier)
     results = asyncio.run(
         env.evaluate(
             client_config,
@@ -78,7 +83,7 @@ def main() -> int:
     print(f"min      {min(rewards):.3f}")
     print(f"max      {max(rewards):.3f}")
     print(f"zeros    {sum(1 for r in rewards if r == 0)}/{len(rewards)}")
-    print(f"spread   {len(set(round(r, 3) for r in rewards))} distinct values")
+    print(f"spread   {len({round(r, 3) for r in rewards})} distinct values")
     print(f"values   {sorted(round(r, 3) for r in rewards)}")
 
     parses = [o.get("code_parses") for o in outputs if o.get("code_parses") is not None]
@@ -93,7 +98,7 @@ def main() -> int:
             print(f"  {n}x  {msg[:200]}")
 
     order = sorted(range(len(rewards)), key=lambda i: rewards[i])
-    for rank, idx in enumerate(order[: max(0, args.show)]):
+    for idx in order[: max(0, args.show)]:
         print()
         print(f"--- rollout {idx} (reward {rewards[idx]:.3f}) ---")
         print(str(outputs[idx].get("completion"))[:2000])

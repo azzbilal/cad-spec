@@ -1,5 +1,6 @@
 name: ci
 on: [push, pull_request]
+
 jobs:
   test:
     strategy:
@@ -18,8 +19,68 @@ jobs:
           python-version: ${{ matrix.python }}
       - run: pip install -e ".[dev]"
       - run: ruff check .
+      - name: Lint repo scripts
+        working-directory: .
+        run: ruff check scripts
       - run: mypy cad_spec
       - run: pytest -q
       - name: Adversarial rubric harness
         working-directory: .
         run: python scripts/test_rubric.py
+
+  # The README promises the harness runs with nothing but cadquery installed,
+  # from a plain checkout. Prove it on every push.
+  clean-room:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install "cadquery==2.8.0"
+      - run: python scripts/test_rubric.py
+      - name: verifiers must not have been needed
+        run: python -c "import importlib.util, sys; sys.exit(importlib.util.find_spec('verifiers') is not None)"
+
+  # Pinned dependency set used for published results, plus the scorer
+  # validation gate: zero false full credit, zero false rejection.
+  pinned-validation:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: environments/cad_spec
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -c constraints.txt -e ".[dev]"
+      - run: pytest -q
+      - name: Mutation validation gate
+        working-directory: .
+        run: python scripts/validate_scorer.py --specs 10 --out /tmp/validation
+      - name: Deterministic baselines reproduce
+        working-directory: .
+        run: |
+          python scripts/run_baseline.py --provider parser-copy --tiers L0 L1 L2 --out /tmp/pc.jsonl
+          python - <<'PY'
+          import json
+          rows = [json.loads(l) for l in open("/tmp/pc.jsonl")][1:]
+          by = {}
+          for r in rows: by.setdefault(r["tier"], []).append(r["reward"])
+          assert min(by["L0"]) == 1.0 and min(by["L1"]) == 1.0, by
+          assert max(by["L2"]) == 0.0, by
+          print({t: sum(v)/len(v) for t, v in by.items()})
+          PY
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t cad-spec .
+      - name: Score the reference answer inside the locked-down container
+        run: |
+          docker run --rm --entrypoint python cad-spec -c "from cad_spec.tasks import TASKS, reference_solution; print(reference_solution(TASKS[0]))" > answer.py
+          docker run --rm --network none --read-only --tmpfs /tmp:size=64m \
+            --memory 2g --pids-limit 128 --cap-drop ALL --security-opt no-new-privileges \
+            -v "$PWD/answer.py:/in/answer.py:ro" cad-spec score plate-01 /in/answer.py
