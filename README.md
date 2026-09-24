@@ -206,6 +206,19 @@ give per-check learning curves; all functions of one rollout share that
 rollout's single build through its `state`, and no build is shared between
 rollouts.
 
+**Leaderboard and failure fingerprints.** After a board of runs:
+
+```bash
+python scripts/failure_modes.py results/rescored/0.4.0/*.jsonl
+python scripts/leaderboard.py results/rescored/0.4.0/*.jsonl --failures results/failure-modes-0.4.0.json
+```
+
+`results/leaderboard/` then holds a ranked table and three SVG charts. The
+failure classifier labels each failed answer from its re-measured geometry
+and code (for example "holes stacked at one point": positions computed but
+never bound to `.hole()`), so the board shows how each model fails, not only
+how often.
+
 **Scorer changes never cost a rerun.** Every run file stores each model's
 answer, so `python scripts/rescore.py results/runs/*.jsonl` replays them
 through the current scorer into `results/rescored/<version>/`, at no cost.
@@ -223,6 +236,8 @@ scripts/
   test_rubric.py      37 hand-labelled cases, needs only cadquery
   validate_scorer.py  mutation suite -> results/scorer-validation-*.md
   rescore.py          replay saved answers through the current scorer
+  failure_modes.py    label every failed answer (geometry + code)
+  leaderboard.py      ranked table + SVG charts
   openrouter_models.py  live model catalogue with run cost estimates
   run_baseline.py     any provider, any tier, JSONL with provenance
   summarize_results.py

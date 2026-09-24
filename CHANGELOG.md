@@ -3,6 +3,26 @@
 Scores are only comparable within one scorer version
 (`cad_spec.rubric.SCORER_VERSION`).
 
+## Unreleased
+
+### Leaderboard and failure analysis (no scoring change)
+- `scripts/failure_modes.py`: labels every failed answer from its
+  re-measured geometry and code. Modes found on the first 14-model board:
+  holes stacked at one point (positions planned but never bound to
+  `.hole()`: missing `.vertices()`, unused loop variable, repeated `.hole()`),
+  pattern anchored at a corner, edge margin applied twice, X/Y swapped, and on
+  L4 "change order ignored" / "change not propagated to the pitch".
+  `scripts/test_failure_modes.py` pins one known answer per mode (CI).
+- `scripts/leaderboard.py`: ranked table plus SVG charts (ranking with 95%
+  paired bootstrap intervals and parser reference lines, model x tier
+  heatmap, failure fingerprints). No plotting dependency.
+- Runner retries rate limits (429) and 5xx with exponential backoff,
+  honouring Retry-After.
+- Truncated answers are split: cut off by the budget (a configuration
+  problem, counts toward "not publishable") vs degenerate loops (the model
+  repeating itself; a model failure). `scripts/degenerate.py` decides from
+  the text, so old run files are judged too.
+
 ## 0.4.0 (2026-09)
 
 Response to the reference-grounded audit (`docs/audit-2026-09-reference.md`,

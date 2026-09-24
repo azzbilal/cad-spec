@@ -56,6 +56,9 @@ jobs:
           python-version: "3.12"
       - run: pip install -c constraints.txt -e ".[dev]"
       - run: pytest -q
+      - name: Failure-mode classifier self-test
+        working-directory: .
+        run: python scripts/test_failure_modes.py
       - name: Mutation validation gate
         working-directory: .
         run: python scripts/validate_scorer.py --specs 10 --out /tmp/validation

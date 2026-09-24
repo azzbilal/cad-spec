@@ -1,0 +1,100 @@
+# ruff: noqa: E402
+"""Self-test for scripts/failure_modes.py: one known answer per failure mode.
+
+Each case is a hand-written CadQuery answer with a known failure, scored by
+the real scorer and classified by the real classifier. Needs only cadquery:
+
+    python scripts/test_failure_modes.py
+"""
+
+from __future__ import annotations
+
+import json
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "environments" / "cad_spec"))
+
+from cad_spec.rubric import score
+from cad_spec.tasks import Spec, edit_source, make_splits, reference_solution
+
+CORNERS = ((-1, -1), (-1, 1), (1, -1), (1, 1))
+LOOP = "r = (cq.Workplane('XY')\n" + "    .rect(5.0, 5.0)\n" * 80
+
+
+def fenced(body: str) -> str:
+    return f"```python\nimport cadquery as cq\n{body}\n```"
+
+
+def at_points(s: Spec, pts: list[tuple[float, float]], d: float | None = None, dz: float = 0) -> str:
+    return fenced(f"result = (cq.Workplane('XY').box({s.length}, {s.width}, {s.thickness})"
+                  f".faces('>Z').workplane().pushPoints({pts}).hole({d or s.hole_diameter}))\n"
+                  f"result = result.translate((0, 0, {dz}))")
+
+
+def stacked(s: Spec) -> str:
+    holes = f".hole({s.hole_diameter})" * 4
+    return fenced(f"result = cq.Workplane('XY').box({s.length}, {s.width}, {s.thickness})"
+                  f".faces('>Z').workplane(){holes}")
+
+
+def cases() -> list[tuple[str, Spec, str, str | None, dict]]:
+    _, evals = make_splits()
+    s = next(x for x in evals if x.edge_margin < min(x.pitch_x, x.pitch_y) / 2 - 3)
+    hx, hy, m = s.pitch_x / 2, s.pitch_y / 2, s.edge_margin
+    nominal = [(a * hx, b * hy) for a, b in CORNERS]
+    out = [
+        ("L1", s, reference_solution(s), None, {}),
+        ("L1", s, stacked(s), "holes stacked at one point", {}),
+        ("L1", s, at_points(s, [(0, 0), (2 * hx, 0), (0, 2 * hy), (2 * hx, 2 * hy)]),
+         "pattern anchored at a corner", {}),
+        ("L1", s, at_points(s, [(a * (hx - m), b * (hy - m)) for a, b in CORNERS]), "margin applied twice", {}),
+        ("L1", s, at_points(s, [(a * hy, b * hx) for a, b in CORNERS]), "X and Y swapped", {}),
+        ("L1", s, at_points(s, nominal, d=s.hole_diameter + 1), "wrong hole diameter", {}),
+        ("L1", s, at_points(s, nominal, dz=3), "off Z datum", {}),
+        ("L1", s, fenced("result = cq.Workplane('XY').box(1,2"), "syntax error", {}),
+        ("L1", s, fenced("result = cq.Workplane('XY').box(1,1,1).nonexistent()"), "CadQuery API error", {}),
+        ("L1", s, LOOP, "degenerate loop", {"finish": "length"}),
+        ("L1", s, "", "API error", {"api": "HTTPError 500"}),
+    ]
+    x = next(v for v in evals
+             if (edit_source(v).pitch_x, edit_source(v).pitch_y) != (v.pitch_x, v.pitch_y)
+             and (edit_source(v).length, edit_source(v).width) != (v.length, v.width))
+    rev_a = edit_source(x)
+    stale = [(a * rev_a.pitch_x / 2, b * rev_a.pitch_y / 2) for a, b in CORNERS]
+    out.append(("L4", x, reference_solution(rev_a), "change order ignored", {}))
+    out.append(("L4", x, at_points(x, stale), "change not propagated to pitch", {}))
+    return out
+
+
+def main() -> int:
+    rows, want = [], []
+    for tier, spec, text, label, extra in cases():
+        r = score(text, spec)
+        rows.append({"run_id": "T", "tier": tier, "spec_id": spec.id, "rollout": 0, "reward": r.reward,
+                     "built": r.parsed, "error": r.error, "checks": {c.name: c.passed for c in r.checks},
+                     "completion": text, "finish_reason": extra.get("finish", "stop"),
+                     "truncated": extra.get("finish") == "length", "api_error": extra.get("api")})
+        if label:
+            want.append(label)
+    meta = {"meta": {"run_id": "T", "model": "synthetic", "max_tokens": 1024}}
+    with tempfile.TemporaryDirectory() as tmp:
+        run = Path(tmp) / "run.jsonl"
+        run.write_text("\n".join(json.dumps(r) for r in [meta, *rows]) + "\n")
+        subprocess.run([sys.executable, str(ROOT / "scripts" / "failure_modes.py"), str(run), "--out", tmp],
+                       check=True, capture_output=True)
+        result = json.loads(next(Path(tmp).glob("failure-modes-*.json")).read_text())
+    got = [r["label"] for r in result["rows"]]
+    bad = 0
+    for w, g in zip(want, got, strict=True):
+        bad += w != g
+        print(f"[{'ok ' if w == g else 'BAD'}] want {w:32s} got {g}")
+    print(f"\n{len(want) - bad}/{len(want)} failure modes classified correctly")
+    return 1 if bad else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -59,6 +59,7 @@ import re
 import subprocess
 import sys
 import time
+import urllib.error
 import urllib.request
 from pathlib import Path
 from typing import Any
@@ -70,6 +71,7 @@ from cad_spec import __version__
 from cad_spec.measure import sandbox_info
 from cad_spec.rubric import SCORER_VERSION, score
 from cad_spec.tasks import SAMPLE_SEED, TIERS, Spec, edit_source, make_splits, prompt_for, reference_solution
+from degenerate import is_degenerate
 
 # A wrong key or model id fails every call; stop early instead of recording
 # a whole run of errors.
@@ -154,10 +156,46 @@ def parser_template_answer(prompt: str) -> str:
     return parser_answer(prompt, derive=True)
 
 
-def _post(url: str, headers: dict[str, str], body: dict[str, Any], timeout: float) -> dict[str, Any]:
-    req = urllib.request.Request(url, data=json.dumps(body).encode(), headers=headers, method="POST")
-    with urllib.request.urlopen(req, timeout=timeout) as resp:
-        return json.loads(resp.read())
+# Transient provider failures are retried with exponential backoff, honouring
+# Retry-After when the provider sends it. 429 = rate limited (gemma-3-4b hit
+# this twice in September 2026); 5xx = provider trouble.
+RETRY_STATUS = {429, 500, 502, 503, 504}
+MAX_ATTEMPTS = 6
+MAX_WAIT_S = 60.0
+
+
+def _post(url: str, headers: dict[str, str], body: dict[str, Any], timeout: float,
+          retries: list[int] | None = None) -> dict[str, Any]:
+    data = json.dumps(body).encode()
+    for attempt in range(1, MAX_ATTEMPTS + 1):
+        req = urllib.request.Request(url, data=data, headers=headers, method="POST")
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                return json.loads(resp.read())
+        except urllib.error.HTTPError as exc:
+            if exc.code not in RETRY_STATUS or attempt == MAX_ATTEMPTS:
+                raise
+            hint = exc.headers.get("Retry-After") if exc.headers else None
+            try:
+                wait = float(hint) if hint else 2.0 ** attempt
+            except ValueError:
+                wait = 2.0 ** attempt
+        except (TimeoutError, urllib.error.URLError) as exc:
+            if attempt == MAX_ATTEMPTS or not _transient(exc):
+                raise
+            wait = 2.0 ** attempt
+        if retries is not None:
+            retries.append(attempt)
+        print(f"\n  provider busy, retrying in {min(wait, MAX_WAIT_S):.0f}s (attempt {attempt + 1}/{MAX_ATTEMPTS})",
+              file=sys.stderr)
+        time.sleep(min(wait, MAX_WAIT_S))
+    raise RuntimeError("unreachable")
+
+
+def _transient(exc: Exception) -> bool:
+    """Timeouts and dropped connections are transient; DNS or refused are not."""
+    reason = str(getattr(exc, "reason", exc)).lower()
+    return isinstance(exc, TimeoutError) or "timed out" in reason or "reset" in reason
 
 
 def _is_openrouter(args: argparse.Namespace) -> bool:
@@ -182,7 +220,8 @@ def model_answer(args: argparse.Namespace, prompt: str, seed: int) -> tuple[str,
             body["usage"] = {"include": True}  # OpenRouter returns the exact cost of the call
             headers["X-Title"] = "cad-spec baseline"
         body.update(json.loads(args.extra_body) if args.extra_body else {})
-        out = _post(args.base_url.rstrip("/") + "/chat/completions", headers, body, args.timeout)
+        retries: list[int] = []
+        out = _post(args.base_url.rstrip("/") + "/chat/completions", headers, body, args.timeout, retries)
         if "error" in out and not out.get("choices"):
             raise RuntimeError(f"API error: {out['error']}")
         choice = out["choices"][0]
@@ -193,6 +232,7 @@ def model_answer(args: argparse.Namespace, prompt: str, seed: int) -> tuple[str,
             "cost_usd": usage.get("cost"),
             "provider": out.get("provider"),
             "served_model": out.get("model"),
+            "retries": len(retries),
         }
         return choice["message"].get("content") or "", info
     if args.provider == "anthropic":
@@ -327,6 +367,7 @@ def main() -> int:
     t_start = time.time()
     status = "interrupted"
     unknown_cost = 0
+    loops = 0
     with out.open("x") as fh:
         fh.write(json.dumps({"meta": meta}) + "\n")
         try:
@@ -359,6 +400,8 @@ def main() -> int:
                         spent += float(cost or 0.0)
                         finish = info.get("finish_reason")
                         truncated += finish == "length"
+                        loop = finish == "length" and is_degenerate(text)
+                        loops += loop
                         row = {
                             "run_id": run_id, "tier": tier, "spec_id": spec.id, "rollout": k,
                             "seed": args.seed + k, "reward": report.reward, "built": report.parsed,
@@ -367,7 +410,8 @@ def main() -> int:
                             "gates_passed": bool(report.checks) and all(
                                 c.passed for c in report.checks if c.name.startswith("gate:")),
                             "timeout": bool(report.error and "execution budget" in report.error),
-                            "finish_reason": finish, "truncated": finish == "length",
+                            "finish_reason": finish, "truncated": finish == "length", "degenerate": loop,
+                            "retries": info.get("retries", 0),
                             "cost_usd": cost, "provider": info.get("provider"),
                             "served_model": info.get("served_model"),
                             "completion_chars": len(text), "usage": info.get("usage") or {},
@@ -394,7 +438,7 @@ def main() -> int:
             # can always tell a finished run from a partial one.
             fh.write(json.dumps({"end": {"status": status, "written": n, "planned": total,
                                          "spent_usd": round(spent, 6), "unknown_cost_calls": unknown_cost,
-                                         "truncated": truncated}}) + "\n")
+                                         "truncated": truncated, "degenerate": loops}}) + "\n")
     print(file=sys.stderr)
     if aborted:
         print(f"ABORTED after {MAX_CONSECUTIVE_API_ERRORS} API errors in a row (key, model id or network?). "
@@ -402,6 +446,10 @@ def main() -> int:
     if stopped_on_budget:
         print(f"BUDGET THRESHOLD REACHED (${spent:.4f} of ${args.budget:.2f}): stopped after {n}/{total} rollouts",
               file=sys.stderr)
+    if loops:
+        print(f"note: {loops}/{n} answers were degenerate loops (the model repeated itself until the cap); "
+              "they count as model failures, not configuration problems.", file=sys.stderr)
+    truncated -= loops  # remaining: answers cut off mid-way, a budget problem
     if truncated:
         share = truncated / max(1, n)
         if share > 0.05:
