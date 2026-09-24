@@ -21,6 +21,8 @@ import statistics
 from collections import Counter, defaultdict
 from pathlib import Path
 
+from degenerate import is_degenerate
+
 CHECKS = ("R1:length", "R2:width", "R3:thickness", "R4a:hole_count", "R4b:hole_diameter",
           "R5:hole_pattern", "R6:material", "R7:edge_margin", "R8:z_datum")
 GATES = ("gate:single_solid", "gate:clean_solid", "gate:simple_through_holes", "gate:hole_count_sane",
@@ -93,6 +95,20 @@ def _looks_truncated(row: dict, max_tokens: int | None) -> bool:
     return bool(max_tokens) and used >= max_tokens
 
 
+def _hit_cap(row: dict, max_tokens: int | None) -> bool:
+    return bool(row.get("truncated")) or _looks_truncated(row, max_tokens)
+
+
+def _is_loop(row: dict, max_tokens: int | None) -> bool:
+    if "degenerate" in row:
+        return bool(row["degenerate"])
+    return _hit_cap(row, max_tokens) and is_degenerate(row.get("completion", ""))
+
+
+def _cut_off(row: dict, max_tokens: int | None) -> bool:
+    return _hit_cap(row, max_tokens) and not _is_loop(row, max_tokens)
+
+
 def summarize(rows: list[dict], max_tokens: int | None = None) -> dict:
     by_spec: dict[str, list[dict]] = defaultdict(list)
     for r in rows:
@@ -108,7 +124,10 @@ def summarize(rows: list[dict], max_tokens: int | None = None) -> dict:
         "built_rate": len(built) / len(rows),
         "gate_hit_rate": sum(1 for r in built if not r["gates_passed"]) / max(1, len(built)),
         "timeouts": sum(r.get("timeout", False) for r in rows),
-        "truncated": sum(bool(r.get("truncated")) or _looks_truncated(r, max_tokens) for r in rows),
+        # Truncated answers split in two: cut off mid-answer (budget too small:
+        # a configuration problem) and degenerate loops (a model failure).
+        "truncated": sum(_cut_off(r, max_tokens) for r in rows),
+        "loops": sum(_is_loop(r, max_tokens) for r in rows),
         "unknown_cost": sum(1 for r in rows if r.get("cost_usd") is None and r.get("usage")),
         "cost_usd": sum(float(r.get("cost_usd") or 0.0) for r in rows),
         "api_errors": sum(bool(r.get("api_error")) for r in rows),
@@ -128,8 +147,8 @@ def main() -> int:
     metas, groups, ends = load(args.paths)
 
     md = ["| Model | Tier | Specs x rollouts | Mean reward [95% CI] | Median | All-pass [95% CI] | Built | Gate hits |"
-          " Timeouts | Truncated | API errors | Cost $ | " + " | ".join(c.split(":")[0] for c in CHECKS) + " |",
-          "|---|---|---|---|---:|---|---:|---:|---:|---:|---:|---:|" + "---:|" * len(CHECKS)]
+          " Timeouts | Cut off | Loops | API errors | Cost $ | " + " | ".join(c.split(":")[0] for c in CHECKS) + " |",
+          "|---|---|---|---|---:|---|---:|---:|---:|---:|---:|---:|---:|" + "---:|" * len(CHECKS)]
     flagged: list[str] = []
     incomplete: list[str] = []
     for (run_id, tier), rows in sorted(groups.items(), key=lambda kv: (metas.get(kv[0][0], {}).get("model", ""),
@@ -145,17 +164,19 @@ def main() -> int:
             f"| {m.get('model', '?')}{mark} | {tier} | {s['specs']}x{s['rollouts'] // max(1, s['specs'])} | "
             f"{s['mean_reward']:.3f} [{lo:.3f}, {hi:.3f}] | {s['median_reward']:.3f} | "
             f"{s['all_requirements_pass']:.1%} [{flo:.1%}, {fhi:.1%}] | {s['built_rate']:.0%} | "
-            f"{s['gate_hit_rate']:.0%} | {s['timeouts']} | {s['truncated']} | {s['api_errors']} | {cost} | "
+            f"{s['gate_hit_rate']:.0%} | {s['timeouts']} | {s['truncated']} | {s['loops']} | "
+            f"{s['api_errors']} | {cost} | "
             + " | ".join("n/a" if s["per_check"][c] is None else f"{s['per_check'][c]:.0%}" for c in CHECKS)
             + " |"
         )
         if s["truncated"] + s["api_errors"] > 0.05 * len(rows):
             flagged.append(f"{m.get('model', '?')} {tier}: "
-                           f"{s['truncated']} truncated, {s['api_errors']} API errors of {len(rows)}")
+                           f"{s['truncated']} cut off, {s['api_errors']} API errors of {len(rows)}")
         if problems:
             incomplete.append(f"{m.get('model', '?')} {tier}: " + "; ".join(problems))
     if flagged:
-        md += ["", "**Not publishable as a model result** (over 5% of answers truncated or failed at the API; "
+        md += ["", "**Not publishable as a model result** (over 5% of answers cut off by the token budget or failed "
+               "at the API; degenerate loops do not count here, they are model failures; "
                "fix the run configuration and rerun):", *[f"- {f}" for f in sorted(flagged)]]
     if incomplete:
         md += ["", "**Incomplete evaluations** (the eval split is ordered, so a partial run is a biased sample; "
