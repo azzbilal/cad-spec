@@ -53,6 +53,9 @@ def cases() -> list[tuple[str, Spec, str, str | None, dict]]:
          "pattern anchored at a corner", {}),
         ("L1", s, at_points(s, [(a * (hx - m), b * (hy - m)) for a, b in CORNERS]), "margin applied twice", {}),
         ("L1", s, at_points(s, [(a * hy, b * hx) for a, b in CORNERS]), "X and Y swapped", {}),
+        ("L1", s, at_points(s, [(a * hx, b * (hy - 2.5)) for a, b in CORNERS]), "one axis misplaced", {}),
+        ("L1", s, at_points(s, [*nominal[:2], (hx - 3.1, -hy + 2.2), (hx - 2.2, hy - 3.3)]),
+         "some holes right, some wrong", {}),
         ("L1", s, at_points(s, nominal, d=s.hole_diameter + 1), "wrong hole diameter", {}),
         ("L1", s, at_points(s, nominal, dz=3), "off Z datum", {}),
         ("L1", s, fenced("result = cq.Workplane('XY').box(1,2"), "syntax error", {}),
@@ -88,6 +91,11 @@ def main() -> int:
                        check=True, capture_output=True)
         result = json.loads(next(Path(tmp).glob("failure-modes-*.json")).read_text())
     got = [r["label"] for r in result["rows"]]
+    api = [r.get("api_kind") for r in result["rows"] if r["label"] == "CadQuery API error"]
+    if api != ["no such method: Workplane.nonexistent"]:
+        print(f"[BAD] API error kind: {api}")
+        return 1
+    print("[ok ] API error kind: no such method: Workplane.nonexistent")
     bad = 0
     for w, g in zip(want, got, strict=True):
         bad += w != g

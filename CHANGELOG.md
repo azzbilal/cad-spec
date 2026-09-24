@@ -5,6 +5,23 @@ Scores are only comparable within one scorer version
 
 ## Unreleased
 
+### A scorer that cannot run never scores
+- New `ScorerUnavailableError` (not a `BuildError`): raised when CadQuery is
+  not importable or the scorer worker cannot start, and never caught by
+  `score()`. Every scoring script checks CadQuery first and exits with the
+  fix ("activate the environment") instead of recording zeros. Found when a
+  session without the virtualenv scored a whole llama run as unbuildable.
+
+### Leaderboard fixes
+- A (model, tier) rerun several times uses the latest run with no problems;
+  notes describe only the run used, plus a count of superseded runs.
+- Failure table: reference programs (parsers, rev A) listed separately from
+  models; every labelled answer keeps its evidence (error text, measured hole
+  positions, plate size); CadQuery API errors broken down by kind (no such
+  method, wrong arguments, empty stack, kernel refusal...); two new pattern
+  labels, "some holes right, some wrong" and "one axis misplaced", shrink
+  the unexplained bucket. Self-test: 14 modes plus the API-kind breakdown.
+
 ### Leaderboard and failure analysis (no scoring change)
 - `scripts/failure_modes.py`: labels every failed answer from its
   re-measured geometry and code. Modes found on the first 14-model board:

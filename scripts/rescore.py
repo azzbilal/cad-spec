@@ -28,6 +28,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "environments" / "cad_spec"))
 
+from cad_spec.measure import ScorerUnavailableError, require_cadquery
 from cad_spec.rubric import SCORER_VERSION, score
 from cad_spec.tasks import TASKS, make_splits
 
@@ -82,6 +83,10 @@ def main() -> int:
     ap.add_argument("--out-dir", default=str(ROOT / "results" / "rescored" / SCORER_VERSION))
     ap.add_argument("--force", action="store_true", help="replace existing rescored files")
     args = ap.parse_args()
+    try:
+        require_cadquery()
+    except ScorerUnavailableError as exc:
+        raise SystemExit(f"cad-spec: {exc}") from None
 
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)

@@ -21,6 +21,9 @@ checked in order, so each answer lands in the first one that fits:
   margin applied twice                          spacing = pitch - 2 x margin
   X and Y swapped                               spacing uses the other axis pitch
   pitch read as coordinates                     spacing = 2 x pitch
+  one axis misplaced                            X right and Y wrong, or the reverse
+  some holes right, some wrong                  at least one hole at a nominal
+                                                position, not all
   holes misplaced (other)
   gate: <name>                                  a cheat gate fired
   wrong plate size, off Z datum, wrong hole     pattern right, one other thing
@@ -46,9 +49,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "environments" / "cad_spec"))
 
-from cad_spec.measure import BuildError, build_and_measure
+from cad_spec.measure import BuildError, ScorerUnavailableError, build_and_measure, require_cadquery
 from cad_spec.rubric import SCORER_VERSION
 from cad_spec.tasks import TASKS, Spec, edit_source, make_splits
+
+DETERMINISTIC = {"reference", "parser-copy", "parser-derive", "parser-template", "rev-a"}
 from degenerate import is_degenerate
 
 TOL = 0.5  # mm, same class as the rubric's position tolerance
@@ -57,7 +62,8 @@ NOT_BUILT = ("syntax error", "CadQuery API error", "no part produced", "timeout"
 ORDER = UNFINISHED + NOT_BUILT + (
     "change order ignored", "change not propagated to pitch",
     "holes stacked at one point", "no holes", "pattern anchored at a corner", "margin applied twice",
-    "X and Y swapped", "pitch read as coordinates", "holes misplaced (other)",
+    "X and Y swapped", "pitch read as coordinates", "one axis misplaced", "some holes right, some wrong",
+    "holes misplaced (other)",
     "gate: single_solid", "gate: clean_solid", "gate: simple_through_holes", "gate: hole_count_sane",
     "gate: is_plate", "wrong plate size", "off Z datum", "wrong hole diameter", "wrong hole count",
     "material off", "edge margin off", "other",
@@ -140,7 +146,36 @@ def _pattern_label(points: list[tuple[float, float]], spec: Spec, code: str = ""
         return "X and Y swapped"
     if "coords" in kinds and kinds <= {"coords", "ok"}:
         return "pitch read as coordinates"
+    # Exact hits first: a true one-axis error puts NO hole at a nominal
+    # position, while a partly right pattern can span the right distance on
+    # one axis by coincidence.
+    nominal = [(a * spec.pitch_x / 2, b * spec.pitch_y / 2) for a in (-1, 1) for b in (-1, 1)]
+    hits = sum(any(close(x, nx) and close(y, ny) for x, y in points) for nx, ny in nominal)
+    if 0 < hits < 4:
+        return "some holes right, some wrong"
+    if "ok" in kinds:
+        return "one axis misplaced"
     return "holes misplaced (other)"
+
+
+_API_KINDS = (
+    (re.compile(r"AttributeError: '(\w+)' object has no attribute '(\w+)'"), "no such method: {0}.{1}"),
+    (re.compile(r"AttributeError: module '([\w.]+)' has no attribute '(\w+)'"), "no such function: {0}.{1}"),
+    (re.compile(r"TypeError: (?:[\w.]+\.)?(\w+)\(\) (?:takes|got|missing)"), "wrong arguments to {0}()"),
+    (re.compile(r"Cannot find a solid on the stack"), "operation needs a solid on the stack"),
+    (re.compile(r"NameError: name '(\w+)' is not defined"), "undefined name"),
+    (re.compile(r"Standard_\w+|StdFail|BRep_API|OCP"), "geometry kernel refused the operation"),
+)
+
+
+def api_error_kind(error: str) -> str:
+    """What the code got wrong, from the error text of a CadQuery API error."""
+    for pattern, template in _API_KINDS:
+        m = pattern.search(error or "")
+        if m:
+            return template.format(*m.groups())
+    m = re.search(r"execution failed: (\w+)", error or "")
+    return m.group(1) if m else "unknown"
 
 
 def _l4_label(m, spec: Spec) -> str | None:
@@ -180,7 +215,18 @@ def _checks_label(checks: dict[str, bool]) -> str:
     return "other"
 
 
-def classify(row: dict, spec: Spec, max_tokens: int | None) -> str:
+def classify(row: dict, spec: Spec, max_tokens: int | None) -> tuple[str, dict]:
+    """(label, detail). Detail keeps the evidence: error text, measured holes."""
+    detail: dict = {}
+    label = _classify(row, spec, max_tokens, detail)
+    if label == "CadQuery API error":
+        detail["api_kind"] = api_error_kind(row.get("error") or "")
+    return label, detail
+
+
+def _classify(row: dict, spec: Spec, max_tokens: int | None, detail: dict) -> str:
+    if row.get("error"):
+        detail["error"] = (row.get("error") or "")[:300]
     if row.get("api_error"):
         return "API error"
     capped = row.get("truncated") or (
@@ -192,7 +238,8 @@ def classify(row: dict, spec: Spec, max_tokens: int | None) -> str:
         return _unbuilt_label(row)
     try:
         m = build_and_measure(row.get("completion", ""))
-    except BuildError:
+    except BuildError as exc:
+        detail["error"] = str(exc)[:300]
         return "build failed"
     if row.get("tier") == "L4":
         label = _l4_label(m, spec)
@@ -201,6 +248,8 @@ def classify(row: dict, spec: Spec, max_tokens: int | None) -> str:
     # Hole pattern before gates: misplaced holes often overlap or break out
     # through an edge, which also fires a gate; the pattern is the diagnosis.
     points = [(h.x, h.y) for h in m.holes] + [(p.x, p.y) for p in m.partial_bores]
+    detail["holes"] = sorted({(round(x, 2), round(y, 2)) for x, y in points})
+    detail["plate"] = [m.length, m.width, m.thickness]
     pattern = _pattern_label(points, spec, row.get("completion", ""))
     return pattern or _checks_label(row["checks"])
 
@@ -211,6 +260,10 @@ def main() -> int:
     ap.add_argument("--tiers", nargs="+", default=["L0", "L1", "L2", "L3", "L4"])
     ap.add_argument("--out", default=str(ROOT / "results"))
     args = ap.parse_args()
+    try:
+        require_cadquery()
+    except ScorerUnavailableError as exc:
+        raise SystemExit(f"cad-spec: {exc}") from None
 
     train, evals = make_splits()
     specs = {s.id: s for s in [*train, *evals, *TASKS]}
@@ -218,6 +271,7 @@ def main() -> int:
     per_model_tier: dict[str, dict[str, Counter]] = defaultdict(lambda: defaultdict(Counter))
     totals: Counter = Counter()
     labelled = []
+    api_kinds: dict[str, Counter] = defaultdict(Counter)
     for path in args.paths:
         lines = [json.loads(ln) for ln in Path(path).read_text(encoding="utf-8").splitlines() if ln.strip()]
         meta = lines[0].get("meta", {})
@@ -229,11 +283,13 @@ def main() -> int:
             passed = bool(row.get("checks")) and all(row["checks"].values())
             if passed:
                 continue
-            label = classify(row, specs[row["spec_id"]], meta.get("max_tokens"))
+            label, detail = classify(row, specs[row["spec_id"]], meta.get("max_tokens"))
+            if "api_kind" in detail:
+                api_kinds[detail["api_kind"]][model] += 1
             per_model[model][label] += 1
             per_model_tier[model][row["tier"]][label] += 1
             labelled.append({"model": model, "tier": row["tier"], "spec_id": row["spec_id"],
-                             "rollout": row.get("rollout", 0), "label": label})
+                             "rollout": row.get("rollout", 0), "label": label, **detail})
         print(f"classified {model}", file=sys.stderr)
 
     out = Path(args.out)
@@ -242,19 +298,37 @@ def main() -> int:
     Path(f"{stem}.json").write_text(json.dumps({
         "scorer_version": SCORER_VERSION, "tiers": args.tiers, "order": list(ORDER),
         "totals": totals, "per_model": per_model,
-        "per_model_tier": {m: dict(t) for m, t in per_model_tier.items()}, "rows": labelled,
+        "per_model_tier": {m: dict(t) for m, t in per_model_tier.items()},
+        "api_error_kinds": {k: dict(v) for k, v in api_kinds.items()}, "rows": labelled,
     }, indent=1))
 
     used = [lab for lab in ORDER if any(c[lab] for c in per_model.values())]
+    header = ["| Model | " + " | ".join(used) + " | all pass |", "|---|" + "---:|" * (len(used) + 1)]
+
+    def table_rows(names: list[str]) -> list[str]:
+        out = []
+        for model in sorted(names, key=lambda k: -sum(per_model[k].values()) / max(1, totals[k])):
+            n = max(1, totals[model])
+            failed = sum(per_model[model].values())
+            cells = [f"{per_model[model][lab] / n:.0%}" if per_model[model][lab] else "" for lab in used]
+            out.append(f"| {model} | " + " | ".join(cells) + f" | {1 - failed / n:.0%} |")
+        return out
+
+    models = [m for m in per_model if m not in DETERMINISTIC]
+    refs = [m for m in per_model if m in DETERMINISTIC]
     md = [f"# Failure modes, cad-spec {SCORER_VERSION}", "",
           f"Tiers {', '.join(args.tiers)}. Each failed answer gets one label (first match, in column order). "
           "Cells are the share of ALL the model's answers; the last column is the all-pass rate.", "",
-          "| Model | " + " | ".join(used) + " | all pass |", "|---|" + "---:|" * (len(used) + 1)]
-    for model in sorted(per_model, key=lambda k: -sum(per_model[k].values()) / max(1, totals[k])):
-        n = max(1, totals[model])
-        failed = sum(per_model[model].values())
-        cells = [f"{per_model[model][lab] / n:.0%}" if per_model[model][lab] else "" for lab in used]
-        md.append(f"| {model} | " + " | ".join(cells) + f" | {1 - failed / n:.0%} |")
+          "## Models", "", *header, *table_rows(models)]
+    if refs:
+        md += ["", "## Reference programs (no model; they answer only what their rule can parse)", "",
+               *header, *table_rows(refs)]
+    if api_kinds:
+        md += ["", "## What the CadQuery API errors were", "",
+               "| Error | Answers | Models with the most |", "|---|---:|---|"]
+        for kind, by in sorted(api_kinds.items(), key=lambda kv: -sum(kv[1].values()))[:15]:
+            top = ", ".join(f"{m} ({n})" for m, n in by.most_common(3))
+            md.append(f"| {kind} | {sum(by.values())} | {top} |")
     Path(f"{stem}.md").write_text("\n".join(md) + "\n")
     print("\n".join(md))
     print(f"\nwrote {stem}.json and .md", file=sys.stderr)

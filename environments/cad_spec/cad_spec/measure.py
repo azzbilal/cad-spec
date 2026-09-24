@@ -113,6 +113,33 @@ OPEN_VOLUME_TOL = 1e-6
 MAX_BREP_BYTES = 8 << 20
 
 
+class ScorerUnavailableError(RuntimeError):
+    """The scorer itself cannot run: CadQuery missing, worker cannot start.
+
+    Deliberately NOT a BuildError. A BuildError means "the model's code did
+    not produce a part" and is scored as a model failure; this means "we
+    could not look", and must never become a score. score() does not catch
+    it, so every script stops with this message instead of recording zeros.
+    (September 2026: a session without the virtualenv active scored every
+    answer of a llama run as unbuildable before this existed.)
+    """
+
+
+def require_cadquery() -> str:
+    """Return the CadQuery version, or raise ScorerUnavailableError with the fix."""
+    import sys
+
+    try:
+        import cadquery
+    except ImportError as exc:
+        raise ScorerUnavailableError(
+            f"CadQuery is not importable from {sys.executable} ({exc}). Activate the environment "
+            "that has it installed (e.g. `source environments/cad_spec/.venv/Scripts/activate` on "
+            "Windows Git Bash, `source .venv/bin/activate` elsewhere) and rerun."
+        ) from exc
+    return str(getattr(cadquery, "__version__", "unknown"))
+
+
 class BuildError(Exception):
     """Model code did not produce a usable solid."""
 
@@ -781,8 +808,11 @@ def _run_reused(code: str, budget: float, mem_mb: int) -> tuple[str, Any]:
 
 def _worker_main(conn: Any, mode: str) -> None:
     os.chdir(tempfile.mkdtemp(prefix="cad-spec-worker-"))
-    import cadquery  # noqa: F401 - warm the kernel BEFORE announcing readiness
-
+    try:
+        require_cadquery()  # warm the kernel BEFORE announcing readiness
+    except ScorerUnavailableError as exc:
+        conn.send(("unavailable", str(exc)))
+        return
     conn.send(("ready", None))
     run = _run_forked if mode == "fork" else _run_reused
     while True:
@@ -814,13 +844,16 @@ class _Worker:
         # code only, so a tight budget stays usable right after a respawn.
         if not self.conn.poll(_STARTUP_TIMEOUT):
             self.kill()
-            raise BuildError(f"scorer worker did not start within {_STARTUP_TIMEOUT:g}s")
+            raise ScorerUnavailableError(f"scorer worker did not start within {_STARTUP_TIMEOUT:g}s")
         try:
             status, _payload = self.conn.recv()
         except EOFError as exc:
-            raise BuildError("scorer worker died during startup") from exc
+            raise ScorerUnavailableError("scorer worker died during startup") from exc
+        if status == "unavailable":
+            self.kill()
+            raise ScorerUnavailableError(str(_payload))
         if status != "ready":
-            raise BuildError("scorer worker sent an unexpected startup message")
+            raise ScorerUnavailableError("scorer worker sent an unexpected startup message")
 
     @property
     def alive(self) -> bool:
@@ -907,13 +940,19 @@ def sandbox_info() -> dict[str, Any]:
 
 
 def build_and_measure(completion: str) -> Measurements:
-    """Extract code, run it isolated, measure the result. Raises BuildError."""
+    """Extract code, run it isolated, measure the result.
+
+    Raises BuildError when the model's code does not yield a part (a model
+    failure), ScorerUnavailableError when the scorer cannot run at all (never a
+    score).
+    """
     code = extract_code(completion)
     if _inproc_requested():
+        require_cadquery()
         return _measure_code(code)
     try:
         return _get_worker().call(code)
-    except BuildError:
+    except (BuildError, ScorerUnavailableError):
         raise
     except Exception as exc:  # anything else means the worker is unwell
         shutdown_worker()

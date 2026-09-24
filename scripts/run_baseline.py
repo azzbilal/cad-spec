@@ -68,7 +68,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "environments" / "cad_spec"))
 
 from cad_spec import __version__
-from cad_spec.measure import sandbox_info
+from cad_spec.measure import ScorerUnavailableError, require_cadquery, sandbox_info
 from cad_spec.rubric import SCORER_VERSION, score
 from cad_spec.tasks import SAMPLE_SEED, TIERS, Spec, edit_source, make_splits, prompt_for, reference_solution
 from degenerate import is_degenerate
@@ -327,6 +327,10 @@ def main() -> int:
                     help='JSON merged into the request, e.g. \'{"reasoning": {"effort": "low"}}\'')
     ap.add_argument("--quiet", action="store_true", help="no per-rollout progress line")
     args = ap.parse_args()
+    try:
+        require_cadquery()
+    except ScorerUnavailableError as exc:
+        raise SystemExit(f"cad-spec: {exc}") from None
     if args.provider in ("openai", "anthropic") and not args.model:
         ap.error("--model is required for model providers")
 
