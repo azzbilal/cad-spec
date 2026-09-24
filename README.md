@@ -15,9 +15,10 @@ What this is, and what it is not:
 
 | Claim | Status |
 |---|---|
-| Scores a CadQuery part against 8 measurable requirements with partial credit | yes, one part family (4-hole mounting plate) |
-| Scorer validated against labelled mutants | yes: 1,020 mutants, 0 false full credit, 0 false rejection ([results](results/scorer-validation-0.3.0.md)) |
-| Separates "copying numbers" from "reading a spec" | yes: five prompt tiers, reported separately ([baselines](results/baselines-deterministic.md)) |
+| Scores a CadQuery part against 9 measurable requirements with partial credit | yes, one part family (4-hole mounting plate) |
+| Measures the real geometry, not what the model's objects claim | yes since 0.4.0: model code hands over BREP geometry; a trusted process measures it ([SECURITY.md](SECURITY.md)) |
+| Scorer validated against labelled mutants | yes: 1,230 mutants, 0 false full credit on 600 wrong parts, 0 false rejection on 600 correct parts ([results](results/scorer-validation-0.4.0.md)) |
+| Separates "copying numbers" from "reading a spec" | partly: five prompt tiers, reported separately; L0 to L2 are solved by simple parsers, and L3 by a parser that knows its wording templates ([baselines](results/baselines-deterministic.md)) |
 | Runs untrusted model code safely | per-rollout sandbox on POSIX, container for untrusted scale ([SECURITY.md](SECURITY.md)) |
 | Shows that RL training improves a model | **not yet**: tooling is ready, no training run is published |
 | Broad text-to-CAD benchmark, new part families | **no**: one family; see [ROADMAP.md](ROADMAP.md) |
@@ -30,7 +31,7 @@ What this is, and what it is not:
 ```bash
 git clone https://github.com/azzbilal/cad-spec && cd cad-spec
 pip install "cadquery==2.8.0"
-python scripts/test_rubric.py              # 28 hand-labelled cases
+python scripts/test_rubric.py              # 37 hand-labelled cases
 ```
 
 **Full environment** (Verifiers, tests, validation):
@@ -65,21 +66,30 @@ The same specs are posed at five **tiers**. Geometry and scorer are identical
 across tiers, so any score difference comes from how the requirement was
 stated. Never average tiers together.
 
-| Tier | Prompt | What it tests | Regex copier | Copier + one rule |
-|---|---|---|---:|---:|
-| L0 | template with `???` slots | numeric copying | 100% | 100% |
-| L1 | requirement table, no template | writing the CadQuery yourself | 100% | 100% |
-| L2 | table without the hole pitch | deriving pitch = size - 2 x margin | 0% | 100% |
-| L3 | prose; eval uses wordings never seen in train | reading a spec | 0% | 0% |
-| L4 | rev A model + engineering change order | a controlled edit | 0% | 0% |
+| Tier | Prompt | What it tests | Regex copier | Copier + one rule | Template-aware parser |
+|---|---|---|---:|---:|---:|
+| L0 | template with `???` slots | numeric copying | 100% | 100% | 100% |
+| L1 | requirement table, no template | writing the CadQuery yourself | 100% | 100% | 100% |
+| L2 | table without the hole pitch | deriving pitch = size - 2 x margin | 0% | 100% | 100% |
+| L3 | prose; eval uses wordings never seen in train | robustness to unseen phrasing | 0% | 0% | **100%** |
+| L4 | rev A model + engineering change order | a controlled edit | 0% | 0% | 0% |
 
-The two right-hand columns are all-requirements pass rates of deterministic
+The three right-hand columns are all-requirements pass rates of deterministic
 programs with no model at all ([results](results/baselines-deterministic.md)).
-They are the reason L0 is kept only as a warm-up: a regex solves it.
+L0 is kept only as a warm-up: a regex solves it.
 
-**L4 caveat.** Returning rev A unchanged earns a mean reward of 0.746 with 0%
+**L3 caveat.** L3 has four train and two eval wording templates, and each
+template states the numbers in a fixed order. A model that saw only the train
+wordings cannot know the eval ones, so L3 does measure robustness to unseen
+phrasing; but a parser given all six templates reads every eval prompt by
+position and scores 100%. L3 is template-structured text, not free prose. A
+larger, shuffled wording space is on the roadmap.
+
+**L4 caveat.** Returning rev A unchanged earns a mean reward of 0.774 with 0%
 full passes, because most requirements did not change. Partial credit is a
 training signal; for L4 the headline metric is the all-requirements pass rate.
+Every change order moves at least one value clearly outside its tolerance, so
+an unedited model can never pass (checked on all 230 specs).
 
 ## Scoring
 
@@ -88,12 +98,13 @@ cheat is a case in `scripts/test_rubric.py`:
 
 | Gate | Cheat it kills |
 |---|---|
-| `single_solid` | loose pieces that share the bounding box (every object on the Workplane stack is measured) |
-| `simple_through_holes` | blind dimples, counterbores, joggled two-sided holes: each bore must be one diameter running from the stock's bottom face to its top face |
+| `single_solid` | loose pieces that share the bounding box (every shape on the Workplane stack is measured) |
+| `clean_solid` | an enclosed cavity (a second shell), loose faces or edges beside the part, or an invalid B-rep: changes that keep the volume in band |
+| `simple_through_holes` | blind dimples, counterbores, joggled two-sided holes, and membranes: each bore must be one diameter from the stock's bottom face to its top face, and a rod along its axis must meet no material |
 | `hole_count_sane` | swiss-cheesing the plate to hit a volume target |
 | `is_plate` | a shell or ellipse with the right bounding box (volume vs volume predicted from the measured geometry, 12% band) |
 
-**Requirements** give partial credit, reward = k/8:
+**Requirements** give partial credit, reward = k/9:
 
 | Check | Tolerance | Referenced to |
 |---|---|---|
@@ -103,18 +114,23 @@ cheat is a case in `scripts/test_rubric.py`:
 | R5 hole pattern | 0.5 mm | the **origin** (the prompt fixes the part centred on it) |
 | R6 material | 3% | measured envelope minus nominal bores (volume only) |
 | R7 edge margin | 0.5 mm | the part's own **edges** |
+| R8 Z datum | 0.5 mm | plate mid-plane to **Z = 0** |
 
-Two datums on purpose: a plate slid under its holes fails R7 only, a whole
-part translated off the origin fails R5 only. Before 0.3.0 only sizes were
-checked, which are translation-invariant, and the first case scored 1.0.
+Tolerances are inclusive: 6.7 mm is inside 6.5 +/- 0.2 (comparisons carry a
+1e-6 mm numerical slack; 0.3.x failed it on floating-point rounding).
+
+Datums on purpose: a plate slid under its holes fails R7 only, a part moved
+in X or Y fails R5 only, a part moved in Z fails R8 only. Before 0.3.0 only
+sizes were checked, which are translation-invariant; before 0.4.0 Z was not
+checked at all. Rotations are not normalised: the prompt fixes the axes.
 
 Prompt numbering (R1-R6 in the task text) is the drawing's; check names are
 the scorer's. The prompt's "R6 edge margin" is scored as `R7:edge_margin`;
 `R6:material` has no line in the prompt because it is a consistency check.
 
-At the environment level, code that builds but satisfies nothing, or fails a
-gate, earns a 0.05 floor so a weak model has a first rung. Code that does not
-build earns 0.
+At the environment level, code that builds a solid but satisfies nothing, or
+fails a gate, earns a 0.05 floor so a weak model has a first rung. Code that
+does not build a solid (including a bare 2D sketch) earns 0.
 
 ### How holes are found
 
@@ -131,13 +147,19 @@ close, so it is reported in `Measurements.partial_bores` but not counted. The
 part then loses count and pattern, where an inspector would say "4 holes, one
 misplaced". Pinned as `LIMIT_hole_breakout`.
 
+**Known limitation:** bores are recognised only as analytic cylinders. The
+same correct part converted to NURBS surfaces (`toNURBS()`) scores 0. Models
+do not produce this unprompted. Pinned as `LIMIT_nurbs_surfaces`.
+
 ## Evidence
 
 | File | What it shows |
 |---|---|
-| [`results/scorer-validation-0.3.0.md`](results/scorer-validation-0.3.0.md) | 1,020 one-change mutants over the 30 held-out specs; ground truth from geometry parameters; 0 false full credit, 0 false rejection, 100% per-check agreement |
-| [`results/scorer-validation-0.2.0.md`](results/scorer-validation-0.2.0.md) | the same suite on the previous scorer: 5.9% false full credit, 12.5% false rejection. Shows the suite detects real defects |
-| [`results/baselines-deterministic.md`](results/baselines-deterministic.md) | reference, regex copier, copier + derivation, and "ignore the change order" baselines per tier |
+| [`results/scorer-validation-0.4.0.md`](results/scorer-validation-0.4.0.md) | 1,230 one-change mutants over the 30 held-out specs (600 wrong parts, 600 correct, 30 documented-limitation cases excluded); ground truth from geometry parameters; 0 false full credit, 0 false rejection, 100% per-check agreement |
+| [`results/scorer-validation-0.3.0-under-suite-0.4.0.md`](results/scorer-validation-0.3.0-under-suite-0.4.0.md) | the 0.4.0 suite on the previous scorer: 15.0% false full credit (Z shift, membranes, cavities), 4.7% false rejection (exact-limit diameters). Shows the suite detects the defects the second audit found |
+| [`results/scorer-validation-0.2.0.md`](results/scorer-validation-0.2.0.md) | the original suite on 0.2.0: 5.9% false full credit, 12.5% false rejection |
+| [`results/baselines-deterministic.md`](results/baselines-deterministic.md) | reference, regex copier, copier + derivation, template-aware parser, and "ignore the change order" baselines per tier |
+| [`docs/audit-2026-09.md`](docs/audit-2026-09.md), [`docs/audit-2026-09-reference.md`](docs/audit-2026-09-reference.md) | the two external audits this release responds to |
 | `results/runs/*.jsonl` | every rollout behind those tables, with scorer version, git revision and sandbox mode |
 
 No model baseline or training result is published for 0.3.0 yet. The last
@@ -153,7 +175,8 @@ python scripts/summarize_results.py results/runs/*.jsonl --markdown results/base
 ```
 
 Hosted models through OpenRouter (one key, hundreds of models), with the
-cost of a full run estimated first and a hard spending cap:
+cost of a full run estimated first and a spending threshold (the run stops
+before a call that would likely cross it; one call can still overshoot):
 
 ```bash
 python scripts/openrouter_models.py --max-cost 0.50         # live catalogue + run estimates
@@ -178,8 +201,14 @@ from cad_spec import load_environment
 env = load_environment(tier=["L1", "L2", "L3"], eval_tier=["L0", "L1", "L2", "L3", "L4"])
 ```
 
-Zero-weight metrics (`built`, `gates_passed`, `m_R1_length` ... `m_R7_edge_margin`)
-give per-check learning curves; they reuse one cached build per rollout.
+Zero-weight metrics (`built`, `gates_passed`, `m_R1_length` ... `m_R8_z_datum`)
+give per-check learning curves; all functions of one rollout share that
+rollout's single build through its `state`, and no build is shared between
+rollouts.
+
+**Scorer changes never cost a rerun.** Every run file stores each model's
+answer, so `python scripts/rescore.py results/runs/*.jsonl` replays them
+through the current scorer into `results/rescored/<version>/`, at no cost.
 
 ## Layout
 
@@ -191,8 +220,10 @@ environments/cad_spec/cad_spec/
   environment.py  the only file that imports verifiers
   __main__.py     the cad-spec CLI
 scripts/
-  test_rubric.py      28 hand-labelled cases, needs only cadquery
+  test_rubric.py      37 hand-labelled cases, needs only cadquery
   validate_scorer.py  mutation suite -> results/scorer-validation-*.md
+  rescore.py          replay saved answers through the current scorer
+  openrouter_models.py  live model catalogue with run cost estimates
   run_baseline.py     any provider, any tier, JSONL with provenance
   summarize_results.py
 docs/                 evaluation protocol, data card

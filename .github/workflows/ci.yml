@@ -62,15 +62,25 @@ jobs:
       - name: Deterministic baselines reproduce
         working-directory: .
         run: |
-          python scripts/run_baseline.py --provider parser-copy --tiers L0 L1 L2 --out /tmp/pc.jsonl
+          python scripts/run_baseline.py --provider parser-copy --tiers L0 L1 L2 --out /tmp/pc.jsonl --quiet
+          python scripts/run_baseline.py --provider parser-template --tiers L3 --out /tmp/pt.jsonl --quiet
           python - <<'PY'
           import json
-          rows = [json.loads(l) for l in open("/tmp/pc.jsonl")][1:]
+
+          def load(path):
+              lines = [json.loads(l) for l in open(path) if l.strip()]
+              end = [l["end"] for l in lines if "end" in l]
+              assert end and end[0]["status"] == "complete", (path, end)
+              return [l for l in lines if "tier" in l]  # result rows only
+
           by = {}
-          for r in rows: by.setdefault(r["tier"], []).append(r["reward"])
-          assert min(by["L0"]) == 1.0 and min(by["L1"]) == 1.0, by
-          assert max(by["L2"]) == 0.0, by
-          print({t: sum(v)/len(v) for t, v in by.items()})
+          for r in load("/tmp/pc.jsonl") + load("/tmp/pt.jsonl"):
+              by.setdefault((r["tier"], r["run_id"]), []).append(r["reward"])
+          got = {tier: v for (tier, _), v in by.items()}
+          assert min(got["L0"]) == 1.0 and min(got["L1"]) == 1.0, got
+          assert max(got["L2"]) == 0.0, got
+          assert min(got["L3"]) == 1.0, got  # parser-template solves L3
+          print({t: sum(v) / len(v) for t, v in got.items()})
           PY
 
   docker:

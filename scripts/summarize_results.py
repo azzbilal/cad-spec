@@ -18,12 +18,13 @@ import argparse
 import json
 import random
 import statistics
-from collections import defaultdict
+from collections import Counter, defaultdict
 from pathlib import Path
 
 CHECKS = ("R1:length", "R2:width", "R3:thickness", "R4a:hole_count", "R4b:hole_diameter",
-          "R5:hole_pattern", "R6:material", "R7:edge_margin")
-GATES = ("gate:single_solid", "gate:simple_through_holes", "gate:hole_count_sane", "gate:is_plate")
+          "R5:hole_pattern", "R6:material", "R7:edge_margin", "R8:z_datum")
+GATES = ("gate:single_solid", "gate:clean_solid", "gate:simple_through_holes", "gate:hole_count_sane",
+         "gate:is_plate")
 
 
 def bootstrap_ci(per_spec: list[float], iters: int = 2000, seed: int = 0) -> tuple[float, float]:
@@ -36,30 +37,63 @@ def bootstrap_ci(per_spec: list[float], iters: int = 2000, seed: int = 0) -> tup
     return means[int(0.025 * iters)], means[int(0.975 * iters) - 1]
 
 
-def load(paths: list[str]) -> tuple[dict[str, dict], dict[tuple[str, str], list[dict]]]:
+def load(paths: list[str]) -> tuple[dict[str, dict], dict[tuple[str, str], list[dict]], dict[str, dict]]:
+    """Returns run metadata, rows grouped by (run, tier), and end records by run."""
     metas: dict[str, dict] = {}
     groups: dict[tuple[str, str], list[dict]] = defaultdict(list)
+    ends: dict[str, dict] = {}
     for p in paths:
+        run_in_file = None
         with open(p) as fh:
             for line in fh:
+                if not line.strip():
+                    continue
                 row = json.loads(line)
                 if "meta" in row:
-                    metas[row["meta"]["run_id"]] = row["meta"]
+                    run_in_file = row["meta"]["run_id"]
+                    if run_in_file in metas:
+                        raise SystemExit(f"run id {run_in_file} appears in two files; refusing to merge them")
+                    metas[run_in_file] = row["meta"]
+                    continue
+                if "end" in row:
+                    if run_in_file:
+                        ends[run_in_file] = row["end"]
                     continue
                 groups[(row["run_id"], row["tier"])].append(row)
-    return metas, groups
+    return metas, groups, ends
 
 
-def _looks_truncated(row: dict) -> bool:
-    """Rows from before finish_reason was recorded: an empty answer that used the whole
-    token budget (the signature of the September 2026 qwen3 incident)."""
+def completeness_problems(run_id: str, tier: str, rows: list[dict], meta: dict, ends: dict[str, dict]) -> list[str]:
+    """Why this (run, tier) is not a complete, clean evaluation; empty if it is."""
+    problems = []
+    planned = meta.get("planned")
+    if planned:
+        expected = len(planned["spec_ids"]) * planned["rollouts"] if tier in planned["tiers"] else 0
+        if len(rows) < expected:
+            problems.append(f"{len(rows)}/{expected} planned rollouts")
+    end = ends.get(run_id)
+    if planned and end is None:
+        problems.append("no end record (run interrupted or still running)")
+    elif end and end.get("status") != "complete":
+        problems.append(f"run ended: {end.get('status')}")
+    seen = Counter((r["spec_id"], r.get("rollout", 0)) for r in rows)
+    dup = sum(c - 1 for c in seen.values() if c > 1)
+    if dup:
+        problems.append(f"{dup} duplicate rollouts")
+    return problems
+
+
+def _looks_truncated(row: dict, max_tokens: int | None) -> bool:
+    """Rows from before finish_reason was recorded: judged against the run's
+    ACTUAL token cap (0.3.x used a fixed 1,000). Any answer, empty or not,
+    that used the whole cap counts as cut off."""
     if "finish_reason" in row:
         return False
     used = (row.get("usage") or {}).get("completion_tokens") or 0
-    return not row.get("completion", "").strip() and used >= 1000
+    return bool(max_tokens) and used >= max_tokens
 
 
-def summarize(rows: list[dict]) -> dict:
+def summarize(rows: list[dict], max_tokens: int | None = None) -> dict:
     by_spec: dict[str, list[dict]] = defaultdict(list)
     for r in rows:
         by_spec[r["spec_id"]].append(r)
@@ -74,10 +108,13 @@ def summarize(rows: list[dict]) -> dict:
         "built_rate": len(built) / len(rows),
         "gate_hit_rate": sum(1 for r in built if not r["gates_passed"]) / max(1, len(built)),
         "timeouts": sum(r.get("timeout", False) for r in rows),
-        "truncated": sum(bool(r.get("truncated")) or _looks_truncated(r) for r in rows),
+        "truncated": sum(bool(r.get("truncated")) or _looks_truncated(r, max_tokens) for r in rows),
+        "unknown_cost": sum(1 for r in rows if r.get("cost_usd") is None and r.get("usage")),
         "cost_usd": sum(float(r.get("cost_usd") or 0.0) for r in rows),
         "api_errors": sum(bool(r.get("api_error")) for r in rows),
-        "per_check": {c: sum(r["checks"].get(c, False) for r in rows) / len(rows) for c in CHECKS},
+        "per_check": {c: (sum(r["checks"].get(c, False) for r in rows) / len(rows)
+                          if any(c in r["checks"] for r in rows) or not any(r["checks"] for r in rows)
+                          else None) for c in CHECKS},
         "per_gate_fail": {g: sum(not r["checks"].get(g, True) for r in built) / max(1, len(built)) for g in GATES},
     }
     return out
@@ -88,37 +125,51 @@ def main() -> int:
     ap.add_argument("paths", nargs="+")
     ap.add_argument("--markdown", default="")
     args = ap.parse_args()
-    metas, groups = load(args.paths)
+    metas, groups, ends = load(args.paths)
 
-    md = ["| Model | Tier | Specs x rollouts | Mean reward [95% CI] | All-8 pass [95% CI] | Built | Gate hits |"
-          " Timeouts | Truncated | API errors | Cost $ | R1 | R2 | R3 | R4a | R4b | R5 | R6 | R7 |",
-          "|---|---|---|---|---|---:|---:|---:|---:|---:|---:|" + "---:|" * 8]
+    md = ["| Model | Tier | Specs x rollouts | Mean reward [95% CI] | Median | All-pass [95% CI] | Built | Gate hits |"
+          " Timeouts | Truncated | API errors | Cost $ | " + " | ".join(c.split(":")[0] for c in CHECKS) + " |",
+          "|---|---|---|---|---:|---|---:|---:|---:|---:|---:|---:|" + "---:|" * len(CHECKS)]
     flagged: list[str] = []
+    incomplete: list[str] = []
     for (run_id, tier), rows in sorted(groups.items(), key=lambda kv: (metas.get(kv[0][0], {}).get("model", ""),
                                                                        kv[0][1])):
-        s = summarize(rows)
         m = metas.get(run_id, {})
+        s = summarize(rows, m.get("max_tokens"))
         lo, hi = s["mean_reward_ci95"]
         flo, fhi = s["all_requirements_pass_ci95"]
+        problems = completeness_problems(run_id, tier, rows, m, ends)
+        mark = " (incomplete)" if problems else ""
+        cost = f"{s['cost_usd']:.4f}" + ("*" if s["unknown_cost"] else "")
         md.append(
-            f"| {m.get('model', '?')} | {tier} | {s['specs']}x{s['rollouts'] // max(1, s['specs'])} | "
-            f"{s['mean_reward']:.3f} [{lo:.3f}, {hi:.3f}] | {s['all_requirements_pass']:.1%} "
-            f"[{flo:.1%}, {fhi:.1%}] | {s['built_rate']:.0%} | {s['gate_hit_rate']:.0%} | {s['timeouts']} | "
-            f"{s['truncated']} | {s['api_errors']} | {s['cost_usd']:.4f} | "
-            + " | ".join(f"{s['per_check'][c]:.0%}" for c in CHECKS) + " |"
+            f"| {m.get('model', '?')}{mark} | {tier} | {s['specs']}x{s['rollouts'] // max(1, s['specs'])} | "
+            f"{s['mean_reward']:.3f} [{lo:.3f}, {hi:.3f}] | {s['median_reward']:.3f} | "
+            f"{s['all_requirements_pass']:.1%} [{flo:.1%}, {fhi:.1%}] | {s['built_rate']:.0%} | "
+            f"{s['gate_hit_rate']:.0%} | {s['timeouts']} | {s['truncated']} | {s['api_errors']} | {cost} | "
+            + " | ".join("n/a" if s["per_check"][c] is None else f"{s['per_check'][c]:.0%}" for c in CHECKS)
+            + " |"
         )
-    for (run_id, tier), rows in groups.items():
-        s = summarize(rows)
         if s["truncated"] + s["api_errors"] > 0.05 * len(rows):
-            flagged.append(f"{metas.get(run_id, {}).get('model', '?')} {tier}: "
+            flagged.append(f"{m.get('model', '?')} {tier}: "
                            f"{s['truncated']} truncated, {s['api_errors']} API errors of {len(rows)}")
+        if problems:
+            incomplete.append(f"{m.get('model', '?')} {tier}: " + "; ".join(problems))
     if flagged:
         md += ["", "**Not publishable as a model result** (over 5% of answers truncated or failed at the API; "
                "fix the run configuration and rerun):", *[f"- {f}" for f in sorted(flagged)]]
+    if incomplete:
+        md += ["", "**Incomplete evaluations** (the eval split is ordered, so a partial run is a biased sample; "
+               "do not rank these):", *[f"- {f}" for f in sorted(incomplete)]]
+    if any(r.get("cost_usd") is None and r.get("usage") for rows in groups.values() for r in rows):
+        md += ["", "\\* some calls had no cost reported by the provider; the cost shown is a lower bound."]
     scorers = sorted({m.get("scorer_version", "?") for m in metas.values()})
     revs = sorted({m.get("git_rev", "?") for m in metas.values()})
+    if len(scorers) > 1:
+        md += ["", f"**Mixed scorer versions ({', '.join(scorers)}): rows are not comparable across versions.** "
+               "Rescore old runs with scripts/rescore.py."]
     md += ["", f"Scorer version(s): {', '.join(scorers)}. Code revision(s): {', '.join(revs)}. "
-           "Intervals: 95% bootstrap over specs."]
+           "Intervals: 95% percentile bootstrap over specs (rollouts of one spec are averaged first). "
+           "All-pass is pass@1: the share of rollouts meeting every requirement."]
     text = "\n".join(md)
     print(text)
     if args.markdown:

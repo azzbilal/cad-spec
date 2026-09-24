@@ -91,7 +91,7 @@ def test_reference_solutions_verify_across_seeds(seed):
 
 # --- 0.3.0: tiers and diagnostics --------------------------------------------
 
-from cad_spec.environment import CHECK_NAMES, _report  # noqa: E402
+from cad_spec.environment import CHECK_NAMES  # noqa: E402
 from cad_spec.tasks import TIERS, edit_source, is_feasible, prompt_for  # noqa: E402
 
 
@@ -136,18 +136,38 @@ def test_l4_rev_a_code_does_not_score_as_rev_b():
     assert score(reference_solution(edit_source(spec)), spec).reward < 1.0
 
 
-def test_metrics_reuse_one_build():
+def test_metrics_share_one_build_per_rollout(monkeypatch):
+    """All reward/metric functions of ONE rollout share one build; a second
+    rollout with identical code gets its own build (audit K2)."""
+    import cad_spec.environment as envmod
+
+    calls = []
+    real_score = envmod.score
+
+    def counting_score(text, spec):
+        calls.append(spec.id)
+        return real_score(text, spec)
+
+    monkeypatch.setattr(envmod, "score", counting_score)
     spec = EVAL_SPECS[0]
-    _report.cache_clear()
     env = load_environment()
     code = reference_solution(spec)
     names = env.rubric._get_reward_func_names()
     weights = env.rubric._get_reward_weights()
     ours = [f for f, n in zip(env.rubric._get_reward_funcs(), names, strict=True)
-            if n == "spec_reward" or n == "built" or n == "gates_passed" or n.startswith("m_R")]
-    assert len(ours) == 2 + len(CHECK_NAMES) + 1 == 11
+            if n in ("spec_reward", "built", "gates_passed") or n.startswith("m_R")]
+    assert len(ours) == 2 + len(CHECK_NAMES) + 1 == 12
     assert weights[names.index("spec_reward")] == 1.0
     assert all(weights[names.index(n)] == 0.0 for n in names if n.startswith("m_R"))
-    for func in ours:
-        assert func(code, spec.id, {"spec_id": spec.id}) == 1.0
-    assert _report.cache_info().misses == 1
+
+    for rollout in range(2):
+        state: dict = {}
+        for func in ours:
+            assert func(code, spec.id, {"spec_id": spec.id}, state=state) == 1.0
+        assert len(calls) == rollout + 1, "one build per rollout, never shared across rollouts"
+
+
+def test_l4_unedited_rev_a_never_scores_full_marks():
+    """Audit F12: every ECO must change something beyond tolerance."""
+    for spec in TRAIN_SPECS + EVAL_SPECS:
+        assert score(reference_solution(edit_source(spec)), spec).reward < 1.0, spec.id

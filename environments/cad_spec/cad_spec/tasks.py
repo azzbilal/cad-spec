@@ -273,11 +273,27 @@ _EDIT_LABEL = {
 }
 
 
+# Scoring tolerance per editable field (mm), mirrored from rubric.py. An ECO
+# must move at least one field clearly outside its tolerance, otherwise the
+# unedited rev A already scores full marks and "ignore the change order" is
+# rewarded (0.3.x had three such train tasks, e.g. thickness 4.5 -> 5.0).
+_ECO_TOL = {"length": 0.5, "width": 0.5, "thickness": 0.5, "hole_diameter": 0.2, "edge_margin": 0.5}
+_ECO_CLEARANCE = 0.25
+
+
+def _eco_is_visible(source: Spec, target: Spec) -> bool:
+    return any(
+        abs(getattr(source, f) - getattr(target, f)) > _ECO_TOL[f] + _ECO_CLEARANCE
+        for f in _EDIT_FIELDS
+    )
+
+
 def edit_source(target: Spec) -> Spec:
     """Rev A for an L4 edit task: `target` with one or two fields changed.
 
     Deterministic per spec id. Rev A is always feasible, so the starting
-    model the prompt shows is itself a valid part.
+    model the prompt shows is itself a valid part, and at least one change
+    exceeds its scoring tolerance, so the unedited model cannot pass.
     """
     rng = random.Random(zlib.crc32(("edit:" + target.id).encode()))
     for _ in range(200):
@@ -288,7 +304,7 @@ def edit_source(target: Spec) -> Spec:
             step = rng.choice((-1, 1)) * rng.choice((0.1, 0.15, 0.2, 0.25)) * base
             changes[f] = max(0.5, round((base + step) * 2) / 2)
         source = replace(target, id=target.id + "-revA", **changes)
-        if source != replace(target, id=source.id) and is_feasible(source):
+        if is_feasible(source) and _eco_is_visible(source, target):
             return source
     raise RuntimeError(f"no feasible rev A for {target.id}")
 

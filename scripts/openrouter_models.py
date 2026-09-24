@@ -13,8 +13,12 @@ spec x rollouts, using token counts measured from the real cad-spec prompts.
 Estimates, not quotes. Reasoning models are costed at --reasoning-tokens per
 answer because their thinking is billed as output; the real run records the
 exact cost of every call (usage.cost) and --budget enforces a hard stop.
-Free (":free") models are listed but rate limited (50 calls/day on accounts
-with under $10 of credit), too few for a 150-call run.
+Hidden by default, because none can produce a reproducible benchmark row:
+  ":free" and zero-priced models (rate limited to ~50 calls/day; routers such
+  as openrouter/free pick a different model per call), ":batch" variants
+  (asynchronous batch API), "~" aliases (silently repoint to newer models),
+  and models whose output is not text-only (music, image, audio).
+Use --all to show them anyway.
 """
 
 from __future__ import annotations
@@ -61,7 +65,8 @@ def main() -> int:
     ap.add_argument("--reasoning-tokens", type=int, default=6000,
                     help="output tokens assumed per answer for reasoning models")
     ap.add_argument("--limit", type=int, default=40)
-    ap.add_argument("--free", action="store_true", help="include :free models")
+    ap.add_argument("--all", action="store_true",
+                    help="also show free/zero-priced, :batch, ~alias and non-text-output models")
     ap.add_argument("--from-file", default="", help="read a saved /models JSON instead of the network")
     args = ap.parse_args()
 
@@ -77,10 +82,12 @@ def main() -> int:
             continue
         if args.search and not all(w.lower() in text for w in args.search):
             continue
-        if mid.endswith(":free") and not (args.free or args.ids):
-            continue
         modality = (m.get("architecture") or {}).get("output_modalities") or ["text"]
-        if "text" not in modality:
+        hidden = (
+            mid.endswith(":free") or mid.endswith(":batch") or mid.startswith("~")
+            or set(modality) != {"text"}
+        )
+        if hidden and not (args.all or args.ids):
             continue
         pricing = m.get("pricing") or {}
         try:
@@ -89,6 +96,8 @@ def main() -> int:
             continue
         if p_in < 0 or p_out < 0:  # routers with variable pricing report -1
             continue
+        if p_in == 0 and p_out == 0 and not (args.all or args.ids):
+            continue  # free routers and previews: not reproducible
         reasoning = "reasoning" in (m.get("supported_parameters") or [])
         tout = args.reasoning_tokens if reasoning else ANSWER_TOKENS
         cost = calls * (tin * p_in + tout * p_out)

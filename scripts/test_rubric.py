@@ -9,8 +9,8 @@ Run (needs only cadquery, no verifiers, no install):
     pip install cadquery
     python scripts/test_rubric.py
 
-k/8 scale: 8 requirements (R1-R3 dimensions, R4a/R4b holes, R5 pattern vs
-origin, R6 material volume, R7 edge margin). Any failed gate zeroes the raw
+k/9 scale: 9 requirements (R1-R3 dimensions, R4a/R4b holes, R5 pattern vs
+origin, R6 material volume, R7 edge margin, R8 Z datum). Any failed gate zeroes the raw
 reward; the environment-level reward then applies a 0.05 parse floor to code
 that built. These expectations are raw-rubric scores.
 """
@@ -29,7 +29,7 @@ from cad_spec.tasks import TASKS, reference_solution
 
 
 class Case(NamedTuple):
-    expected: str                 # "8/8", "6/8", "0.0"
+    expected: str                 # "9/9", "7/9", "0.0"
     code: str
     fails: frozenset[str] = frozenset()  # exact set of FAILED check names; gates included
 
@@ -41,23 +41,24 @@ def _f(*names: str) -> frozenset[str]:
 SPEC = TASKS[0]  # 80 x 60 x 6, four 6.5 mm holes, 10 mm margin
 
 ALL_REQS = ("R1:length", "R2:width", "R3:thickness", "R4a:hole_count",
-            "R4b:hole_diameter", "R5:hole_pattern", "R6:material", "R7:edge_margin")
+            "R4b:hole_diameter", "R5:hole_pattern", "R6:material", "R7:edge_margin",
+            "R8:z_datum")
 BUILD = _f("build")  # code did not produce a measurable solid
 
 CASES: dict[str, Case] = {}
 
-CASES["reference"] = Case("8/8", reference_solution(SPEC))
+CASES["reference"] = Case("9/9", reference_solution(SPEC))
 
 # --- honest partial answers: each loses exactly the requirement(s) it breaks ---
 
-CASES["wrong_thickness"] = Case("7/8", """
+CASES["wrong_thickness"] = Case("8/9", """
 import cadquery as cq
 result = (cq.Workplane("XY").box(80, 60, 9)
           .faces(">Z").workplane()
           .rect(60, 40, forConstruction=True).vertices().hole(6.5))
 """, _f("R3:thickness"))
 
-CASES["two_holes_only"] = Case("6/8", """
+CASES["two_holes_only"] = Case("7/9", """
 import cadquery as cq
 result = (cq.Workplane("XY").box(80, 60, 6)
           .faces(">Z").workplane()
@@ -66,7 +67,7 @@ result = (cq.Workplane("XY").box(80, 60, 6)
 
 # Oversized bores fail twice, honestly: R4b (diameter) and R6 (3.9% excess
 # material removed vs the nominal-bore envelope).
-CASES["wrong_hole_diameter"] = Case("6/8", """
+CASES["wrong_hole_diameter"] = Case("7/9", """
 import cadquery as cq
 result = (cq.Workplane("XY").box(80, 60, 6)
           .faces(">Z").workplane()
@@ -74,28 +75,29 @@ result = (cq.Workplane("XY").box(80, 60, 6)
 """, _f("R4b:hole_diameter", "R6:material"))
 
 # A shifted pattern is wrong against BOTH datums: origin (R5) and edges (R7).
-CASES["offset_pattern"] = Case("6/8", """
+CASES["offset_pattern"] = Case("7/9", """
 import cadquery as cq
 result = (cq.Workplane("XY").box(80, 60, 6)
           .faces(">Z").workplane().center(5, 0)
           .rect(60, 40, forConstruction=True).vertices().hole(6.5))
 """, _f("R5:hole_pattern", "R7:edge_margin"))
 
-# Every number divided by 25.4. Only the hole COUNT survives; R6 fails too
-# because four nominal 6.5 mm bores cannot fit in a 3 mm envelope.
-CASES["built_in_inches"] = Case("1/8", """
+# Every number divided by 25.4. Only the hole COUNT and the Z datum survive
+# (the tiny plate is still centred); R6 fails because four nominal 6.5 mm
+# bores cannot fit in a 3 mm envelope.
+CASES["built_in_inches"] = Case("2/9", """
 import cadquery as cq
 result = (cq.Workplane("XY").box(80/25.4, 60/25.4, 6/25.4)
           .faces(">Z").workplane()
           .rect(60/25.4, 40/25.4, forConstruction=True).vertices().hole(6.5/25.4))
-""", frozenset(ALL_REQS) - {"R4a:hole_count"})
+""", frozenset(ALL_REQS) - {"R4a:hole_count", "R8:z_datum"})
 
 # --- 0.3.0 regressions from the September 2026 audit ---------------------------
 
 # P0-1. The plate slides +2 mm in X under holes cut at nominal global positions.
 # Left/right margins become 8 and 12 mm. Scored 1.0 before 0.3.0 because only
 # translation-invariant sizes were checked. Must lose R7 and nothing else.
-CASES["shifted_stock"] = Case("7/8", """
+CASES["shifted_stock"] = Case("8/9", """
 import cadquery as cq
 result = (cq.Workplane("XY").box(80, 60, 6)
           .translate((2, 0, 0))
@@ -105,14 +107,14 @@ result = (cq.Workplane("XY").box(80, 60, 6)
 
 # The whole correct part, translated off the origin datum. Edge margins are
 # perfect; only the origin-referenced pattern (R5) is wrong.
-CASES["whole_part_off_origin"] = Case("7/8", reference_solution(SPEC).rstrip()
+CASES["whole_part_off_origin"] = Case("8/9", reference_solution(SPEC).rstrip()
                                       + "\nresult = result.translate((2, 0, 0))\n",
                                       _f("R5:hole_pattern"))
 
 # P0-2. A symmetric cutter leaves each bore wall as two stacked 3 mm faces.
 # Same solid as the reference; scored 0.0 before 0.3.0 because depth was the
 # tallest single face. Must score exactly like the reference.
-CASES["symmetric_cutter"] = Case("8/8", """
+CASES["symmetric_cutter"] = Case("9/9", """
 import cadquery as cq
 base = cq.Workplane("XY").box(80, 60, 6)
 cutters = (cq.Workplane("XY")
@@ -122,7 +124,7 @@ result = base.cut(cutters)
 """)
 
 # Holes drilled from the bottom face: a different operation, the same part.
-CASES["drilled_from_bottom"] = Case("8/8", """
+CASES["drilled_from_bottom"] = Case("9/9", """
 import cadquery as cq
 result = (cq.Workplane("XY").box(80, 60, 6)
           .faces("<Z").workplane()
@@ -130,7 +132,7 @@ result = (cq.Workplane("XY").box(80, 60, 6)
 """)
 
 # Two blind 3 mm holes meeting from both faces on one axis: a through bore.
-CASES["two_sided_meeting"] = Case("8/8", """
+CASES["two_sided_meeting"] = Case("9/9", """
 import cadquery as cq
 result = (cq.Workplane("XY").box(80, 60, 6)
           .faces(">Z").workplane()
@@ -155,17 +157,68 @@ result = (cq.Workplane("XY").box(80, 60, 6)
 # cylinder, so it is reported as a partial bore and NOT counted: the part
 # loses count AND pattern (asymmetric vs a misplaced interior hole, which
 # would lose pattern and margin). See measure.py module docstring.
-CASES["LIMIT_hole_breakout"] = Case("6/8", """
+CASES["LIMIT_hole_breakout"] = Case("7/9", """
 import cadquery as cq
 result = (cq.Workplane("XY").box(80, 60, 6)
           .faces(">Z").workplane()
           .pushPoints([(38.5, -20), (-30, -20), (-30, 20), (30, 20)]).hole(6.5))
 """, _f("R4a:hole_count", "R5:hole_pattern"))
 
+# --- 0.4.0 regressions from the September 2026 reference-grounded audit ------
+
+REF = reference_solution(SPEC).rstrip() + "\n"
+
+# K1. The correct part floating in Z. Scored 1.0 before 0.4.0.
+CASES["part_off_z"] = Case("8/9", REF + "result = result.translate((0, 0, 2))\n", _f("R8:z_datum"))
+
+# F03. A hand-made object that REPORTS nominal geometry while its kernel
+# shape is a 1 mm cube. Scored 1.0: the scorer trusted the object's methods.
+# The scorer now measures only the serialised kernel geometry: a 1 mm cube.
+CASES["HACK_fake_result_object"] = Case("0.0", """
+import cadquery as cq, math
+class Result:
+    wrapped = cq.Workplane("XY").box(1, 1, 1).val().wrapped
+    def BoundingBox(self):
+        return cq.Workplane("XY").box(80, 60, 6).val().BoundingBox()
+    def Volume(self):
+        return 80 * 60 * 6 - 4 * math.pi * 3.25 ** 2 * 6
+    def Solids(self):
+        return [cq.Shape.cast(self.wrapped)]
+    def Faces(self):
+        return [f for x in (-30, 30) for y in (-20, 20)
+                for f in cq.Solid.makeCylinder(3.25, 6, cq.Vector(x, y, -3)).Faces()]
+result = Result()
+""", _f("gate:simple_through_holes"))
+
+# F04. Holes stopping 0.005 mm short leave a membrane: nothing passes through.
+# Endpoints sit inside DEPTH_TOL, so 0.3.x called them "through".
+CASES["HACK_membrane"] = Case("0.0", REF.replace(".hole(6.5)", ".hole(6.5, depth=5.995)"),
+                              _f("gate:simple_through_holes"))
+
+# F05. An enclosed cavity (a second shell) and a loose face beside the part.
+CASES["HACK_hidden_cavity"] = Case("0.0", REF + 'result = result.cut(cq.Workplane("XY").box(10, 10, 2))\n',
+                                   _f("gate:clean_solid"))
+CASES["HACK_loose_face"] = Case("0.0", REF + """face = cq.Face.makePlane(5, 5, cq.Vector(0, 0, 0))
+result = cq.Compound.makeCompound([result.val(), face])
+""", _f("gate:clean_solid"))
+
+# F07. 6.7 and 6.3 are exactly on the 6.5 +/- 0.2 limit: inside, inclusive.
+CASES["diameter_upper_limit"] = Case("9/9", REF.replace(".hole(6.5)", ".hole(6.7)"))
+CASES["diameter_lower_limit"] = Case("9/9", REF.replace(".hole(6.5)", ".hole(6.3)"))
+
+# F06, KNOWN LIMITATION pinned so a change is deliberate: the same correct
+# part converted to NURBS surfaces. Bores are recognised only as analytic
+# cylinders, so it scores 0. Models do not produce this unprompted.
+CASES["LIMIT_nurbs_surfaces"] = Case("0.0", REF + "result = result.val().toNURBS()\n",
+                                     _f("gate:simple_through_holes"))
+
+# A 2D sketch is not a part: no solid, no floor credit (0.3.x gave it 0.05).
+CASES["BROKEN_sketch_only"] = Case("0.0", "import cadquery as cq\nresult = cq.Sketch().rect(80, 60)\n", BUILD)
+
 # --- benign extras: real parts that must keep full marks ---------------------
 
 # Corner fillets are external rounds, not bores.
-CASES["fillets_r3"] = Case("8/8", """
+CASES["fillets_r3"] = Case("9/9", """
 import cadquery as cq
 result = (cq.Workplane("XY").box(80, 60, 6)
           .edges("|Z").fillet(3)
@@ -174,7 +227,7 @@ result = (cq.Workplane("XY").box(80, 60, 6)
 """)
 
 # A shallow engraving pocket stays inside the R6 material band.
-CASES["pocket_small"] = Case("8/8", """
+CASES["pocket_small"] = Case("9/9", """
 import cadquery as cq
 result = (cq.Workplane("XY").box(80, 60, 6)
           .faces(">Z").workplane().rect(30, 20).cutBlind(-1.0)
@@ -183,7 +236,7 @@ result = (cq.Workplane("XY").box(80, 60, 6)
 """)
 
 # A deeper pocket removes >3% of expected material: loses R6 only.
-CASES["pocket_big"] = Case("7/8", """
+CASES["pocket_big"] = Case("8/9", """
 import cadquery as cq
 result = (cq.Workplane("XY").box(80, 60, 6)
           .faces(">Z").workplane().rect(30, 20).cutBlind(-3.0)
@@ -255,7 +308,7 @@ result = (cq.Workplane("XY").box(80, 60, 20)
 # A fenced block indented four spaces, the way a model echoes an indented
 # template. The 0.2.0 baseline lost 59 rollouts to exactly this.
 CASES["fenced_and_indented"] = Case(
-    "8/8",
+    "9/9",
     "Here you go:\n\n```python\n"
     + "".join("    " + line + "\n" for line in reference_solution(SPEC).strip().splitlines())
     + "```\n",

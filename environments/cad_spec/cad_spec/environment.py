@@ -10,7 +10,7 @@ which are plain Python and testable without verifiers, a model, or an account.
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from functools import lru_cache
+from typing import Any
 
 import verifiers as vf
 from datasets import Dataset
@@ -100,28 +100,46 @@ def _build_eval_dataset(tiers: Sequence[str] = ("L0",)) -> Dataset:
     return Dataset.from_list(_rows(EVAL_SPECS, tiers, "eval"))
 
 
-@lru_cache(maxsize=4096)
-def _report(text: str, spec_id: str) -> Report:
-    """One build per rollout, however many reward/metric functions read it."""
-    return score(text, SPECS[spec_id])
+_STATE_KEY = "_cad_spec_report"
+
+
+def _report(text: str, spec_id: str, state: Any = None) -> Report:
+    """One build per rollout, however many reward/metric functions read it.
+
+    The report is shared through the rollout's own `state` dict, which
+    verifiers passes to every reward function of that rollout. Before 0.4.0
+    a process-wide cache keyed on (text, spec) was used, so two rollouts that
+    produced identical code shared one execution; each rollout is now judged
+    on its own build. Without a state dict (direct calls) nothing is cached.
+    """
+    key = (text, spec_id)
+    if isinstance(state, dict):
+        cached = state.get(_STATE_KEY)
+        if cached is not None and cached[0] == key:
+            return cached[1]
+    report = score(text, SPECS[spec_id])
+    if isinstance(state, dict):
+        state[_STATE_KEY] = (key, report)
+    return report
 
 
 def spec_reward(completion, answer="", info=None, **kwargs) -> float:
     """Single reward on a clean [0, 1] scale.
 
-    reward = max(fraction of the 8 requirements met, PARSE_FLOOR if code ran)
+    reward = max(fraction of the 9 requirements met, PARSE_FLOOR if a solid was built)
 
-    1.0    all eight requirements met (R1-R3, R4a, R4b, R5, R6, R7)
-    k/8    partial compliance (gates permitting)
-    0.05   runnable CadQuery that satisfies nothing or fails a gate
+    1.0    all nine requirements met (R1-R3, R4a, R4b, R5, R6, R7, R8)
+    k/9    partial compliance (gates permitting)
+    0.05   code that builds a solid but satisfies nothing or fails a gate
            (the floor also reaches gated-out cheats - they DID build)
-    0.0    code that does not execute, times out, or no code at all
+    0.0    code that does not execute, times out, builds no solid (e.g. only
+           a 2D sketch), or no code at all
     """
     spec = _spec_for(answer, info)
     if spec is None:
         return 0.0
 
-    report = _report(_completion_text(completion), spec.id)
+    report = _report(_completion_text(completion), spec.id, kwargs.get("state"))
     return max(report.reward, PARSE_FLOOR) if report.parsed else 0.0
 
 
@@ -132,7 +150,7 @@ def _check_metric(check_name: str) -> Callable[..., float]:
         spec = _spec_for(answer, info)
         if spec is None:
             return 0.0
-        report = _report(_completion_text(completion), spec.id)
+        report = _report(_completion_text(completion), spec.id, kwargs.get("state"))
         return float(any(c.name == check_name and c.passed for c in report.checks))
 
     metric.__name__ = "m_" + check_name.replace(":", "_")
@@ -142,7 +160,7 @@ def _check_metric(check_name: str) -> Callable[..., float]:
 def built(completion, answer="", info=None, **kwargs) -> float:
     """Zero-weight diagnostic: 1.0 if the code executed and produced a solid."""
     spec = _spec_for(answer, info)
-    return float(spec is not None and _report(_completion_text(completion), spec.id).parsed)
+    return float(spec is not None and _report(_completion_text(completion), spec.id, kwargs.get("state")).parsed)
 
 
 def gates_passed(completion, answer="", info=None, **kwargs) -> float:
@@ -150,7 +168,7 @@ def gates_passed(completion, answer="", info=None, **kwargs) -> float:
     spec = _spec_for(answer, info)
     if spec is None:
         return 0.0
-    report = _report(_completion_text(completion), spec.id)
+    report = _report(_completion_text(completion), spec.id, kwargs.get("state"))
     gates = [c for c in report.checks if c.name.startswith("gate:")]
     return float(bool(gates) and all(c.passed for c in gates))
 
@@ -158,6 +176,7 @@ def gates_passed(completion, answer="", info=None, **kwargs) -> float:
 CHECK_NAMES = (
     "R1:length", "R2:width", "R3:thickness", "R4a:hole_count",
     "R4b:hole_diameter", "R5:hole_pattern", "R6:material", "R7:edge_margin",
+    "R8:z_datum",
 )
 
 

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Any
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 __all__ = ["__version__", "load_environment"]
 
 
