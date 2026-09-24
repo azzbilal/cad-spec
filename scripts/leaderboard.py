@@ -44,7 +44,8 @@ FAILURE_GROUPS = {
     "code did not build": ("syntax error", "CadQuery API error", "no part produced", "timeout", "build failed"),
     "holes not bound to positions": ("holes stacked at one point", "no holes"),
     "hole pattern misread": ("pattern anchored at a corner", "margin applied twice", "X and Y swapped",
-                             "pitch read as coordinates", "holes misplaced (other)"),
+                             "pitch read as coordinates", "one axis misplaced", "some holes right, some wrong",
+                             "holes misplaced (other)"),
     "change order not applied": ("change order ignored", "change not propagated to pitch"),
     "gate fired": ("gate: single_solid", "gate: clean_solid", "gate: simple_through_holes",
                    "gate: hole_count_sane", "gate: is_plate"),
@@ -75,22 +76,36 @@ def headline(tier_rows: dict[str, list[dict]], iters: int = 2000) -> tuple[float
 
 
 def collect(paths: list[str]) -> tuple[dict[str, dict], dict[str, dict]]:
-    """Per model: tier -> rows, headline, notes. Returns (models, references)."""
+    """Per model: tier -> rows, headline, notes. Returns (models, references).
+
+    A (model, tier) can appear in several runs (reruns after API errors, an
+    aborted attempt). The rule: use the LATEST run that has no problems; if
+    every run has problems, use the latest one and say so. Notes describe
+    only the run actually used, so a superseded run's errors never haunt the
+    board. Run ids start with a UTC timestamp, so they sort by time.
+    """
     metas, groups, ends = load(paths)
-    by_model: dict[str, dict] = defaultdict(lambda: {"tiers": {}, "notes": [], "cost": 0.0})
+    candidates: dict[tuple[str, str], list[tuple[str, list[dict], list[str], float]]] = defaultdict(list)
     for (run_id, tier), rows in groups.items():
         meta = metas.get(run_id, {})
-        name = meta.get("model", "?")
-        entry = by_model[name]
-        if tier in entry["tiers"]:
-            entry["notes"].append(f"{tier} appears in two runs; the later one is used")
-        entry["tiers"][tier] = rows
         s = summarize(rows, meta.get("max_tokens"))
-        entry["cost"] += s["cost_usd"]
         problems = completeness_problems(run_id, tier, rows, meta, ends)
         if s["truncated"] + s["api_errors"] > 0.05 * len(rows):
             problems.append(f"{s['truncated']} cut off, {s['api_errors']} API errors")
-        entry["notes"] += [f"{tier}: {p}" for p in problems]
+        candidates[(meta.get("model", "?"), tier)].append((run_id, rows, problems, s["cost_usd"]))
+
+    by_model: dict[str, dict] = defaultdict(lambda: {"tiers": {}, "notes": [], "cost": 0.0, "runs": {}})
+    for (name, tier), runs in candidates.items():
+        runs.sort(key=lambda r: r[0])
+        clean = [r for r in runs if not r[2]]
+        run_id, rows, problems, cost = (clean or runs)[-1]
+        entry = by_model[name]
+        entry["tiers"][tier] = rows
+        entry["runs"][tier] = run_id
+        entry["cost"] += cost
+        entry["notes"] += [f"{tier}: {p}" for p in dict.fromkeys(problems)]
+        if len(runs) > 1:
+            entry["superseded"] = entry.get("superseded", 0) + len(runs) - 1
     models, refs = {}, {}
     for name, entry in by_model.items():
         entry["score"] = headline(entry["tiers"])
@@ -274,6 +289,8 @@ def main() -> int:
         mean, lo, hi = e["score"]
         tiers = " | ".join(f"{e['tier_pass'][t]:.0%}" if t in e["tier_pass"] else "" for t in ALL_TIERS)
         note = "PROVISIONAL: " + "; ".join(e["notes"]) if e["notes"] else ""
+        if e.get("superseded"):
+            note = (note + "; " if note else "") + f"{e['superseded']} earlier run(s) superseded by reruns"
         md.append(f"| {i} | {name} | {mean:.0%} [{lo:.0%}, {hi:.0%}] | {tiers} | {e['cost']:.3f} | "
                   f"{top_failure(name)} | {note} |")
     md += ["", "Reference programs (no model):", "", "| Program | Score | L0 | L1 | L2 | L3 | L4 |",

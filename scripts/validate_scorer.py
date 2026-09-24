@@ -302,6 +302,15 @@ def main() -> int:
     ap.add_argument("--specs", type=int, default=30, help="number of eval specs to mutate")
     ap.add_argument("--out", default=str(ROOT / "results"))
     args = ap.parse_args()
+    try:
+        from cad_spec.measure import ScorerUnavailableError, require_cadquery
+    except ImportError:  # pre-0.4.1 scorer: plain import check
+        import cadquery  # noqa: F401
+    else:
+        try:
+            require_cadquery()
+        except ScorerUnavailableError as exc:
+            raise SystemExit(f"cad-spec: {exc}") from None
 
     _, eval_specs = make_splits()
     specs = eval_specs[: args.specs]

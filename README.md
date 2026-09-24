@@ -185,6 +185,11 @@ python scripts/run_baseline.py --provider openai --base-url https://openrouter.a
     --key-env OPENROUTER_API_KEY --model <model-id> --tiers L0 L1 L2 L3 L4 --budget 0.50
 ```
 
+Every scoring script checks that CadQuery is importable before doing
+anything, and stops with instructions if it is not (typically: the virtual
+environment is not active in this terminal). A scorer that cannot run never
+records a score.
+
 Reasoning models need `--max-tokens 8000` or more; otherwise they spend the
 budget thinking and return nothing. The summary flags any run where that
 happened.

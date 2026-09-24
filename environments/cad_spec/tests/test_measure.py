@@ -429,3 +429,36 @@ def test_memory_limit_setting_is_honoured(monkeypatch):
         monkeypatch.delenv("CAD_SPEC_MEM_MB")
         shutdown_worker()
     assert build_and_measure(PLATE).hole_count == 4
+
+
+# --- 0.4.1: a scorer that cannot run must never produce a score ---------------
+
+def test_missing_cadquery_is_scorer_unavailable_not_a_score(monkeypatch):
+    """Sept 2026: without the venv, every answer was scored as unbuildable."""
+    import builtins
+    import sys
+
+    from cad_spec.measure import ScorerUnavailableError, require_cadquery
+    from cad_spec.rubric import score
+    from cad_spec.tasks import TASKS, reference_solution
+
+    real_import = builtins.__import__
+
+    def no_cadquery(name, *args, **kwargs):
+        if name == "cadquery" or name.startswith("cadquery."):
+            raise ImportError("No module named 'cadquery'")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setenv("CAD_SPEC_INPROC", "1")
+    monkeypatch.setattr(builtins, "__import__", no_cadquery)
+    monkeypatch.delitem(sys.modules, "cadquery", raising=False)
+    with pytest.raises(ScorerUnavailableError, match="Activate the environment"):
+        require_cadquery()
+    with pytest.raises(ScorerUnavailableError):
+        score(reference_solution(TASKS[0]), TASKS[0])  # must raise, not return 0
+
+
+def test_scorer_unavailable_is_not_a_build_error():
+    from cad_spec.measure import ScorerUnavailableError
+
+    assert not issubclass(ScorerUnavailableError, BuildError)
