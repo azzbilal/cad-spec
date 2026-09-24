@@ -1,8 +1,8 @@
 [project]
 name = "cad-spec"
-description = "RL reward environment: write CadQuery from a dimensioned plate spec, scored by measuring the built B-rep. 8 requirements (dimensions, hole count/diameter, pattern vs origin, material volume, edge margin) behind anti-reward-hacking gates; per-rollout sandboxed execution; five prompt tiers (template, table, derived pitch, held-out prose, change order); mutation-validated scorer. 200 train / 30 held-out specs per tier."
+description = "RL reward environment: write CadQuery from a dimensioned plate spec, scored by measuring the built B-rep in a trusted process. 9 requirements (dimensions, holes, pattern and Z datums, material volume, edge margin) behind 5 anti-reward-hacking gates; sandboxed per-rollout execution; five prompt tiers; mutation-validated scorer (0 false full credit over 1,230 mutants). 200 train / 30 held-out specs per tier."
 tags = ["cad", "engineering", "code-generation", "cadquery", "geometry", "train", "eval"]
-version = "0.3.0"
+version = "0.4.0"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 # verifiers/datasets stay in the core set because `prime env push` installs the
@@ -11,7 +11,7 @@ license = { text = "MIT" }
 dependencies = [
     "verifiers>=0.3.0,<0.4",
     "cadquery>=2.8,<2.9",
-    "datasets",
+    "datasets>=2,<6",
 ]
 
 [project.optional-dependencies]

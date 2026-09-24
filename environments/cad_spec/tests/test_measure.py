@@ -1,5 +1,6 @@
 """measure.py units: code extraction, exact hole classification, exec timeout."""
 
+
 import pytest
 
 from cad_spec.measure import (
@@ -308,3 +309,123 @@ def test_file_size_limit():
 def test_sandbox_info_describes_mode(monkeypatch):
     monkeypatch.setenv("CAD_SPEC_INPROC", "1")
     assert sandbox_info() == {"mode": "inproc", "isolated": False}
+
+
+# --- 0.4.0: trusted measurement, topology, sandbox fixes ----------------------
+
+from cad_spec.measure import build_brep, load_brep  # noqa: E402
+
+FAKE_RESULT = """
+import cadquery as cq, math
+class Result:
+    wrapped = cq.Workplane("XY").box(1, 1, 1).val().wrapped
+    def BoundingBox(self):
+        return cq.Workplane("XY").box(80, 60, 6).val().BoundingBox()
+    def Volume(self):
+        return 80 * 60 * 6 - 4 * math.pi * 3.25 ** 2 * 6
+result = Result()
+"""
+
+
+def test_brep_round_trip_preserves_the_part():
+    m = measure(load_brep(build_brep(PLATE)))
+    assert (m.length, m.width, m.thickness, m.hole_count) == (80.0, 60.0, 6.0, 4)
+    assert m.valid and m.shell_count == 1 and m.loose_count == 0
+
+
+def test_fake_result_object_is_measured_by_its_real_geometry():
+    """Audit F03: the object's own BoundingBox/Volume are never called."""
+    m = measure(build(FAKE_RESULT))
+    assert (m.length, m.width, m.thickness, m.hole_count) == (1.0, 1.0, 1.0, 0)
+
+
+def test_garbage_brep_is_rejected():
+    with pytest.raises(BuildError):
+        load_brep(b"not a brep file")
+
+
+def test_membrane_is_not_open():
+    m = measure(build(PLATE.replace(".hole(6.5)", ".hole(6.5, depth=5.995)")))
+    assert m.hole_count == 4 and not any(h.open for h in m.holes)
+    assert all(h.open for h in measure(build(PLATE)).holes)
+
+
+def test_cavity_adds_a_shell_and_loose_face_is_counted():
+    cavity = measure(build(PLATE + '\nresult = result.cut(cq.Workplane("XY").box(10, 10, 2))\n'))
+    assert cavity.solid_count == 1 and cavity.shell_count == 2
+    loose = measure(build(PLATE + "\nresult = cq.Compound.makeCompound("
+                          "[result.val(), cq.Face.makePlane(5, 5, cq.Vector(0, 0, 0))])\n"))
+    assert loose.loose_count > 0
+
+
+def test_sketch_only_is_not_a_part():
+    with pytest.raises(BuildError, match=r"no solid|no CadQuery shape"):
+        measure(build("import cadquery as cq\nresult = cq.Sketch().rect(80, 60)\n"))
+
+
+@posix_only
+def test_fake_result_object_through_the_sandbox():
+    m = build_and_measure(FAKE_RESULT)
+    assert m.length == 1.0 and m.hole_count == 0
+
+
+@posix_only
+def test_child_cannot_reach_the_worker_pipe():
+    """Audit F01: inherited descriptors are closed; writing to them fails."""
+    probe = """
+import os
+open_fds = []
+for fd in range(3, 256):
+    try:
+        os.fstat(fd)
+        open_fds.append(fd)
+    except OSError:
+        pass
+# Only the result pipe (and whatever the kernel itself opens) may remain.
+assert len(open_fds) <= 3, open_fds
+"""
+    build_and_measure(probe + TINY)
+
+
+@posix_only
+def test_descendants_are_killed_with_the_rollout(tmp_path):
+    """Audit F02: a process the rollout leaves behind dies with it."""
+    import time
+
+    marker = tmp_path / "grandchild.pid"
+    code = f"""
+import os, time
+pid = os.fork()
+if pid == 0:
+    time.sleep(60)
+    os._exit(0)
+open({str(marker)!r}, "w").write(str(pid))
+""" + TINY
+    started = time.monotonic()
+    build_and_measure(code)
+    assert time.monotonic() - started < 5, "a finished rollout must not wait for its descendants"
+    pid = int(marker.read_text())
+    time.sleep(0.5)
+    # Killed and gone, or a zombie awaiting reaping by init: never running.
+    try:
+        with open(f"/proc/{pid}/stat") as fh:
+            state = fh.read().rsplit(")", 1)[1].split()[0]
+    except FileNotFoundError:
+        return
+    assert state == "Z", f"descendant still running (state {state})"
+
+
+@posix_only
+def test_memory_limit_setting_is_honoured(monkeypatch):
+    """Audit F08: CAD_SPEC_MEM_MB used to be erased before it was read."""
+    from cad_spec.measure import shutdown_worker
+
+    monkeypatch.setenv("CAD_SPEC_MEM_MB", "200")
+    shutdown_worker()
+    try:
+        with pytest.raises(BuildError, match=r"MemoryError|memory|crashed|without a result"):
+            build_and_measure("x = bytearray(600 * 1024 * 1024)\n" + TINY)
+    finally:
+        monkeypatch.delenv("CAD_SPEC_MEM_MB")
+        shutdown_worker()
+    assert build_and_measure(PLATE).hole_count == 4

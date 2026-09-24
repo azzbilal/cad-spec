@@ -9,17 +9,20 @@ Design notes:
     alone are trivially gameable: a solid block with no holes passes R1-R3.
   * Each layer tests exactly one thing: gates test part identity, R1-R3 own
     overall dimensions, R4-R5 own the holes, R6 owns material consistency,
-    R7 owns hole-to-edge margins. R6 therefore compares against volume
+    R7 owns hole-to-edge margins, R8 owns the Z datum. R6 therefore compares against volume
     predicted from the MEASURED envelope minus NOMINAL bores - decoupled from
     dimension errors, so a thickness miss costs R3 alone rather than also
     torching R6. "Material" means volume consistency only: not alloy,
     strength, fit, or manufacturability.
-  * Two datums, stated so nobody has to guess: R5 references hole centres
-    to the ORIGIN (the prompt fixes the plate centred on it), R7 references
-    them to the part's own EDGES. A plate slid off its holes fails R7; a
-    whole part translated off the origin fails R5. Before 0.3.0 only sizes
+  * Datums, stated so nobody has to guess: R5 references hole centres to
+    the ORIGIN in X and Y (the prompt fixes the plate centred on it), R7
+    references them to the part's own EDGES, and R8 references the plate's
+    mid-plane to Z = 0. A plate slid off its holes fails R7; a part moved in
+    X or Y fails R5; a part moved in Z fails R8. Before 0.3.0 only sizes
     were checked, which are translation-invariant, and a plate shifted 2 mm
-    against nominal holes scored 1.0.
+    against nominal holes scored 1.0; before 0.4.0 Z was unchecked.
+  * Rotations are not normalised: the prompt fixes the axes, so a part
+    turned 90 degrees is a different part and loses the checks it breaks.
 """
 
 from __future__ import annotations
@@ -37,10 +40,16 @@ GATE_VOLUME_BAND = 0.12  # identity band: measured vs bbox-predicted volume
 MATERIAL_TOL = 0.03   # fraction, R6: material vs envelope-minus-nominal-bores
 DEPTH_TOL = 0.01      # mm, hole depth vs stock thickness
 MARGIN_TOL = 0.5      # mm, hole centre to nearest edge (R7); same class as POSITION_TOL
+DATUM_TOL = 0.5       # mm, plate mid-plane to Z = 0 (R8); same class as POSITION_TOL
+# Numerical slack on every tolerance comparison. Tolerances are INCLUSIVE:
+# 6.7 is inside 6.5 +/- 0.2, but abs(6.7 - 6.5) is 0.20000000000000018 in
+# binary floating point, and 0.3.x failed it. 1e-6 mm is far below any
+# engineering meaning and far above float noise at these magnitudes.
+NUM_EPS = 1e-6
 
 # Bump on ANY change that can move a score. Recorded in every results file so
 # numbers from different scorer revisions are never silently compared.
-SCORER_VERSION = "0.3.0"
+SCORER_VERSION = "0.4.0"
 
 
 @dataclass
@@ -67,7 +76,7 @@ class Report:
 
 
 def _close(actual: float, target: float, tol: float) -> bool:
-    return abs(actual - target) <= tol
+    return abs(actual - target) <= tol + NUM_EPS
 
 
 def _gates(m: Measurements, spec: Spec) -> list[Check]:
@@ -75,9 +84,16 @@ def _gates(m: Measurements, spec: Spec) -> list[Check]:
 
     Each exists because of a specific way to fake a passing part:
       single_solid         - four loose corner tabs would satisfy the bbox
+      clean_solid          - a valid solid bounded by exactly one shell, with
+                             no loose faces, edges or vertices: an enclosed
+                             cavity (a second shell) or stray geometry changes
+                             the part without moving the volume check (0.4.0)
       simple_through_holes - blind dimples measure like fastener holes from
                              above; counterbores/countersinks are coaxial
-                             steps, i.e. a different fastener interface
+                             steps, i.e. a different fastener interface; and
+                             since 0.4.0 the passage must be OPEN (a rod
+                             along the axis meets no material), so a hole
+                             stopping microns short of the far face fails
       hole_count_sane      - swiss-cheesing the plate to hit a volume target
       is_plate             - a shell, hollow box, or ellipse extrusion with
                              the right bounding box
@@ -101,6 +117,7 @@ def _gates(m: Measurements, spec: Spec) -> list[Check]:
         and group[0].segments == 1
         and _close(group[0].z_min, m.z_min, DEPTH_TOL)
         and _close(group[0].z_max, m.z_max, DEPTH_TOL)
+        and all(h.open for h in group)
         for group in by_position.values()
     )
 
@@ -109,6 +126,12 @@ def _gates(m: Measurements, spec: Spec) -> list[Check]:
             "gate:single_solid",
             m.solid_count == 1,
             f"{m.solid_count} solid(s)",
+        ),
+        Check(
+            "gate:clean_solid",
+            m.valid and m.shell_count == m.solid_count and m.loose_count == 0,
+            f"valid={m.valid}, {m.shell_count} shell(s) for {m.solid_count} solid(s), "
+            f"{m.loose_count} loose sub-shape(s)",
         ),
         Check(
             "gate:simple_through_holes",
@@ -157,7 +180,7 @@ def _requirements(m: Measurements, spec: Spec) -> list[Check]:
     }
     matched = 0
     for hx, hy in expected:
-        if any(math.dist((h.x, h.y), (hx, hy)) <= POSITION_TOL for h in m.holes):
+        if any(math.dist((h.x, h.y), (hx, hy)) <= POSITION_TOL + NUM_EPS for h in m.holes):
             matched += 1
     checks.append(Check(
         "R5:hole_pattern",
@@ -186,9 +209,19 @@ def _requirements(m: Measurements, spec: Spec) -> list[Check]:
         worst = max(worst, abs(dx - spec.edge_margin), abs(dy - spec.edge_margin))
     checks.append(Check(
         "R7:edge_margin",
-        bool(m.holes) and worst <= MARGIN_TOL,
+        bool(m.holes) and worst <= MARGIN_TOL + NUM_EPS,
         f"worst deviation {worst:.2f} mm from {spec.edge_margin} mm margin"
         if m.holes else "no bores to measure",
+    ))
+
+    # R8: the Z datum. The prompt fixes the plate centred on the origin with
+    # its thickness along Z. R5 and R7 together pin X and Y; nothing pinned Z
+    # before 0.4.0, and a correct part floating 100 mm up scored 1.0.
+    z_mid = (m.z_min + m.z_max) / 2
+    checks.append(Check(
+        "R8:z_datum",
+        abs(z_mid) <= DATUM_TOL + NUM_EPS,
+        f"mid-plane at Z = {z_mid:.3f} mm (nominal 0)",
     ))
 
     return checks

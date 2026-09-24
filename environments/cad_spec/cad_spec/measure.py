@@ -36,12 +36,24 @@ for one mistake. The check is kept anyway because partial cylinders are
 exactly how corner fillets masquerade as bores; anyone comparing model
 scores should know the asymmetry is there.
 
+Trust boundary (0.4.0): model code never hands the scorer a Python object.
+The untrusted side (build_brep) executes the code, collects the OCCT shapes
+bound to `result` and serialises them to BREP, a plain-text geometry format.
+The trusted side (load_brep + measure) parses those bytes with the kernel
+and measures what they describe. Before 0.4.0 the scorer called methods on
+whatever object `result` was, so a class that answered BoundingBox() and
+Volume() with nominal numbers scored 1.0 while its real geometry was a 1 mm
+cube; and in fork mode the result came back as a pickle, which can execute
+code when loaded. Neither path exists any more.
+
 Execution safety: model code never runs in the caller's process. On POSIX
 a warm worker forks a disposable, rlimited, env-scrubbed child per rollout
-(CAD_SPEC_SANDBOX=fork); on Windows one persistent worker runs rollouts in
-fresh temp directories (CAD_SPEC_SANDBOX=reuse). CAD_SPEC_EXEC_TIMEOUT bounds
-each build (seconds, default 10). CAD_SPEC_INPROC=1 disables isolation for
-debugging. This is containment, not a security boundary; see SECURITY.md.
+(CAD_SPEC_SANDBOX=fork) and measures the returned BREP itself; on Windows
+one persistent worker runs rollouts in fresh temp directories
+(CAD_SPEC_SANDBOX=reuse). CAD_SPEC_EXEC_TIMEOUT bounds each build (seconds,
+default 10). CAD_SPEC_INPROC=1 disables isolation for debugging. This is
+containment, not a security boundary; see SECURITY.md for what each mode
+does and does not guarantee.
 
 Windows note: the spawn-based worker requires callers to follow the standard
 multiprocessing contract - entry scripts must guard top-level code with
@@ -92,6 +104,13 @@ PARTIAL_REPORT_MIN = 0.30
 # split by a symmetric cutter meet exactly at the split plane; the kernel
 # tolerance is far below this.
 INTERVAL_MERGE_TOL = 1e-4
+# Open-passage probe: a rod of this fraction of the bore radius, run along the
+# axis past both faces of the stock, must intersect less than this volume
+# (mm3) of material. A 0.00001 mm membrane on a 6.5 mm bore leaves ~8e-5 mm3.
+OPEN_PROBE_RADIUS_FRACTION = 0.5
+OPEN_VOLUME_TOL = 1e-6
+# Largest BREP a rollout may hand back (bytes). The plates here are 5-50 kB.
+MAX_BREP_BYTES = 8 << 20
 
 
 class BuildError(Exception):
@@ -116,6 +135,11 @@ class Hole:
     z_min: float = 0.0
     z_max: float = 0.0
     segments: int = 1
+    # True when a rod along the bore axis meets no material anywhere through
+    # the stock. Endpoint coordinates alone cannot tell a through hole from a
+    # blind one that stops a few microns short, leaving a membrane (0.3.x
+    # scored a 0.005 mm membrane as "through").
+    open: bool = True
 
 
 @dataclass
@@ -152,6 +176,12 @@ class Measurements:
     z_min: float = 0.0
     z_max: float = 0.0
     partial_bores: list[PartialBore] = field(default_factory=list)
+    # Topology (0.4.0). A plate is one solid bounded by ONE shell: a second
+    # shell is an enclosed cavity. Loose faces, edges or vertices outside the
+    # solids are extra geometry that no volume check can see.
+    shell_count: int = 1
+    loose_count: int = 0
+    valid: bool = True
 
     @property
     def hole_count(self) -> int:
@@ -182,12 +212,8 @@ def extract_code(completion: str) -> str:
     return textwrap.dedent(completion).strip()
 
 
-def build(code: str) -> Any:
-    """Exec model code and return the object bound to `result`.
-
-    Not a security boundary. Used directly by tests and by the isolated
-    worker; production scoring goes through build_and_measure().
-    """
+def _exec_result(code: str) -> Any:
+    """Execute model code and return the object bound to `result`. Untrusted."""
     import cadquery as cq
 
     namespace: dict[str, Any] = {"cq": cq, "cadquery": cq, "math": math}
@@ -196,42 +222,97 @@ def build(code: str) -> Any:
         exec(compile(code, "<model>", "exec"), namespace)
     except Exception as exc:
         raise BuildError(f"execution failed: {type(exc).__name__}: {exc}") from exc
-
     obj = namespace.get("result")
     if obj is None:
         raise BuildError("code did not define `result`")
-
-    try:
-        solid = _resolve_shape(obj)
-    except BuildError:
-        raise
-    except Exception as exc:
-        raise BuildError(f"could not resolve result to a shape: {exc}") from exc
-
-    if not hasattr(solid, "Volume"):
-        raise BuildError(f"`result` is not a shape (got {type(obj).__name__})")
-
-    return solid
+    return obj
 
 
-def _resolve_shape(obj: Any) -> Any:
-    """Everything `result` holds, as ONE shape.
+def _result_topods(obj: Any) -> Any:
+    """The OCCT shapes `result` holds, as one TopoDS_Shape. Untrusted side.
 
-    A Workplane can carry several objects on its stack. Before 0.3.0 only
-    .val() (the first) was measured, so four loose tabs built with
-    combine=False were scored as a single tab and the single_solid gate
-    never saw them. Every shape on the stack is now measured together.
+    Only the kernel handle (`.wrapped`, a TopoDS_Shape) of each shape is
+    used; no method of the model's object is trusted to describe geometry.
+    A Workplane contributes every shape on its stack (non-shape stack items
+    such as vectors carry no geometry and are ignored); anything else must
+    itself wrap a TopoDS_Shape.
     """
     import cadquery as cq
+    from OCP.BRep import BRep_Builder
+    from OCP.TopoDS import TopoDS_Compound, TopoDS_Shape
 
-    if not hasattr(obj, "vals"):
-        return obj
-    shapes = [v for v in obj.vals() if isinstance(v, cq.Shape)]
+    items = obj.vals() if isinstance(obj, cq.Workplane) else [obj]
+    shapes = []
+    for item in items:
+        wrapped = getattr(item, "wrapped", None)
+        if isinstance(wrapped, TopoDS_Shape) and not wrapped.IsNull():
+            shapes.append(wrapped)
     if not shapes:
-        raise BuildError("`result` holds no shapes")
+        raise BuildError(f"`result` holds no CadQuery shape (got {type(obj).__name__})")
     if len(shapes) == 1:
         return shapes[0]
-    return cq.Compound.makeCompound(shapes)
+    builder = BRep_Builder()
+    compound = TopoDS_Compound()
+    builder.MakeCompound(compound)
+    for shape in shapes:
+        builder.Add(compound, shape)
+    return compound
+
+
+def build_brep(code: str) -> bytes:
+    """Execute model code; return its geometry as BREP bytes. Untrusted side."""
+    import shutil
+
+    from OCP.BRepTools import BRepTools
+
+    shape = _result_topods(_exec_result(code))
+    workdir = tempfile.mkdtemp(prefix="cad-spec-brep-")
+    try:
+        path = os.path.join(workdir, "result.brep")
+        if not BRepTools.Write_s(shape, path):
+            raise BuildError("result geometry could not be serialised")
+        with open(path, "rb") as fh:
+            data = fh.read(MAX_BREP_BYTES + 1)
+    finally:
+        shutil.rmtree(workdir, ignore_errors=True)
+    if len(data) > MAX_BREP_BYTES:
+        raise BuildError("result geometry is too large")
+    return data
+
+
+def load_brep(data: bytes) -> Any:
+    """Parse BREP bytes into a CadQuery shape. Trusted side: bytes are data."""
+    import shutil
+
+    import cadquery as cq
+    from OCP.BRep import BRep_Builder
+    from OCP.BRepTools import BRepTools
+    from OCP.TopoDS import TopoDS_Shape
+
+    if not data or len(data) > MAX_BREP_BYTES:
+        raise BuildError("result geometry is empty or too large")
+    workdir = tempfile.mkdtemp(prefix="cad-spec-load-")
+    try:
+        path = os.path.join(workdir, "result.brep")
+        with open(path, "wb") as fh:
+            fh.write(data)
+        shape = TopoDS_Shape()
+        ok = BRepTools.Read_s(shape, path, BRep_Builder())
+    finally:
+        shutil.rmtree(workdir, ignore_errors=True)
+    if not ok or shape.IsNull():
+        raise BuildError("result geometry could not be read")
+    return cq.Shape.cast(shape)
+
+
+def build(code: str) -> Any:
+    """Exec model code and return its geometry as a trusted CadQuery shape.
+
+    Goes through the same BREP round-trip as production scoring, so tests
+    measure exactly what the scorer measures. Not a security boundary: it
+    runs the code in the calling process.
+    """
+    return load_brep(build_brep(code))
 
 
 def _z_aligned_cylinders(solid: Any) -> list[tuple[float, float, float, Any]]:
@@ -337,25 +418,70 @@ def _extract_holes(solid: Any) -> list[Hole]:
     return _classify_cylinders(solid)[0]
 
 
+def _count(shape: Any, kind: Any, avoid: Any = None) -> int:
+    from OCP.TopExp import TopExp_Explorer
+
+    explorer = TopExp_Explorer(shape, kind) if avoid is None else TopExp_Explorer(shape, kind, avoid)
+    n = 0
+    while explorer.More():
+        n += 1
+        explorer.Next()
+    return n
+
+
+def _bore_is_open(solid: Any, hole: Hole, z_min: float, z_max: float) -> bool:
+    """Does a rod along the bore axis, through the whole stock, meet no material?"""
+    from OCP.BRepAlgoAPI import BRepAlgoAPI_Common
+    from OCP.BRepGProp import BRepGProp
+    from OCP.BRepPrimAPI import BRepPrimAPI_MakeCylinder
+    from OCP.gp import gp_Ax2, gp_Dir, gp_Pnt
+    from OCP.GProp import GProp_GProps
+
+    radius = hole.diameter / 2 * OPEN_PROBE_RADIUS_FRACTION
+    axis = gp_Ax2(gp_Pnt(hole.x, hole.y, z_min - 1.0), gp_Dir(0, 0, 1))
+    rod = BRepPrimAPI_MakeCylinder(axis, radius, (z_max - z_min) + 2.0).Shape()
+    common = BRepAlgoAPI_Common(solid.wrapped, rod)
+    common.Build()
+    if not common.IsDone():
+        return False
+    props = GProp_GProps()
+    BRepGProp.VolumeProperties_s(common.Shape(), props)
+    return abs(props.Mass()) < OPEN_VOLUME_TOL
+
+
 def measure(solid: Any) -> Measurements:
-    """Extract features from a built solid."""
+    """Extract features from a trusted shape (see load_brep)."""
+    from OCP.BRepCheck import BRepCheck_Analyzer
+    from OCP.TopAbs import TopAbs_EDGE, TopAbs_FACE, TopAbs_SHELL, TopAbs_SOLID, TopAbs_VERTEX
+
     try:
         bb = solid.BoundingBox()
         volume = solid.Volume()
-        solids = solid.Solids()
+        topo = solid.wrapped
+        solid_count = _count(topo, TopAbs_SOLID)
     except Exception as exc:
         raise BuildError(f"shape could not be measured: {exc}") from exc
 
+    if solid_count == 0:
+        raise BuildError("result contains no solid")
     if volume <= 0:
         raise BuildError("shape has zero or negative volume")
 
+    loose = (
+        _count(topo, TopAbs_SHELL, TopAbs_SOLID)
+        + _count(topo, TopAbs_FACE, TopAbs_SHELL)
+        + _count(topo, TopAbs_EDGE, TopAbs_FACE)
+        + _count(topo, TopAbs_VERTEX, TopAbs_EDGE)
+    )
     holes, partial = _classify_cylinders(solid)
+    for h in holes:
+        h.open = _bore_is_open(solid, h, bb.zmin, bb.zmax)
     return Measurements(
         length=round(bb.xlen, 4),
         width=round(bb.ylen, 4),
         thickness=round(bb.zlen, 4),
         volume=round(volume, 4),
-        solid_count=len(solids),
+        solid_count=solid_count,
         holes=holes,
         x_min=round(bb.xmin, 4),
         x_max=round(bb.xmax, 4),
@@ -364,11 +490,15 @@ def measure(solid: Any) -> Measurements:
         z_min=round(bb.zmin, 4),
         z_max=round(bb.zmax, 4),
         partial_bores=partial,
+        shell_count=_count(topo, TopAbs_SHELL),
+        loose_count=loose,
+        valid=bool(BRepCheck_Analyzer(topo).IsValid()),
     )
 
 
 def _measure_code(code: str) -> Measurements:
-    return measure(build(code))
+    """Build and measure in THIS process (inproc and reuse modes)."""
+    return measure(load_brep(build_brep(code)))
 
 
 # --- isolated execution ------------------------------------------------------
@@ -380,14 +510,18 @@ def _measure_code(code: str) -> Measurements:
 # Sandbox modes (CAD_SPEC_SANDBOX), see SECURITY.md for the threat model:
 #
 #   fork   (default on POSIX) the warm worker forks a FRESH child per rollout.
-#          The child gets its own temp directory (deleted afterwards), a
-#          scrubbed environment (no API keys or tokens inherited), stdout and
-#          stderr sent to /dev/null, and rlimits on address space, CPU time,
-#          file size and open files. It is best-effort moved into new user +
-#          network namespaces so it has no network; whether that succeeded is
-#          reported by sandbox_info(). Nothing a rollout does to Python state
-#          (monkeypatching cadquery, globals, sys.modules) survives into the
-#          next rollout, because the child exits.
+#          The child gets its own temp directory (deleted afterwards), its
+#          own process group (killed whole afterwards, descendants included),
+#          a scrubbed environment (no API keys or tokens inherited), every
+#          inherited file descriptor closed except its result pipe, stdout
+#          and stderr sent to /dev/null, and rlimits on CPU time, file size,
+#          open files and (Linux only) address space. It is best-effort moved
+#          into new user + network namespaces. The child sends back ONLY a
+#          status byte plus either BREP geometry bytes or a short error text;
+#          the worker parses the geometry with the kernel and measures it.
+#          No object from the child is ever unpickled. Nothing a rollout does
+#          to Python state survives into the next rollout, because the child
+#          exits.
 #   reuse  (default on Windows, which has no fork) one persistent process runs
 #          every rollout, each in a fresh temp directory. State CAN leak
 #          between rollouts. Trusted debugging and Windows dev only.
@@ -420,8 +554,12 @@ _STARTUP_TIMEOUT = 120.0
 # Extra seconds the parent allows beyond the model budget for fork, pickling
 # and cleanup before it declares the whole worker wedged.
 _GRACE = 10.0
-# Largest measurement payload a child may send back (bytes).
-_MAX_RESULT_BYTES = 1 << 20
+# Largest payload a child may send back (bytes): one status byte + BREP.
+_MAX_RESULT_BYTES = MAX_BREP_BYTES + 1
+# Longest error text a child may send back (characters). Error text is the
+# only free-form data that crosses from model code to the scorer; it is
+# length-capped and stripped of control characters, and treated as data.
+_MAX_ERROR_CHARS = 300
 # Environment variables a rollout child keeps. Everything else (tokens, keys,
 # proxy credentials) is dropped.
 _ENV_KEEP = ("PATH", "LANG", "LC_ALL", "PYTHONHASHSEED", "SYSTEMROOT", "TMP", "TEMP")
@@ -455,11 +593,22 @@ def _vm_size_bytes() -> int:
     return 0
 
 
-def _harden_child(workdir: str, budget_s: float) -> dict[str, Any]:
-    """Runs in the forked child only, before model code. Returns what applied."""
+def _clean_error(text: str) -> str:
+    text = "".join(ch if ch.isprintable() else " " for ch in text)
+    return text[:_MAX_ERROR_CHARS]
+
+
+def _harden_child(workdir: str, budget_s: float, mem_mb: int, keep_fd: int) -> None:
+    """Runs in the forked child only, before model code.
+
+    Every argument is captured by the trusted parent BEFORE the environment
+    is scrubbed (0.3.x read CAD_SPEC_MEM_MB after scrubbing, so the default
+    2048 always applied).
+    """
     import resource
 
-    applied: dict[str, Any] = {"netns": _try_netns()}
+    os.setpgid(0, 0)  # own process group: the parent kills it whole
+    _try_netns()
     os.chdir(workdir)
     keep = {k: v for k, v in os.environ.items() if k in _ENV_KEEP}
     os.environ.clear()
@@ -470,113 +619,150 @@ def _harden_child(workdir: str, budget_s: float) -> dict[str, Any]:
     devnull = os.open(os.devnull, os.O_RDWR)
     for fd in (0, 1, 2):
         os.dup2(devnull, fd)
+    # Close everything inherited (the worker's control pipe included) except
+    # the result pipe. The child must not be able to talk to the worker on
+    # any channel but the one the worker parses as plain bytes.
+    for lo, hi in ((3, keep_fd), (keep_fd + 1, 4096)):
+        if lo < hi:
+            os.closerange(lo, hi)
 
     budget = max(1, math.ceil(budget_s))
     limits = {
         "RLIMIT_CPU": (budget + 1, budget + 2),
-        "RLIMIT_FSIZE": (16 << 20, 16 << 20),
+        "RLIMIT_FSIZE": (MAX_BREP_BYTES * 2, MAX_BREP_BYTES * 2),
         "RLIMIT_NOFILE": (64, 64),
     }
-    vm = _vm_size_bytes()
+    vm = _vm_size_bytes()  # Linux /proc only; macOS gets no RLIMIT_AS
     if vm:
-        cap = vm + _mem_limit_mb() * (1 << 20)
+        cap = vm + mem_mb * (1 << 20)
         limits["RLIMIT_AS"] = (cap, cap)
     for name, value in limits.items():
         res = getattr(resource, name, None)
-        if res is None:
-            continue
-        try:
-            resource.setrlimit(res, value)
-            applied[name] = value[0]
-        except (ValueError, OSError):
-            applied[name] = None
-    return applied
+        if res is not None:
+            with contextlib.suppress(ValueError, OSError):
+                resource.setrlimit(res, value)
 
 
-def _run_forked(code: str, budget: float) -> tuple[str, Any]:
-    """Run one rollout in a disposable forked child. Returns (status, payload)."""
-    import pickle
+def _kill_group(pid: int) -> None:
+    """SIGKILL the rollout's process group (the child set pgid = its pid)."""
+    import signal
+
+    with contextlib.suppress(ProcessLookupError, PermissionError):
+        os.killpg(pid, signal.SIGKILL)
+
+
+def _run_forked(code: str, budget: float, mem_mb: int) -> tuple[str, Any]:
+    """Run one rollout in a disposable forked child. Returns (status, payload).
+
+    The child replies with b"O" + BREP bytes or b"E" + UTF-8 error text. The
+    worker (this process, trusted) parses and measures the BREP itself.
+    """
     import select
     import shutil
     import signal
+    import time
 
     workdir = tempfile.mkdtemp(prefix="cad-spec-rollout-")
     read_fd, write_fd = os.pipe()
     pid = os.fork()
-    if pid == 0:  # --- child -------------------------------------------------
+    if pid == 0:  # --- child: untrusted from here on -------------------------
         os.close(read_fd)
         try:
-            _harden_child(workdir, budget)
+            _harden_child(workdir, budget, mem_mb, write_fd)
             try:
-                out: tuple[str, Any] = ("ok", _measure_code(code))
+                out = b"O" + build_brep(code)
             except BuildError as exc:
-                out = ("error", str(exc))
+                out = b"E" + _clean_error(str(exc)).encode()
             except MemoryError:
-                out = ("error", "model code exceeded the memory budget")
+                out = b"E" + b"model code exceeded the memory budget"
             except BaseException as exc:
-                out = ("error", f"worker fault: {type(exc).__name__}: {exc}")
-            data = pickle.dumps(out)
-            if len(data) > _MAX_RESULT_BYTES:
-                data = pickle.dumps(("error", "measurement payload too large"))
+                out = b"E" + _clean_error(f"worker fault: {type(exc).__name__}: {exc}").encode()
             with os.fdopen(write_fd, "wb") as fh:
-                fh.write(data)
+                fh.write(out)
         finally:
             os._exit(0)
 
-    # --- parent (the warm worker) ------------------------------------------
+    # --- parent: the warm worker, trusted ------------------------------------
+    # Completion is "the child exited", not "the pipe closed": a descendant
+    # the model code started inherits the pipe and would otherwise hold it
+    # open until the deadline, turning a finished rollout into a timeout.
     os.close(write_fd)
     chunks: list[bytes] = []
     total = 0
-    timed_out = False
-    try:
-        import time
+    timed_out = oversized = False
+    status: int | None = None
+    deadline = time.monotonic() + budget
 
-        deadline = time.monotonic() + budget
+    def _read_available(wait: float) -> bool:
+        """Read what is ready within `wait` s. False once the pipe hits EOF."""
+        nonlocal total, oversized
+        ready, _, _ = select.select([read_fd], [], [], wait)
+        if not ready:
+            return True
+        chunk = os.read(read_fd, 65536)
+        if not chunk:
+            return False
+        total += len(chunk)
+        if total > _MAX_RESULT_BYTES:
+            oversized = True
+            return False
+        chunks.append(chunk)
+        return True
+
+    try:
         while True:
             remaining = deadline - time.monotonic()
             if remaining <= 0:
                 timed_out = True
                 break
-            ready, _, _ = select.select([read_fd], [], [], remaining)
-            if not ready:
-                timed_out = True
+            if not _read_available(min(remaining, 0.05)) or oversized:
                 break
-            chunk = os.read(read_fd, 65536)
-            if not chunk:
+            reaped, st = os.waitpid(pid, os.WNOHANG)
+            if reaped:
+                status = st
+                # The child is gone; take whatever it wrote, without waiting
+                # for descendants that may still hold the pipe open.
+                while _read_available(0.0) and not oversized:
+                    ready, _, _ = select.select([read_fd], [], [], 0.0)
+                    if not ready:
+                        break
                 break
-            total += len(chunk)
-            if total > _MAX_RESULT_BYTES + 65536:
-                break
-            chunks.append(chunk)
     finally:
         os.close(read_fd)
-        if timed_out:
-            with contextlib.suppress(ProcessLookupError):
-                os.kill(pid, signal.SIGKILL)
-        _, status = os.waitpid(pid, 0)
+        _kill_group(pid)  # always: kills descendants the child left running
+        if status is None:
+            _, status = os.waitpid(pid, 0)
         shutil.rmtree(workdir, ignore_errors=True)
 
     if timed_out:
         return ("error", f"model code exceeded {budget:g}s execution budget")
-    if not chunks:
-        if os.WIFSIGNALED(status):
-            sig = os.WTERMSIG(status)
-            if sig in (signal.SIGXCPU, signal.SIGKILL):
-                return ("error", f"model code exceeded {budget:g}s execution budget")
-            return ("error", f"model code crashed the rollout process (signal {sig})")
+    if oversized:
+        return ("error", "result geometry is too large")
+    data = b"".join(chunks)
+    if not data:
+        if os.WIFSIGNALED(status) and os.WTERMSIG(status) == signal.SIGXCPU:
+            return ("error", f"model code exceeded {budget:g}s execution budget")
         return ("error", "rollout process exited without a result")
+    tag, body = data[:1], data[1:]
+    if tag == b"E":
+        return ("error", _clean_error(body.decode("utf-8", errors="replace")))
+    if tag != b"O":
+        return ("error", "rollout process returned a malformed result")
     try:
-        return pickle.loads(b"".join(chunks))
-    except Exception:
-        return ("error", "rollout process returned a corrupt result")
+        return ("ok", measure(load_brep(body)))
+    except BuildError as exc:
+        return ("error", str(exc))
+    except Exception as exc:
+        return ("error", f"result geometry could not be measured: {type(exc).__name__}")
 
 
-def _run_reused(code: str, budget: float) -> tuple[str, Any]:
+def _run_reused(code: str, budget: float, mem_mb: int) -> tuple[str, Any]:
     """Run one rollout in this (persistent) process, in a fresh temp dir.
 
-    `budget` is enforced by the parent, which kills this whole process.
+    `budget` is enforced by the parent, which kills this whole process;
+    `mem_mb` cannot be enforced without fork and is ignored.
     """
-    del budget
+    del budget, mem_mb
     import shutil
 
     workdir = tempfile.mkdtemp(prefix="cad-spec-rollout-")
@@ -585,9 +771,9 @@ def _run_reused(code: str, budget: float) -> tuple[str, Any]:
         os.chdir(workdir)
         return ("ok", _measure_code(code))
     except BuildError as exc:
-        return ("error", str(exc))
+        return ("error", _clean_error(str(exc)))
     except Exception as exc:
-        return ("error", f"worker fault: {type(exc).__name__}: {exc}")
+        return ("error", _clean_error(f"worker fault: {type(exc).__name__}: {exc}"))
     finally:
         os.chdir(previous)
         shutil.rmtree(workdir, ignore_errors=True)
@@ -607,9 +793,9 @@ def _worker_main(conn: Any, mode: str) -> None:
         if kind == "stop":
             conn.send(("ok", None))
             return
-        code, budget = payload
+        code, budget, mem_mb = payload
         try:
-            conn.send(run(code, budget))
+            conn.send(run(code, budget, mem_mb))
         except Exception as exc:  # report faults before dying
             conn.send(("error", f"worker fault: {type(exc).__name__}: {exc}"))
 
@@ -642,7 +828,7 @@ class _Worker:
 
     def call(self, code: str) -> Measurements:
         try:
-            self.conn.send(("measure", (code, _exec_timeout())))
+            self.conn.send(("measure", (code, _exec_timeout(), _mem_limit_mb())))
         except (BrokenPipeError, OSError) as exc:
             raise BuildError(f"scorer pipe broke: {exc}") from exc
         # In fork mode the worker enforces the budget itself and survives;
@@ -663,6 +849,9 @@ class _Worker:
     def kill(self) -> None:
         self.proc.terminate()
         self.proc.join(timeout=5)
+        if self.proc.is_alive():  # terminate ignored: force it
+            self.proc.kill()
+            self.proc.join(timeout=5)
 
     def stop(self) -> None:
         try:
@@ -706,9 +895,14 @@ def sandbox_info() -> dict[str, Any]:
         "per_rollout_process": mode == "fork",
         "state_isolated": mode == "fork",
         "env_scrubbed": mode == "fork",
+        # Where geometry is measured: from BREP bytes in the trusted worker
+        # (fork) or in the same process that ran the model code (reuse).
+        "measured_in": "trusted worker" if mode == "fork" else "rollout process",
     }
     if mode == "fork":
-        info["mem_limit_mb"] = _mem_limit_mb()
+        # Requested limits. Address-space limits apply on Linux only; the
+        # namespace (no-network) step is best effort and not verified here.
+        info["mem_limit_mb_requested"] = _mem_limit_mb()
     return info
 
 
