@@ -46,11 +46,14 @@ from cad_spec.tasks import Spec, make_splits
 
 SCORER_VERSION = getattr(R, "SCORER_VERSION", "0.2.0")
 MARGIN_TOL = getattr(R, "MARGIN_TOL", R.POSITION_TOL)  # R7 did not exist before 0.3.0
+DATUM_TOL = getattr(R, "DATUM_TOL", R.POSITION_TOL)  # R8 did not exist before 0.4.0
+EXACT = 1e-9  # a deviation this close to a tolerance is AT the limit: inside, by definition
 BOUNDARY_GUARD = 0.02  # mm for linear checks, fraction-of-band for R6/is_plate
 
-GATES = ("gate:single_solid", "gate:simple_through_holes", "gate:hole_count_sane", "gate:is_plate")
+GATES = ("gate:single_solid", "gate:clean_solid", "gate:simple_through_holes", "gate:hole_count_sane",
+         "gate:is_plate")
 REQS = ("R1:length", "R2:width", "R3:thickness", "R4a:hole_count", "R4b:hole_diameter",
-        "R5:hole_pattern", "R6:material", "R7:edge_margin")
+        "R5:hole_pattern", "R6:material", "R7:edge_margin", "R8:z_datum")
 
 
 @dataclass(frozen=True)
@@ -69,6 +72,8 @@ class Geometry:
     T: float
     ox: float = 0.0          # plate centre offset
     oy: float = 0.0
+    oz: float = 0.0
+    cavity: bool = False     # a small sealed void at the centre of the plate
     holes: tuple[HoleG, ...] = ()
     fillet: float = 0.0      # vertical corner fillet radius
     method: str = "hole_top"  # hole_top | cutter_both | cutter_split
@@ -94,11 +99,11 @@ def nominal(spec: Spec) -> Geometry:
 def to_code(g: Geometry) -> str:
     lines = [
         "import cadquery as cq",
-        f"plate = cq.Workplane('XY').box({g.L}, {g.W}, {g.T}).translate(({g.ox}, {g.oy}, 0))",
+        f"plate = cq.Workplane('XY').box({g.L}, {g.W}, {g.T}).translate(({g.ox}, {g.oy}, {g.oz}))",
     ]
     if g.fillet:
         lines.append(f"plate = plate.edges('|Z').fillet({g.fillet})")
-    top, bot = g.T / 2, -g.T / 2
+    top, bot = g.oz + g.T / 2, g.oz - g.T / 2
     for h in g.holes:
         r = h.d / 2
         if not h.through:
@@ -115,6 +120,9 @@ def to_code(g: Geometry) -> str:
             lines.append(f"plate = plate.cut(cq.Workplane('XY').center({h.x}, {h.y}).circle({r}).extrude({bot - 2}))")
         else:
             raise ValueError(g.method)
+    if g.cavity:  # 1.5 x 1.5 mm, 40% of the thickness: clear of any hole (web >= 2 mm)
+        void = f"cq.Workplane('XY').box(1.5, 1.5, {0.4 * g.T}).translate(({g.ox}, {g.oy}, {g.oz}))"
+        lines.append(f"plate = plate.cut({void})")
     lines.append("result = plate")
     return "\n".join(lines) + "\n"
 
@@ -122,8 +130,15 @@ def to_code(g: Geometry) -> str:
 # --- oracle -------------------------------------------------------------------
 
 def _edge(value: float, target: float, tol: float) -> tuple[bool, bool]:
-    """(passes, ambiguous) for |value - target| <= tol."""
+    """(passes, ambiguous) for |value - target| <= tol, tolerance INCLUSIVE.
+
+    Exactly at the limit is a pass and NOT ambiguous: the scorer must get
+    exact decimal endpoints right (0.3.x failed 6.7 against 6.5 +/- 0.2).
+    Only near-misses on either side are left to kernel noise.
+    """
     dev = abs(value - target)
+    if abs(dev - tol) <= EXACT:
+        return True, False
     return dev <= tol, abs(dev - tol) < BOUNDARY_GUARD
 
 
@@ -143,6 +158,8 @@ def oracle(spec: Spec, g: Geometry) -> tuple[set[str], set[str]]:
         fails.add("gate:simple_through_holes")
     if len(inside) > 3 * spec.hole_count:
         fails.add("gate:hole_count_sane")
+    if g.cavity:
+        fails.add("gate:clean_solid")
 
     # requirements
     for name, value, target in (("R1:length", g.L, spec.length), ("R2:width", g.W, spec.width),
@@ -177,9 +194,16 @@ def oracle(spec: Spec, g: Geometry) -> tuple[set[str], set[str]]:
     if inside and abs(worst - MARGIN_TOL) < BOUNDARY_GUARD:
         amb.add("R7:edge_margin")
 
+    ok, a = _edge(g.oz, 0.0, DATUM_TOL)
+    if not ok:
+        fails.add("R8:z_datum")
+    if a:
+        amb.add("R8:z_datum")
+
     fillet_loss = 4 * (g.fillet ** 2 - math.pi * g.fillet ** 2 / 4) * g.T
+    cavity_loss = 1.5 * 1.5 * 0.4 * g.T if g.cavity else 0.0
     removed = sum(math.pi * (h.d / 2) ** 2 * (g.T if h.through else h.depth) for h in inside)
-    volume = g.L * g.W * g.T - fillet_loss - removed
+    volume = g.L * g.W * g.T - fillet_loss - removed - cavity_loss
     exp_mat = g.L * g.W * g.T - spec.hole_count * math.pi * (spec.hole_diameter / 2) ** 2 * g.T
     band = R.MATERIAL_TOL * exp_mat
     if abs(volume - exp_mat) > band:
@@ -221,9 +245,15 @@ def mutants_for(spec: Spec) -> list[Mutant]:
                 g = replace(g0, **{attr: value})
                 if attr in ("L", "W"):
                     k = 0 if attr == "L" else 1
+                    # Move each hole outward (grow) or inward (shrink) with its
+                    # edge so the margins stay nominal. 0.3.x used copysign,
+                    # which drops the sign of `sign`: shrinking moved holes out.
+                    def _out(v: float) -> float:
+                        return 1.0 if v > 0 else -1.0
+
                     g = replace(g, holes=tuple(
-                        replace(h, x=h.x + math.copysign(sign * delta / 2, h.x)) if k == 0
-                        else replace(h, y=h.y + math.copysign(sign * delta / 2, h.y)) for h in g.holes))
+                        replace(h, x=h.x + _out(h.x) * sign * delta / 2) if k == 0
+                        else replace(h, y=h.y + _out(h.y) * sign * delta / 2) for h in g.holes))
                 out.append((f"{field_name}{'+' if sign > 0 else '-'}{delta:.1f}", fam, g, "margins kept"))
     for sign in (-1, 1):
         for delta, fam in ((t_hole - 0.1, "within_tol"), (t_hole + 0.1, "beyond_tol")):
@@ -244,6 +274,17 @@ def mutants_for(spec: Spec) -> list[Mutant]:
         replace(g0.holes[0], through=False, depth=round(spec.thickness * 0.6, 2)), *g0.holes[1:])), ""))
     out.append(("mixed_diameters", "diameter", replace(g0, holes=(
         replace(g0.holes[0], d=spec.hole_diameter + 1.0), *g0.holes[1:])), ""))
+    # 0.4.0 families from the reference-grounded audit.
+    for delta, fam in ((DATUM_TOL - 0.2, "within_tol"), (DATUM_TOL, "exact_limit"), (DATUM_TOL + 0.2, "beyond_tol")):
+        out.append((f"part_dz{delta:.1f}", fam, replace(g0, oz=delta), "audit K1: Z datum"))
+    for sign in (-1, 1):
+        d = round(spec.hole_diameter + sign * t_hole, 6)
+        out.append((f"D_exact{'+' if sign > 0 else '-'}", "exact_limit",
+                    replace(g0, holes=tuple(replace(h, d=d) for h in g0.holes)), "audit F07"))
+    out.append(("membrane", "gate", replace(g0, holes=tuple(
+        replace(h, through=False, depth=round(spec.thickness - 0.005, 4)) for h in g0.holes)), "audit F04"))
+    out.append(("cavity", "gate", replace(g0, cavity=True), "audit F05"))
+
     # Known limitation: a hole moved so it breaks out through the side wall.
     bx = spec.length / 2 - spec.hole_diameter / 4
     out.append(("LIMIT_breakout", "known_limitation",
@@ -269,7 +310,10 @@ def main() -> int:
     for spec in specs:
         for m in mutants_for(spec):
             report = R.score(to_code(m.geometry), spec)
-            got = {"build"} if report.error else {c.name for c in report.checks if not c.passed}
+            # A part that did not build fails every check. 0.3.x put "build"
+            # outside the compared set, so a build failure read as all-pass
+            # in the per-check table.
+            got = set(GATES + REQS) if report.error else {c.name for c in report.checks if not c.passed}
             compare = set(GATES + REQS) - m.ambiguous
             want = m.oracle_fails & compare
             have = got & compare
