@@ -152,6 +152,20 @@ python scripts/run_baseline.py --provider openai --base-url http://localhost:114
 python scripts/summarize_results.py results/runs/*.jsonl --markdown results/baselines.md
 ```
 
+Hosted models through OpenRouter (one key, hundreds of models), with the
+cost of a full run estimated first and a hard spending cap:
+
+```bash
+python scripts/openrouter_models.py --max-cost 0.50         # live catalogue + run estimates
+export OPENROUTER_API_KEY=sk-or-...
+python scripts/run_baseline.py --provider openai --base-url https://openrouter.ai/api/v1 \
+    --key-env OPENROUTER_API_KEY --model <model-id> --tiers L0 L1 L2 L3 L4 --budget 0.50
+```
+
+Reasoning models need `--max-tokens 8000` or more; otherwise they spend the
+budget thinking and return nothing. The summary flags any run where that
+happened.
+
 The summary reports, per tier: mean reward and all-requirements pass rate with
 95% bootstrap intervals over specs, build rate, gate hits, timeouts and the
 pass rate of every check. The protocol for a training claim is in

@@ -3,6 +3,23 @@
 Scores are only comparable within one scorer version
 (`cad_spec.rubric.SCORER_VERSION`).
 
+## Unreleased
+
+### Baseline tooling
+- `run_baseline.py` records `finish_reason` and a `truncated` flag per rollout,
+  the exact USD cost per call on OpenRouter, and the serving provider.
+  Found by the first qwen3:4b run: 131 of 150 answers were empty because the
+  model spent the whole 4,096-token budget thinking; nothing in the output
+  showed it.
+- `--budget USD` hard stop; abort after 5 consecutive API errors (exit 3);
+  `--extra-body` for provider parameters (e.g. reasoning effort); live
+  progress line with spend and ETA.
+- `summarize_results.py` adds Truncated, API errors and Cost columns, and
+  lists any (model, tier) with over 5% truncated or failed calls as not
+  publishable. Legacy rows are checked too (empty answer at the token cap).
+- `openrouter_models.py`: live OpenRouter catalogue with the cost of a full
+  cad-spec run estimated from the real prompt sizes.
+
 ## 0.3.0 (2026-09)
 
 Response to the September 2026 audit (`docs/audit-2026-09.md`).

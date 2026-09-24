@@ -3,7 +3,10 @@
 Reports what the evaluation protocol asks for: all-requirements pass rate
 (pass@1 over rollouts), mean and median reward with a 95% bootstrap interval
 over SPECS (rollouts of one spec are not independent), build rate, gate hits,
-timeouts, per-check pass rates. Tiers are never averaged together.
+timeouts, truncated answers, API errors, cost, per-check pass rates. Tiers
+are never averaged together. Any (model, tier) with more than 5% truncated
+or failed calls is listed as not publishable: that is a run configuration
+problem, not a model result.
 
     python scripts/summarize_results.py results/runs/*.jsonl
     python scripts/summarize_results.py results/runs/*.jsonl --markdown results/baselines.md
@@ -47,6 +50,15 @@ def load(paths: list[str]) -> tuple[dict[str, dict], dict[tuple[str, str], list[
     return metas, groups
 
 
+def _looks_truncated(row: dict) -> bool:
+    """Rows from before finish_reason was recorded: an empty answer that used the whole
+    token budget (the signature of the September 2026 qwen3 incident)."""
+    if "finish_reason" in row:
+        return False
+    used = (row.get("usage") or {}).get("completion_tokens") or 0
+    return not row.get("completion", "").strip() and used >= 1000
+
+
 def summarize(rows: list[dict]) -> dict:
     by_spec: dict[str, list[dict]] = defaultdict(list)
     for r in rows:
@@ -62,6 +74,8 @@ def summarize(rows: list[dict]) -> dict:
         "built_rate": len(built) / len(rows),
         "gate_hit_rate": sum(1 for r in built if not r["gates_passed"]) / max(1, len(built)),
         "timeouts": sum(r.get("timeout", False) for r in rows),
+        "truncated": sum(bool(r.get("truncated")) or _looks_truncated(r) for r in rows),
+        "cost_usd": sum(float(r.get("cost_usd") or 0.0) for r in rows),
         "api_errors": sum(bool(r.get("api_error")) for r in rows),
         "per_check": {c: sum(r["checks"].get(c, False) for r in rows) / len(rows) for c in CHECKS},
         "per_gate_fail": {g: sum(not r["checks"].get(g, True) for r in built) / max(1, len(built)) for g in GATES},
@@ -77,8 +91,9 @@ def main() -> int:
     metas, groups = load(args.paths)
 
     md = ["| Model | Tier | Specs x rollouts | Mean reward [95% CI] | All-8 pass [95% CI] | Built | Gate hits |"
-          " Timeouts | R1 | R2 | R3 | R4a | R4b | R5 | R6 | R7 |",
-          "|---|---|---|---|---|---:|---:|---:|" + "---:|" * 8]
+          " Timeouts | Truncated | API errors | Cost $ | R1 | R2 | R3 | R4a | R4b | R5 | R6 | R7 |",
+          "|---|---|---|---|---|---:|---:|---:|---:|---:|---:|" + "---:|" * 8]
+    flagged: list[str] = []
     for (run_id, tier), rows in sorted(groups.items(), key=lambda kv: (metas.get(kv[0][0], {}).get("model", ""),
                                                                        kv[0][1])):
         s = summarize(rows)
@@ -89,8 +104,17 @@ def main() -> int:
             f"| {m.get('model', '?')} | {tier} | {s['specs']}x{s['rollouts'] // max(1, s['specs'])} | "
             f"{s['mean_reward']:.3f} [{lo:.3f}, {hi:.3f}] | {s['all_requirements_pass']:.1%} "
             f"[{flo:.1%}, {fhi:.1%}] | {s['built_rate']:.0%} | {s['gate_hit_rate']:.0%} | {s['timeouts']} | "
+            f"{s['truncated']} | {s['api_errors']} | {s['cost_usd']:.4f} | "
             + " | ".join(f"{s['per_check'][c]:.0%}" for c in CHECKS) + " |"
         )
+    for (run_id, tier), rows in groups.items():
+        s = summarize(rows)
+        if s["truncated"] + s["api_errors"] > 0.05 * len(rows):
+            flagged.append(f"{metas.get(run_id, {}).get('model', '?')} {tier}: "
+                           f"{s['truncated']} truncated, {s['api_errors']} API errors of {len(rows)}")
+    if flagged:
+        md += ["", "**Not publishable as a model result** (over 5% of answers truncated or failed at the API; "
+               "fix the run configuration and rerun):", *[f"- {f}" for f in sorted(flagged)]]
     scorers = sorted({m.get("scorer_version", "?") for m in metas.values()})
     revs = sorted({m.get("git_rev", "?") for m in metas.values()})
     md += ["", f"Scorer version(s): {', '.join(scorers)}. Code revision(s): {', '.join(revs)}. "
