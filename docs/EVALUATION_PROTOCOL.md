@@ -1,7 +1,7 @@
 # Evaluation protocol
 
 What must be true before a number from cad-spec goes into a README, a post,
-or a CV. Written against scorer 0.3.0.
+or a CV. Written against scorer 0.4.0.
 
 ## 1. Freeze before training
 
@@ -27,13 +27,14 @@ expected result is fixed.
 ## 3. Always run the deterministic baselines
 
 ```bash
-for p in reference parser-copy parser-derive; do
+for p in reference parser-copy parser-derive parser-template; do
   python scripts/run_baseline.py --provider $p --tiers L0 L1 L2 L3 L4; done
 python scripts/run_baseline.py --provider rev-a --tiers L4
 ```
 
 A model result on a tier is only interesting where these fail. A model scoring
-100% on L0 has matched a regex.
+100% on L0 has matched a regex; on L3, `parser-template` shows how far a
+template-aware shortcut goes.
 
 ## 4. Model baselines
 
@@ -47,7 +48,16 @@ A model result on a tier is only interesting where these fail. A model scoring
   (`summarize_results.py` produces all of these).
 - For L4, lead with all-requirements pass rate: returning rev A unchanged
   already earns about 0.75 mean reward.
-- Keep the JSONL files; they hold the completions for failure analysis.
+- Keep the JSONL files; they hold the completions for failure analysis and
+  let `scripts/rescore.py` replay them under any later scorer at no cost.
+- Only complete runs count. The summary flags a run with fewer rows than
+  planned, no end record, a non-complete status or duplicates; the eval
+  split is ordered by plate size, so a partial run is a biased sample.
+- "All-pass" is pass@1: the share of rollouts meeting every requirement. It
+  is not pass@k.
+- Compare models on the same specs and seeds (paired). With many models on
+  one board, state that differences inside overlapping intervals are not
+  rankings, and name the comparisons you planned before looking.
 
 ## 5. Training claim
 
