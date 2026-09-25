@@ -45,7 +45,7 @@ FAILURE_GROUPS = {
     "code did not build": ("syntax error", "CadQuery API error", "geometry kernel failure",
                            "Python error in model code", "no part produced", "timeout", "build failed",
                            "classifier error"),
-    "holes not bound to positions": ("holes stacked at one point", "no holes"),
+    "holes not bound to positions": ("holes stacked at one point", "holes drilled along the wrong axis", "no holes"),
     "hole pattern misread": ("pattern anchored at a corner", "margin applied twice", "X and Y swapped",
                              "pitch read as coordinates", "one axis misplaced", "some holes right, some wrong",
                              "holes misplaced (other)"),

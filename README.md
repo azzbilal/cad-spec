@@ -20,7 +20,7 @@ What this is, and what it is not:
 | Scorer validated against labelled mutants | yes: 1,230 mutants, 0 false full credit on 600 wrong parts, 0 false rejection on 600 correct parts ([results](results/scorer-validation-0.4.0.md)) |
 | Separates "copying numbers" from "reading a spec" | partly: five prompt tiers, reported separately; L0 to L2 are solved by simple parsers, and L3 by a parser that knows its wording templates ([baselines](results/baselines-deterministic.md)) |
 | Runs untrusted model code safely | per-rollout sandbox on POSIX, container for untrusted scale ([SECURITY.md](SECURITY.md)) |
-| Ranks real models and shows *how* each one fails | yes: 16 models (15 hosted, 1 local), about $0.27 of API calls; failure labels checked by AI-assisted reviews of two fresh random samples, 28/30 correct each; a human check is still to do ([leaderboard](#leaderboard)) |
+| Ranks real models and shows *how* each one fails | yes: 16 models (15 hosted, 1 local), about $0.27 of API calls; failure labels checked by AI-assisted review of three fresh random samples: 28/30, 28/30, 27/30 ([leaderboard](#leaderboard)) |
 | Shows that RL training improves a model | **not yet**: tooling is ready, no training run is published |
 | Broad text-to-CAD benchmark, new part families | **no**: one family; see [ROADMAP.md](ROADMAP.md) |
 | "Material" means alloy, strength, fit, manufacturability | **no**: R6 is volume consistency only |
@@ -208,11 +208,11 @@ parser with one derivation rule 50%, a plain table parser 25%.
 
 **How the failure labels were checked.** `scripts/failure_modes.py` labels
 every failed answer from its re-measured geometry and code. AI agents
-reviewed two fresh random samples of 30 (seeds 20260926 and 20260927, drawn
-from over 1,300 failed answers): **28/30 in the correct category, both
-times.** These are AI-assisted checks, not a human validation; a human review
-of a new sample is still to do. Each sample's misses were fixed afterwards;
-the figures are as measured before the fixes. An
+reviewed three fresh random samples of 30 (seeds 20260926 to 20260928, drawn
+from over 1,300 failed answers): **28/30, 28/30 and 27/30 in the correct
+category**, with the maintainer ruling on the taxonomy questions they raised.
+No human-validated accuracy is claimed. Each sample's misses were fixed
+afterwards; the figures are as measured before the fixes. An
 earlier sample was used to develop the rules and is not counted as evidence.
 A later external audit of the analysis code found four more classifier and
 ranking defects, all fixed with regression tests. Details:
@@ -324,7 +324,7 @@ scripts/
   validate_scorer.py  mutation suite -> results/scorer-validation-*.md
   rescore.py          replay saved answers through the current scorer
   failure_modes.py    label every failed answer (geometry + code)
-  label_check.py      random sample of labels for a human to verify
+  label_check.py      random sample of failure labels, with evidence, for review
   leaderboard.py      ranked table + SVG charts
   openrouter_models.py  live model catalogue with run cost estimates
   run_baseline.py     any provider, any tier, JSONL with provenance

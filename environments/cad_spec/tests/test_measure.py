@@ -484,3 +484,22 @@ def test_origin_tag_survives_the_error_cap():
     with pytest.raises(BuildError) as info:
         build_and_measure(code)
     assert str(info.value).startswith("execution failed [raised in cadquery"), str(info.value)[:120]
+
+
+# --- diagnostics: bores along the wrong axis (never scored) -----------------
+
+def test_off_axis_bores_are_counted_not_scored():
+    import cadquery as cq
+
+    from cad_spec.measure import measure
+
+    side = cq.Workplane("XY").box(40, 30, 10).faces(">X").workplane().hole(4).val()
+    m = measure(side)
+    assert m.off_axis_bores == 1 and m.hole_count == 0
+    twice = cq.Workplane("XY").box(40, 30, 10).faces(">X").workplane().pushPoints([(-6, 0), (6, 0)]).hole(3).val()
+    assert measure(twice).off_axis_bores == 2
+    rounded = cq.Workplane("XY").box(40, 30, 10).edges("|X").fillet(2).val()
+    assert measure(rounded).off_axis_bores == 0  # convex rounds are not bores
+    plate = cq.Workplane("XY").box(40, 30, 10).faces(">Z").workplane().rect(20, 10, forConstruction=True)
+    normal = measure(plate.vertices().hole(4).val())
+    assert normal.off_axis_bores == 0 and normal.hole_count == 4

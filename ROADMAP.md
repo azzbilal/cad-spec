@@ -10,7 +10,7 @@ the evidence that meets it.
 | 0 Reproducible claims | **done** | clean-room CI job (cadquery only); `constraints.txt`; provenance in every run file |
 | 1 Geometric truth | **done** | audit regressions in the harness (37 cases); mutation suite 0/600 false full credit, 0/600 false rejection; the same suite finds 15% false full credit in 0.3.0 |
 | 2 Contain generated code | **done on POSIX**, Windows documented as trusted-only | BREP trust boundary; `SECURITY.md` per mode; sandbox tests; Docker CI job |
-| 3 Learning value | **in progress** | 16-model first-shot board published with human-checked failure labels; no training run yet |
+| 3 Learning value | **in progress** | 16-model first-shot board published; failure labels checked by AI-assisted review of three samples; no training run yet |
 | 4 Transfer | **partial** | tiers L1 to L4 incl. held-out wording; new part families not started |
 | 5 Research-grade release | **partial** | changelog, data card, protocol, license; release tag waits for Phase 3 numbers |
 
@@ -18,10 +18,10 @@ the evidence that meets it.
 
 1. **Model baselines (Phase 3). Done:** 16 models (15 via OpenRouter, 1
    local), all tiers, greedy, rescored under 0.4.0; board, charts and
-   failure fingerprints in `results/leaderboard/`, labels human-checked
-   (`docs/label-check.md`, AI-assisted). Still to do: a human label check
-   on seed 20260928 (the two 28/30 samples so far are AI-assisted), and
-   four reasoning models at `--max-tokens 8000`.
+   failure fingerprints in `results/leaderboard/`, labels checked
+   (`docs/label-check.md`: AI-assisted review of three fresh samples,
+   28/30, 28/30, 27/30). Still to add: four reasoning models at
+   `--max-tokens 8000`.
 2. **Knowledge or reasoning? Hint and feedback tracks.** Rerun weak models
    with a short CadQuery cheat-sheet (stack semantics, `hole`/`rect`/`rarray`
    signatures), then with one retry after a build error. Predicted before
@@ -38,12 +38,16 @@ the evidence that meets it.
    mixed units, so a template-aware parser no longer solves L3.
 7. **Breakout scoring ablation.** Score partial bores by position
    (conservative) and compare reward alignment against the current rule.
-8. **Windows isolation.** Recycle the reuse-mode worker after each rollout
+8. **Aim points for off-plate holes.** Record where each `.hole()` call
+   aims during the failure-analysis rebuild, so a pattern whose holes mostly
+   miss the plate can still be classified (known limitation in
+   `docs/label-check.md`).
+9. **Windows isolation.** Recycle the reuse-mode worker after each rollout
    behind a flag and measure the cost.
-9. **Held-out part families (9/10 track).** Two families with independent
+10. **Held-out part families (9/10 track).** Two families with independent
    detectors (candidates: slotted plate; L-bracket with holes on two faces).
    Each requirement ships with positive, negative and reward-hack fixtures.
-10. **External comparison.** Run a CADTests-style requirement set against the
+11. **External comparison.** Run a CADTests-style requirement set against the
    same answers and report agreement.
 
 ## Explicitly deferred

@@ -67,7 +67,8 @@ NOT_BUILT = ("syntax error", "CadQuery API error", "geometry kernel failure", "P
              "no part produced", "timeout", "build failed")
 ORDER = UNFINISHED + NOT_BUILT + (
     "change order ignored", "change not propagated to pitch",
-    "holes stacked at one point", "no holes", "pattern anchored at a corner", "margin applied twice",
+    "holes stacked at one point", "holes drilled along the wrong axis", "no holes", "pattern anchored at a corner",
+    "margin applied twice",
     "X and Y swapped", "pitch read as coordinates", "one axis misplaced", "some holes right, some wrong",
     "holes misplaced (other)",
     "gate: single_solid", "gate: clean_solid", "gate: simple_through_holes", "gate: hole_count_sane",
@@ -183,6 +184,32 @@ def _axis(vals: list[float], pitch: float, other_pitch: float, margin: float) ->
     return "other"
 
 
+def _axis_grid(kind: str, vals: list[float], pitch: float, other_pitch: float, margin: float) -> set[float] | None:
+    """The coordinates a hypothesis predicts on one axis; None if it predicts none.
+
+    Extremes alone are not evidence: two right corners plus two holes between
+    them have the right span (label check, seed 20260928, #13). A mistake
+    pattern is named only if EVERY hole sits on the grid it predicts.
+    """
+    return {
+        "ok": {-pitch / 2, pitch / 2},
+        "corner": {min(vals), min(vals) + pitch},
+        "margin twice": {-abs(pitch / 2 - margin), abs(pitch / 2 - margin)},
+        "swapped": {-other_pitch / 2, other_pitch / 2},
+        "coords": {-pitch, pitch},
+    }.get(kind)
+
+
+def _on_grid(points: list[tuple[float, float]], gx: set[float] | None, gy: set[float] | None) -> bool:
+    return (gx is not None and gy is not None
+            and all(any(close(x, g) for g in gx) and any(close(y, g) for g in gy) for x, y in points))
+
+
+def _repeated_drilling(code: str) -> bool:
+    """Several drills with nothing moving the drill between them."""
+    return (len(_HOLE_CALL.findall(code)) >= 2 and not _PLACEMENT.search(code)) or bool(_STACK_SIGNS[1].search(code))
+
+
 # Operations that put the next drill somewhere new. Their absence is what
 # makes repeated .hole() calls pile up at one spot: CadQuery drills at the
 # centre of whatever is on the stack, so .translate() (which moves the SOLID)
@@ -214,8 +241,7 @@ def _single_point_label(x: float, y: float, code: str) -> str:
     (Label check, September 2026: the earlier rule required the .hole()
     calls to be adjacent and missed five stacked answers.)
     """
-    repeated = len(_HOLE_CALL.findall(code)) >= 2 and not _PLACEMENT.search(code)
-    if repeated or _STACK_SIGNS[1].search(code):
+    if _repeated_drilling(code):
         return "holes stacked at one point"
     if close(x, 0) and close(y, 0):
         compact = re.sub(r"\s+", "", code)
@@ -226,9 +252,16 @@ def _single_point_label(x: float, y: float, code: str) -> str:
     return "holes misplaced (other)"
 
 
-def _pattern_label(points: list[tuple[float, float]], spec: Spec, code: str = "") -> str | None:
+def _pattern_label(points: list[tuple[float, float]], spec: Spec, code: str = "",
+                   off_axis: int = 0) -> str | None:
     """None when the hole pattern is right; otherwise the pattern failure."""
     if not points:
+        # No bore along Z. Bores along another axis mean the holes were drilled
+        # into a side face: repeated drilling there is still stacking (the
+        # maintainer's call on seed 20260928, #1); holes placed apart are the
+        # wrong axis. The Z-only scorer alone reported "no holes".
+        if off_axis:
+            return "holes stacked at one point" if _repeated_drilling(code) else "holes drilled along the wrong axis"
         return "no holes"
     distinct = {(round(x / TOL), round(y / TOL)) for x, y in points}
     if len(distinct) == 1:
@@ -236,6 +269,10 @@ def _pattern_label(points: list[tuple[float, float]], spec: Spec, code: str = ""
     ax = _axis([p[0] for p in points], spec.pitch_x, spec.pitch_y, spec.edge_margin)
     ay = _axis([p[1] for p in points], spec.pitch_y, spec.pitch_x, spec.edge_margin)
     kinds = {ax, ay}
+    xs, ys = [p[0] for p in points], [p[1] for p in points]
+    gx = _axis_grid(ax, xs, spec.pitch_x, spec.pitch_y, spec.edge_margin)
+    gy = _axis_grid(ay, ys, spec.pitch_y, spec.pitch_x, spec.edge_margin)
+    on_grid = _on_grid(points, gx, gy)
     nominal = [(a * spec.pitch_x / 2, b * spec.pitch_y / 2) for a in (-1, 1) for b in (-1, 1)]
     hits = sum(any(close(x, nx) and close(y, ny) for x, y in points) for nx, ny in nominal)
     if kinds == {"ok"}:
@@ -246,13 +283,13 @@ def _pattern_label(points: list[tuple[float, float]], spec: Spec, code: str = ""
         if not stray:
             return None
         return "some holes right, some wrong" if hits else "holes misplaced (other)"
-    if "corner" in kinds and kinds <= {"corner", "ok"}:
+    if on_grid and "corner" in kinds and kinds <= {"corner", "ok"}:
         return "pattern anchored at a corner"
-    if "margin twice" in kinds and kinds <= {"margin twice", "ok"}:
+    if on_grid and "margin twice" in kinds and kinds <= {"margin twice", "ok"}:
         return "margin applied twice"
-    if kinds == {"swapped"}:
+    if on_grid and kinds == {"swapped"}:
         return "X and Y swapped"
-    if "coords" in kinds and kinds <= {"coords", "ok"}:
+    if on_grid and "coords" in kinds and kinds <= {"coords", "ok"}:
         return "pitch read as coordinates"
     # Exact hits first: a true one-axis error puts NO hole at a nominal
     # position, while a partly right pattern can span the right distance on
@@ -379,7 +416,8 @@ def _classify(row: dict, spec: Spec, max_tokens: int | None, detail: dict) -> st
     # Where the plate IS, not only its size: a moved plate puts correct-looking
     # holes "outside the footprint" (label check #26).
     detail["plate_bbox"] = {"x": [m.x_min, m.x_max], "y": [m.y_min, m.y_max], "z": [m.z_min, m.z_max]}
-    pattern = _pattern_label(points, spec, executable_code(row.get("completion", "")))
+    detail["off_axis_bores"] = getattr(m, "off_axis_bores", 0)
+    pattern = _pattern_label(points, spec, executable_code(row.get("completion", "")), detail["off_axis_bores"])
     return pattern or _checks_label(row["checks"])
 
 

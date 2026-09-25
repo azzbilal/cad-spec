@@ -5,6 +5,20 @@ Scores are only comparable within one scorer version
 
 ## Unreleased
 
+### Label check, seed 20260928 (AI-assisted, 27/30)
+- Measurements report `off_axis_bores`: closed concave bores along X, Y or
+  any non-Z axis (same concavity and completeness tests as Z bores).
+  Diagnostics only, never scored; mutation suite unchanged.
+- New label "holes drilled along the wrong axis"; an answer with no Z bore
+  whose side-face drilling repeats without moving is "holes stacked at one
+  point" (maintainer's ruling).
+- Mistake patterns (corner, margin twice, swapped, pitch as coordinates) must
+  place every measured hole on the grid they predict; matching extremes is
+  no longer enough.
+- Method stated: labels are checked by AI-assisted review of three fresh
+  samples (28/30, 28/30, 27/30); no human-validated figure is claimed. Holes
+  that land off the plate are a documented limitation.
+
 ### Label check, seed 20260927 (AI-assisted, 28/30)
 - Error origin tag moved to the start of the error text: the 300-character
   cap on sandbox error text cut an end tag from long messages, so 11 answers

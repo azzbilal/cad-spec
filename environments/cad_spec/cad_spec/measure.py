@@ -209,6 +209,11 @@ class Measurements:
     shell_count: int = 1
     loose_count: int = 0
     valid: bool = True
+    # Diagnostics only, never scored: closed concave bores whose axis is NOT
+    # along Z (holes drilled into a side face). The spec asks for Z bores, so
+    # these earn nothing; counting them lets failure analysis tell "no holes"
+    # from "holes drilled along the wrong axis" (label check, seed 20260928).
+    off_axis_bores: int = 0
 
     @property
     def hole_count(self) -> int:
@@ -392,6 +397,64 @@ def _z_aligned_cylinders(solid: Any) -> list[tuple[float, float, float, Any]]:
     return out
 
 
+def _off_axis_bore_count(solid: Any) -> int:
+    """Closed concave bores whose axis is not along Z. Diagnostics only.
+
+    Same two discriminators as the Z bores (see _classify_cylinders): a probe
+    just inside the surface must find no material (concave, not a round or a
+    boss), and the coaxial group must cover a full cylinder over its axial
+    extent (a bore, not a fillet arc). Never raises: a diagnostic must not be
+    able to break measurement.
+    """
+    try:
+        from OCP.BRepAdaptor import BRepAdaptor_Surface
+        from OCP.BRepClass3d import BRepClass3d_SolidClassifier
+        from OCP.GeomAbs import GeomAbs_SurfaceType
+        from OCP.gp import gp_Pnt
+        from OCP.TopAbs import TopAbs_State
+
+        classifier = BRepClass3d_SolidClassifier(solid.wrapped)
+        groups: dict[tuple, tuple[list[float], list[tuple[float, float]]]] = {}
+        for face in solid.Faces():
+            ad = BRepAdaptor_Surface(face.wrapped)
+            if ad.GetType() != GeomAbs_SurfaceType.GeomAbs_Cylinder:
+                continue
+            cyl = ad.Cylinder()
+            d = cyl.Axis().Direction()
+            if abs(d.X()) <= AXIS_TOL and abs(d.Y()) <= AXIS_TOL:
+                continue  # Z bores are measured by _classify_cylinders
+            r, loc = cyl.Radius(), cyl.Axis().Location()
+            dx, dy, dz = d.X(), d.Y(), d.Z()
+            if next(c for c in (dx, dy, dz) if abs(c) > AXIS_TOL) < 0:
+                dx, dy, dz = -dx, -dy, -dz  # one key per axis, whatever its sense
+            u = (ad.FirstUParameter() + ad.LastUParameter()) / 2
+            v = (ad.FirstVParameter() + ad.LastVParameter()) / 2
+            p = ad.Value(u, v)
+            t = (p.X() - loc.X()) * dx + (p.Y() - loc.Y()) * dy + (p.Z() - loc.Z()) * dz
+            foot = (loc.X() + t * dx, loc.Y() + t * dy, loc.Z() + t * dz)
+            k = max(r * PROBE_INSET_FRACTION, PROBE_INSET_MIN_MM) / r
+            classifier.Perform(gp_Pnt(p.X() + (foot[0] - p.X()) * k, p.Y() + (foot[1] - p.Y()) * k,
+                                      p.Z() + (foot[2] - p.Z()) * k), 1e-6)
+            if classifier.State() == TopAbs_State.TopAbs_IN:
+                continue  # material just inward: convex round or boss
+            t0 = loc.X() * dx + loc.Y() * dy + loc.Z() * dz
+            base = (loc.X() - t0 * dx, loc.Y() - t0 * dy, loc.Z() - t0 * dz)
+            key = (*(round(c, COAXIAL_DP) for c in (dx, dy, dz, *base)), round(2 * r, 4))
+            area, spans = groups.setdefault(key, ([0.0], []))
+            area[0] += face.Area()
+            v1, v2 = sorted((ad.FirstVParameter(), ad.LastVParameter()))
+            sense = 1.0 if (d.X(), d.Y(), d.Z()) == (dx, dy, dz) else -1.0
+            spans.append(tuple(sorted((sense * (t0 + v1), sense * (t0 + v2)))))
+        count = 0
+        for key, (area, spans) in groups.items():
+            covered = sum(hi - lo for lo, hi in _merge_intervals(spans))
+            if covered > 0 and area[0] / (math.pi * key[-1] * covered) >= AREA_COMPLETENESS_MIN:
+                count += 1
+        return count
+    except Exception:  # diagnostics never break measurement
+        return 0
+
+
 def _merge_intervals(intervals: list[tuple[float, float]]) -> list[tuple[float, float]]:
     """Union of closed Z intervals, merging touching or overlapping ones."""
     merged: list[list[float]] = []
@@ -551,6 +614,7 @@ def measure(solid: Any) -> Measurements:
         shell_count=_count(topo, TopAbs_SHELL),
         loose_count=loose,
         valid=bool(BRepCheck_Analyzer(topo).IsValid()),
+        off_axis_bores=_off_axis_bore_count(solid),
     )
 
 
