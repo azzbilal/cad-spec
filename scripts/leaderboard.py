@@ -31,7 +31,7 @@ from xml.sax.saxutils import escape
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from summarize_results import completeness_problems, load, summarize
+from summarize_results import load, select_runs
 
 HEADLINE_TIERS = ("L1", "L2", "L3", "L4")
 ALL_TIERS = ("L0", *HEADLINE_TIERS)
@@ -85,27 +85,15 @@ def collect(paths: list[str]) -> tuple[dict[str, dict], dict[str, dict]]:
     board. Run ids start with a UTC timestamp, so they sort by time.
     """
     metas, groups, ends = load(paths)
-    candidates: dict[tuple[str, str], list[tuple[str, list[dict], list[str], float]]] = defaultdict(list)
-    for (run_id, tier), rows in groups.items():
-        meta = metas.get(run_id, {})
-        s = summarize(rows, meta.get("max_tokens"))
-        problems = completeness_problems(run_id, tier, rows, meta, ends)
-        if s["truncated"] + s["api_errors"] > 0.05 * len(rows):
-            problems.append(f"{s['truncated']} cut off, {s['api_errors']} API errors")
-        candidates[(meta.get("model", "?"), tier)].append((run_id, rows, problems, s["cost_usd"]))
-
     by_model: dict[str, dict] = defaultdict(lambda: {"tiers": {}, "notes": [], "cost": 0.0, "runs": {}})
-    for (name, tier), runs in candidates.items():
-        runs.sort(key=lambda r: r[0])
-        clean = [r for r in runs if not r[2]]
-        run_id, rows, problems, cost = (clean or runs)[-1]
+    for (name, tier), run in select_runs(metas, groups, ends).items():
         entry = by_model[name]
-        entry["tiers"][tier] = rows
-        entry["runs"][tier] = run_id
-        entry["cost"] += cost
-        entry["notes"] += [f"{tier}: {p}" for p in dict.fromkeys(problems)]
-        if len(runs) > 1:
-            entry["superseded"] = entry.get("superseded", 0) + len(runs) - 1
+        entry["tiers"][tier] = run["rows"]
+        entry["runs"][tier] = run["run_id"]
+        entry["cost"] += run["cost"]
+        entry["notes"] += [f"{tier}: {p}" for p in run["problems"]]
+        if run["superseded"]:
+            entry["superseded"] = entry.get("superseded", 0) + run["superseded"]
     models, refs = {}, {}
     for name, entry in by_model.items():
         entry["score"] = headline(entry["tiers"])

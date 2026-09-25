@@ -25,7 +25,10 @@ checked in order, so each answer lands in the first one that fits:
   some holes right, some wrong                  at least one hole at a nominal
                                                 position, not all
   holes misplaced (other)
-  gate: <name>                                  a cheat gate fired
+  gate: <name>                                  a cheat gate fired (overlapping
+                                                holes merge into one opening, so
+                                                hole positions count bore axes,
+                                                not separate openings)
   wrong plate size, off Z datum, wrong hole     pattern right, one other thing
   diameter, wrong hole count, material off,     wrong
   edge margin off, other
@@ -55,6 +58,7 @@ from cad_spec.tasks import TASKS, Spec, edit_source, make_splits
 
 DETERMINISTIC = {"reference", "parser-copy", "parser-derive", "parser-template", "rev-a"}
 from degenerate import is_degenerate
+from summarize_results import load, select_runs
 
 TOL = 0.5  # mm, same class as the rubric's position tolerance
 UNFINISHED = ("API error", "degenerate loop", "cut off")
@@ -103,6 +107,16 @@ def _axis(vals: list[float], pitch: float, other_pitch: float, margin: float) ->
     return "other"
 
 
+# Operations that put the next drill somewhere new. Their absence is what
+# makes repeated .hole() calls pile up at one spot: CadQuery drills at the
+# centre of whatever is on the stack, so .translate() (which moves the SOLID)
+# and .faces().workplane() do not move the drill point.
+_PLACEMENT = re.compile(
+    r"\.(transformed|moveTo|move|pushPoints|vertices|rarray|polarArray)\s*\("
+    r"|\.center\(\s*(?!0(\.0)?\s*,\s*0(\.0)?\s*\))"
+)
+_HOLE_CALL = re.compile(r"\.hole\s*\(")
+
 _STACK_SIGNS = (
     re.compile(r"(\.hole\([^)]*\)\s*){2,}"),                     # .hole().hole(): same spot twice
     re.compile(r"for\s+(\w+)[^:]*:\s*\n(?:(?!\1).)*?\.hole\(", re.S),  # loop var never used
@@ -113,13 +127,23 @@ _CORNER_SIGNS = re.compile(r"centered\s*=\s*False|[\[,]\s*\(\s*0(\.0)?\s*,\s*0(\
 
 
 def _single_point_label(x: float, y: float, code: str) -> str:
-    """Only one hole position on the plate. Geometry alone cannot tell four
-    holes drilled at one spot from a corner-anchored pattern whose other
-    holes fell off the plate, so the code breaks the tie."""
+    """Only one hole position on the plate: stacked drilling, or not?
+
+    Stacked means several drills at one spot: two or more .hole() calls (or
+    one in a loop that never uses its variable) with nothing in the code that
+    sets a new position. A single measured position can also come from holes
+    that really were placed apart but landed off the plate (e.g. cumulative
+    .transformed() offsets); those are NOT stacked. When only the origin hole
+    survived, the code decides between stacked and corner-anchored.
+    (Label check, September 2026: the earlier rule required the .hole()
+    calls to be adjacent and missed five stacked answers.)
+    """
+    repeated = len(_HOLE_CALL.findall(code)) >= 2 and not _PLACEMENT.search(code)
+    if repeated or _STACK_SIGNS[1].search(code):
+        return "holes stacked at one point"
     if close(x, 0) and close(y, 0):
         compact = re.sub(r"\s+", "", code)
-        rect_no_bind = ".rect(" in compact and ".vertices()" not in compact and "pushPoints" not in compact
-        if rect_no_bind or any(sign.search(code) for sign in _STACK_SIGNS):
+        if ".rect(" in compact and ".vertices()" not in compact and "pushPoints" not in compact:
             return "holes stacked at one point"
         if _CORNER_SIGNS.search(code):
             return "pattern anchored at a corner"
@@ -250,6 +274,9 @@ def _classify(row: dict, spec: Spec, max_tokens: int | None, detail: dict) -> st
     points = [(h.x, h.y) for h in m.holes] + [(p.x, p.y) for p in m.partial_bores]
     detail["holes"] = sorted({(round(x, 2), round(y, 2)) for x, y in points})
     detail["plate"] = [m.length, m.width, m.thickness]
+    # Where the plate IS, not only its size: a moved plate puts correct-looking
+    # holes "outside the footprint" (label check #26).
+    detail["plate_bbox"] = {"x": [m.x_min, m.x_max], "y": [m.y_min, m.y_max], "z": [m.z_min, m.z_max]}
     pattern = _pattern_label(points, spec, row.get("completion", ""))
     return pattern or _checks_label(row["checks"])
 
@@ -272,25 +299,25 @@ def main() -> int:
     totals: Counter = Counter()
     labelled = []
     api_kinds: dict[str, Counter] = defaultdict(Counter)
-    for path in args.paths:
-        lines = [json.loads(ln) for ln in Path(path).read_text(encoding="utf-8").splitlines() if ln.strip()]
-        meta = lines[0].get("meta", {})
-        model = meta.get("model", Path(path).stem)
-        for row in lines:
-            if row.get("tier") not in args.tiers or row.get("spec_id") not in specs:
+    metas, groups, ends = load(args.paths)
+    for (model, tier), run in sorted(select_runs(metas, groups, ends).items()):
+        if tier not in args.tiers:
+            continue
+        max_tokens = run["meta"].get("max_tokens")
+        for row in run["rows"]:
+            if row.get("spec_id") not in specs:
                 continue
             totals[model] += 1
-            passed = bool(row.get("checks")) and all(row["checks"].values())
-            if passed:
+            if bool(row.get("checks")) and all(row["checks"].values()):
                 continue
-            label, detail = classify(row, specs[row["spec_id"]], meta.get("max_tokens"))
+            label, detail = classify(row, specs[row["spec_id"]], max_tokens)
             if "api_kind" in detail:
                 api_kinds[detail["api_kind"]][model] += 1
             per_model[model][label] += 1
-            per_model_tier[model][row["tier"]][label] += 1
-            labelled.append({"model": model, "tier": row["tier"], "spec_id": row["spec_id"],
+            per_model_tier[model][tier][label] += 1
+            labelled.append({"model": model, "run_id": run["run_id"], "tier": tier, "spec_id": row["spec_id"],
                              "rollout": row.get("rollout", 0), "label": label, **detail})
-        print(f"classified {model}", file=sys.stderr)
+        print(f"classified {model} {tier} (run {run['run_id']})", file=sys.stderr)
 
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
