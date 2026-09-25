@@ -93,6 +93,21 @@ def cases() -> list[tuple[str, Spec, str, str | None, dict]]:
                                 f".vertices().hole({k.hole_diameter}))"),
                 "change not propagated to pitch", {}))
 
+    # External audit of the publish patch, September 2026: regression cases.
+    k2 = next(v for v in evals if v.id == "gen-0037")
+    k2a = edit_source(k2)
+    bare = f"result = cq.Workplane('XY').box({k2.length}, {k2.width}, {k2.thickness})"
+    out.append(("L4", k2, fenced(f"# rev A used .rect({k2a.pitch_x}, {k2a.pitch_y})\n{bare}"), "no holes", {}))
+    out.append(("L4", k2, fenced(f"# .rect(1..2,3)\n{bare}"), "no holes", {}))
+    diag = [(-hx, -hy), (hx, hy), (-hx / 3, hy / 3), (hx / 3, -hy / 3)]
+    out.append(("L1", s, at_points(s, diag), "some holes right, some wrong", {}))
+    plain = f"result = cq.Workplane('XY').box({s.length}, {s.width}, {s.thickness})"
+    out.append(("L1", s, fenced(f"n = int('abc')\n{plain}"),
+                "Python error in model code", {}))
+    out.append(("L1", s, fenced(f"result = (cq.Workplane('XY').box({s.length}, {s.width}, {s.thickness})"
+                                f".faces('>Z').workplane().rarray(2, 2, {s.pitch_x / 2}, {s.pitch_y / 2}).hole(5))"),
+                "CadQuery API error", {}))
+
     x = next(v for v in evals
              if (edit_source(v).pitch_x, edit_source(v).pitch_y) != (v.pitch_x, v.pitch_y)
              and (edit_source(v).length, edit_source(v).width) != (v.length, v.width))
@@ -149,7 +164,8 @@ def main() -> int:
         result = json.loads(next(Path(tmp).glob("failure-modes-*.json")).read_text())
     by_rollout = {r["rollout"]: r["label"] for r in result["rows"]}  # match by answer, not by order
     api = [r.get("api_kind") for r in result["rows"] if r["label"] == "CadQuery API error"]
-    if sorted(api) != ["no matching signature for Location()", "no such method: Workplane.nonexistent"]:
+    if sorted(api) != ["no matching signature for Location()", "no such method: Workplane.nonexistent",
+                       "non-integer count"]:
         print(f"[BAD] API error kind: {api}")
         return 1
     print("[ok ] API error kinds: no such method, no matching signature")

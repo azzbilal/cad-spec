@@ -5,12 +5,31 @@ Scores are only comparable within one scorer version
 
 ## Unreleased
 
+### External audit of the publish patch (fixed before release)
+- Headline inflation: a model is ranked only if every headline tier covers
+  exactly the 30 held-out specs (derived from the sampler, not the run file);
+  run summaries check spec-by-spec coverage against the run plan and no
+  longer crash on a plan without spec ids. `scripts/test_leaderboard.py`.
+- Classifier: every hole must sit at a nominal corner before a pattern is
+  accepted; code rules read parsed code, so comments cannot change a label;
+  L4 stale-pitch evidence comes from the syntax tree; one unreadable answer
+  gets "classifier error" instead of aborting the analysis.
+- New label "Python error in model code": the scorer now tags each execution
+  error with where it was raised (`[raised in model code|cadquery|other
+  library]`); CadQuery misuse needs a CadQuery message or origin. Scores are
+  unchanged; rescore saved runs with `--force` to refresh error texts.
+- `scripts/check_release.py` in CI: every relative link in the docs must
+  resolve, so a claim cannot ship without its evidence file.
+- Attribution corrected: the 28/30 label check was AI-assisted, not a human
+  validation; a human check on a new seed is on the roadmap.
+
 ### Leaderboard published
 - README: ranking chart, 16-model table, what the board shows (stack
   semantics, change-order propagation, invented methods, scale), how the
-  labels were checked, and the lower-bound caveats. Results committed:
-  rescored runs, leaderboard, failure analysis.
-- `docs/label-check.md`: method and both label checks. Fresh human-checked
+  labels were checked, and the lower-bound caveats. The results (rescored
+  runs, leaderboard, failure analysis) are committed in the same pull
+  request; the release check fails CI if any linked file is missing.
+- `docs/label-check.md`: method and both label checks. Fresh AI-assisted
   sample (seed 20260926): 28/30 labels in the correct category.
 - Fixes from that check: `DispatchError` is a CadQuery API error; an L4
   answer whose code keeps rev A's pitch on a rev B plate is "change not

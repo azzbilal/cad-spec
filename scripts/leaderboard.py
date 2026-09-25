@@ -30,6 +30,7 @@ from xml.sax.saxutils import escape
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "environments" / "cad_spec"))
 
 from summarize_results import load, select_runs
 
@@ -41,7 +42,8 @@ FONT = "font-family='Segoe UI, Helvetica, Arial, sans-serif'"
 PALETTE = ["#0072B2", "#E69F00", "#009E73", "#D55E00", "#CC79A7", "#56B4E9", "#F0E442", "#999999"]
 FAILURE_GROUPS = {
     "did not finish": ("API error", "degenerate loop", "cut off"),
-    "code did not build": ("syntax error", "CadQuery API error", "no part produced", "timeout", "build failed"),
+    "code did not build": ("syntax error", "CadQuery API error", "Python error in model code", "no part produced",
+                           "timeout", "build failed", "classifier error"),
     "holes not bound to positions": ("holes stacked at one point", "no holes"),
     "hole pattern misread": ("pattern anchored at a corner", "margin applied twice", "X and Y swapped",
                              "pitch read as coordinates", "one axis misplaced", "some holes right, some wrong",
@@ -62,11 +64,42 @@ def per_spec_pass(rows: list[dict]) -> dict[str, float]:
     return {k: statistics.fmean(v) for k, v in acc.items()}
 
 
-def headline(tier_rows: dict[str, list[dict]], iters: int = 2000) -> tuple[float, float, float] | None:
+def held_out_ids() -> set[str]:
+    """The 30 held-out specs every ranked model must answer, derived from the
+    task sampler, never from what a run file claims about itself."""
+    from cad_spec.tasks import make_splits
+
+    return {s.id for s in make_splits()[1]}
+
+
+def coverage_problems(tier_rows: dict[str, list[dict]], expected: set[str]) -> list[str]:
+    """Why a model cannot be ranked on the held-out set; empty if it can."""
+    out = []
+    for t in HEADLINE_TIERS:
+        if t not in tier_rows:
+            continue
+        got = {r.get("spec_id") for r in tier_rows[t]}
+        missing, extra = len(expected - got), len(got - expected)
+        if missing or extra:
+            out.append(f"{t}: {missing} held-out specs missing, {extra} specs outside the held-out set")
+    return out
+
+
+def headline(tier_rows: dict[str, list[dict]], expected: set[str] | None = None,
+             iters: int = 2000) -> tuple[float, float, float] | None:
+    """Mean over the held-out specs of the per-spec pass rate across L1-L4.
+
+    Every headline tier must cover exactly the held-out specs. The earlier
+    version averaged over the specs common to all tiers, so a run whose
+    failures carried stray spec ids scored its passes only (a synthetic run
+    at 50% per tier headlined 100%; audit, September 2026).
+    """
     if not all(t in tier_rows for t in HEADLINE_TIERS):
         return None
+    if expected is not None and coverage_problems(tier_rows, expected):
+        return None
     per_tier = {t: per_spec_pass(tier_rows[t]) for t in HEADLINE_TIERS}
-    specs = sorted(set.intersection(*(set(v) for v in per_tier.values())))
+    specs = sorted(expected) if expected is not None else sorted(set.intersection(*(set(v) for v in per_tier.values())))
     if not specs:
         return None
     per_spec = [statistics.fmean(per_tier[t][s] for t in HEADLINE_TIERS) for s in specs]
@@ -95,8 +128,10 @@ def collect(paths: list[str]) -> tuple[dict[str, dict], dict[str, dict]]:
         if run["superseded"]:
             entry["superseded"] = entry.get("superseded", 0) + run["superseded"]
     models, refs = {}, {}
+    expected = held_out_ids()
     for name, entry in by_model.items():
-        entry["score"] = headline(entry["tiers"])
+        entry["notes"] += coverage_problems(entry["tiers"], expected)
+        entry["score"] = headline(entry["tiers"], expected)
         entry["tier_pass"] = {t: statistics.fmean(per_spec_pass(entry["tiers"][t]).values())
                               for t in ALL_TIERS if t in entry["tiers"]}
         missing = [t for t in HEADLINE_TIERS if t not in entry["tiers"]]
@@ -291,7 +326,8 @@ def main() -> int:
         tiers = " | ".join(f"{e['tier_pass'][t]:.0%}" if t in e["tier_pass"] else "" for t in ALL_TIERS)
         md.append(f"| {name} | {score} | {tiers} |")
     if unranked:
-        md += ["", "Not ranked (missing tiers): " + ", ".join(unranked)]
+        md += ["", "Not ranked (a headline tier is missing or does not cover exactly the 30 held-out specs): "
+               + ", ".join(f"{n} ({'; '.join(models[n]['notes']) or 'missing tiers'})" for n in unranked)]
     md += ["", "![tiers](heatmap.svg)"] + (["", "![failure fingerprints](fingerprints.svg)"] if failures else [])
     (out / "leaderboard.md").write_text("\n".join(md) + "\n")
     print("\n".join(md[:len(ranked) + 8]))

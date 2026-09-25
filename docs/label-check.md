@@ -24,7 +24,8 @@ it prompted.
 
 ## Sample 1 (development, not evidence)
 
-30 answers. Every label was a true statement about the part (30/30); 25/30
+30 answers, reviewed with AI assistance (the maintainer's notes on the
+disputed entries, cross-checked against two AI reviews). Every label was a true statement about the part (30/30); 25/30
 named the right category. The 5 misses were one gap: answers that drilled
 repeatedly at one spot, with the `.hole()` calls separated by `.translate()`,
 `.faces().workplane()` or `mirror()`, were filed as "holes misplaced
@@ -42,10 +43,13 @@ counted as evidence.
 ## Sample 2 (the reported figure)
 
 30 answers, seed 20260926, drawn from 1,318 failed answers after the sample 1
-fixes. Checked by a human reviewer (a mechanical engineer), independently of
-any prior verdict.
+fixes. Reviewed by an AI agent working from the review file, without access to
+any prior verdict on this sample.
 
-**28/30 in the correct category (93%).**
+**28/30 in the correct category (93%), AI-assisted.** This is not a human
+validation. A human review of a new sample (new seed) is still to do and is
+listed in the roadmap; until then, the labels should be read as checked by
+software and an AI reviewer only.
 
 | Entry | Label given | Correct label | Why it was missed |
 |---|---|---|---|
@@ -58,3 +62,19 @@ code when the geometry cannot show it. The reviewer also suggested naming
 three generic error kinds (pending wires, non-integer counts, invalid extrude
 arguments); they are now named. The 28/30 stays the published figure; a new
 sample is needed to measure the fixed rules.
+
+## External audit of the analysis code
+
+A later audit of the publish patch probed the classifier and the leaderboard
+directly rather than sampling answers, and found defects no label sample had
+reached:
+
+| Finding | Effect | Fix |
+|---|---|---|
+| Correct X and Y extremes accepted the pattern | two right corners and two holes between them passed as "edge margin off" | every hole must sit at a nominal corner |
+| Code rules read raw text | a comment containing an old `.rect(...)` changed the label; `# .rect(1..2,3)` crashed the whole analysis | rules read parsed code; `.rect()` arguments come from the syntax tree; an unreadable answer gets "classifier error" and never stops the run |
+| Any Python exception counted as CadQuery misuse | `int('abc')` was a "CadQuery API error" | the scorer records where each error was raised; CadQuery misuse needs a CadQuery message or origin; the rest is "Python error in model code" |
+| Headline averaged over specs common to all tiers | a run at 50% per tier with stray spec ids headlined 100% | a model is ranked only if every headline tier covers exactly the 30 held-out specs |
+
+Each has a regression case in `scripts/test_failure_modes.py` or
+`scripts/test_leaderboard.py`, both run in CI.

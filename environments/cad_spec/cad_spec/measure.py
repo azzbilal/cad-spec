@@ -239,6 +239,25 @@ def extract_code(completion: str) -> str:
     return textwrap.dedent(completion).strip()
 
 
+def _raised_in(exc: BaseException) -> str:
+    """Where an exception from model code was raised: "model code",
+    "cadquery" (CadQuery, its OCP kernel bindings or its multimethod dispatch)
+    or "other library". Failure analysis only; it never affects a score.
+    Argument errors and missing attributes are raised at the caller, so this
+    alone does not prove who is at fault; the message says the rest.
+    """
+    tb = exc.__traceback__
+    last = None
+    while tb is not None:
+        last = tb.tb_frame.f_code.co_filename
+        tb = tb.tb_next
+    if last is None or last == "<model>":
+        return "model code"
+    if any(part in last.replace("\\", "/") for part in ("/cadquery/", "/OCP", "/multimethod")):
+        return "cadquery"
+    return "other library"
+
+
 def _exec_result(code: str) -> Any:
     """Execute model code and return the object bound to `result`. Untrusted."""
     import cadquery as cq
@@ -248,7 +267,7 @@ def _exec_result(code: str) -> Any:
     try:
         exec(compile(code, "<model>", "exec"), namespace)
     except Exception as exc:
-        raise BuildError(f"execution failed: {type(exc).__name__}: {exc}") from exc
+        raise BuildError(f"execution failed: {type(exc).__name__}: {exc} [raised in {_raised_in(exc)}]") from exc
     obj = namespace.get("result")
     if obj is None:
         raise BuildError("code did not define `result`")

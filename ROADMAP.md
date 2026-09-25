@@ -19,8 +19,9 @@ the evidence that meets it.
 1. **Model baselines (Phase 3). Done:** 16 models (15 via OpenRouter, 1
    local), all tiers, greedy, rescored under 0.4.0; board, charts and
    failure fingerprints in `results/leaderboard/`, labels human-checked
-   (`docs/label-check.md`). Still to add: four reasoning models at
-   `--max-tokens 8000`.
+   (`docs/label-check.md`, AI-assisted). Still to do: a human label check
+   on a new seed (the 28/30 so far is AI-assisted), and four reasoning
+   models at `--max-tokens 8000`.
 2. **Knowledge or reasoning? Hint and feedback tracks.** Rerun weak models
    with a short CadQuery cheat-sheet (stack semantics, `hole`/`rect`/`rarray`
    signatures), then with one retry after a build error. Predicted before
