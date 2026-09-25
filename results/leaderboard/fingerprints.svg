@@ -1,0 +1,132 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='900' height='546' viewBox='0 0 900 546' font-family='Segoe UI, Helvetica, Arial, sans-serif'>
+<title>cad-spec failure fingerprints</title>
+<defs><pattern id='hatch' width='6' height='6' patternUnits='userSpaceOnUse' patternTransform='rotate(45)'><rect width='6' height='6' fill='#dfe6ee'/><line x1='0' y1='0' x2='0' y2='6' stroke='#9aa7b5' stroke-width='2'/></pattern></defs>
+<rect width='900' height='546' fill='#ffffff'/>
+<text x='20.0' y='28.0' font-size='17' text-anchor='start' font-weight='bold' fill='#1f2933'>How models fail: share of each model's answers, tiers L1 to L4</text>
+<text x='20.0' y='48.0' font-size='11' text-anchor='start' font-weight='normal' fill='#52606d'>each failed answer gets one label from its re-measured geometry and code (scripts/failure_modes.py); the rest of the bar passed</text>
+<rect x='20' y='62' width='12' height='12' fill='#0072B2'/>
+<text x='36.0' y='72.0' font-size='11' text-anchor='start' font-weight='normal' fill='#1f2933'>did not finish</text>
+<rect x='235' y='62' width='12' height='12' fill='#E69F00'/>
+<text x='251.0' y='72.0' font-size='11' text-anchor='start' font-weight='normal' fill='#1f2933'>code did not build</text>
+<rect x='450' y='62' width='12' height='12' fill='#009E73'/>
+<text x='466.0' y='72.0' font-size='11' text-anchor='start' font-weight='normal' fill='#1f2933'>holes not bound to positions</text>
+<rect x='665' y='62' width='12' height='12' fill='#D55E00'/>
+<text x='681.0' y='72.0' font-size='11' text-anchor='start' font-weight='normal' fill='#1f2933'>hole pattern misread</text>
+<rect x='20' y='80' width='12' height='12' fill='#CC79A7'/>
+<text x='36.0' y='90.0' font-size='11' text-anchor='start' font-weight='normal' fill='#1f2933'>change order not applied</text>
+<rect x='235' y='80' width='12' height='12' fill='#56B4E9'/>
+<text x='251.0' y='90.0' font-size='11' text-anchor='start' font-weight='normal' fill='#1f2933'>gate fired</text>
+<rect x='450' y='80' width='12' height='12' fill='#F0E442'/>
+<text x='466.0' y='90.0' font-size='11' text-anchor='start' font-weight='normal' fill='#1f2933'>one dimension wrong</text>
+<text x='240.0' y='115.0' font-size='12' text-anchor='end' font-weight='normal' fill='#1f2933'>deepseek/deepseek-chat-v3-0324</text>
+<rect x='250.0' y='104' width='51.7' height='16' fill='#D55E00'/>
+<rect x='301.7' y='104' width='62.0' height='16' fill='#CC79A7'/>
+<rect x='363.7' y='104' width='20.7' height='16' fill='#F0E442'/>
+<rect x='384.3' y='104' width='485.7' height='16' fill='#eef2f7'/>
+<text x='240.0' y='141.0' font-size='12' text-anchor='end' font-weight='normal' fill='#1f2933'>openai/gpt-4.1-nano</text>
+<rect x='250.0' y='130' width='31.0' height='16' fill='#E69F00'/>
+<rect x='281.0' y='130' width='87.8' height='16' fill='#D55E00'/>
+<rect x='368.8' y='130' width='103.3' height='16' fill='#CC79A7'/>
+<rect x='472.2' y='130' width='5.2' height='16' fill='#F0E442'/>
+<rect x='477.3' y='130' width='392.7' height='16' fill='#eef2f7'/>
+<text x='240.0' y='167.0' font-size='12' text-anchor='end' font-weight='normal' fill='#1f2933'>qwen/qwen3-coder-next</text>
+<rect x='250.0' y='156' width='5.2' height='16' fill='#0072B2'/>
+<rect x='255.2' y='156' width='46.5' height='16' fill='#E69F00'/>
+<rect x='301.7' y='156' width='62.0' height='16' fill='#009E73'/>
+<rect x='363.7' y='156' width='72.3' height='16' fill='#D55E00'/>
+<rect x='436.0' y='156' width='56.8' height='16' fill='#CC79A7'/>
+<rect x='492.8' y='156' width='377.2' height='16' fill='#eef2f7'/>
+<text x='240.0' y='193.0' font-size='12' text-anchor='end' font-weight='normal' fill='#1f2933'>qwen/qwen3-235b-a22b-2507</text>
+<rect x='250.0' y='182' width='87.8' height='16' fill='#E69F00'/>
+<rect x='337.8' y='182' width='10.3' height='16' fill='#009E73'/>
+<rect x='348.2' y='182' width='62.0' height='16' fill='#D55E00'/>
+<rect x='410.2' y='182' width='67.2' height='16' fill='#CC79A7'/>
+<rect x='477.3' y='182' width='15.5' height='16' fill='#56B4E9'/>
+<rect x='492.8' y='182' width='10.3' height='16' fill='#F0E442'/>
+<rect x='503.2' y='182' width='366.8' height='16' fill='#eef2f7'/>
+<text x='240.0' y='219.0' font-size='12' text-anchor='end' font-weight='normal' fill='#1f2933'>openai/gpt-4o-mini</text>
+<rect x='250.0' y='208' width='10.3' height='16' fill='#E69F00'/>
+<rect x='260.3' y='208' width='5.2' height='16' fill='#009E73'/>
+<rect x='265.5' y='208' width='222.2' height='16' fill='#D55E00'/>
+<rect x='487.7' y='208' width='93.0' height='16' fill='#CC79A7'/>
+<rect x='580.7' y='208' width='41.3' height='16' fill='#F0E442'/>
+<rect x='622.0' y='208' width='248.0' height='16' fill='#eef2f7'/>
+<text x='240.0' y='245.0' font-size='12' text-anchor='end' font-weight='normal' fill='#1f2933'>meta-llama/llama-4-maverick</text>
+<rect x='250.0' y='234' width='180.8' height='16' fill='#E69F00'/>
+<rect x='430.8' y='234' width='72.3' height='16' fill='#D55E00'/>
+<rect x='503.2' y='234' width='41.3' height='16' fill='#CC79A7'/>
+<rect x='544.5' y='234' width='118.8' height='16' fill='#F0E442'/>
+<rect x='663.3' y='234' width='206.7' height='16' fill='#eef2f7'/>
+<text x='240.0' y='271.0' font-size='12' text-anchor='end' font-weight='normal' fill='#1f2933'>mistralai/mistral-small-3.2-24b-instruct</text>
+<rect x='250.0' y='260' width='237.7' height='16' fill='#E69F00'/>
+<rect x='487.7' y='260' width='67.2' height='16' fill='#009E73'/>
+<rect x='554.8' y='260' width='41.3' height='16' fill='#D55E00'/>
+<rect x='596.2' y='260' width='62.0' height='16' fill='#CC79A7'/>
+<rect x='658.2' y='260' width='5.2' height='16' fill='#56B4E9'/>
+<rect x='663.3' y='260' width='5.2' height='16' fill='#F0E442'/>
+<rect x='668.5' y='260' width='201.5' height='16' fill='#eef2f7'/>
+<text x='240.0' y='297.0' font-size='12' text-anchor='end' font-weight='normal' fill='#1f2933'>qwen/qwen3-coder-30b-a3b-instruct</text>
+<rect x='250.0' y='286' width='5.2' height='16' fill='#0072B2'/>
+<rect x='255.2' y='286' width='144.7' height='16' fill='#E69F00'/>
+<rect x='399.8' y='286' width='36.2' height='16' fill='#009E73'/>
+<rect x='436.0' y='286' width='186.0' height='16' fill='#D55E00'/>
+<rect x='622.0' y='286' width='62.0' height='16' fill='#CC79A7'/>
+<rect x='684.0' y='286' width='10.3' height='16' fill='#56B4E9'/>
+<rect x='694.3' y='286' width='175.7' height='16' fill='#eef2f7'/>
+<text x='240.0' y='323.0' font-size='12' text-anchor='end' font-weight='normal' fill='#1f2933'>qwen/qwen3-30b-a3b-instruct-2507</text>
+<rect x='250.0' y='312' width='5.2' height='16' fill='#0072B2'/>
+<rect x='255.2' y='312' width='56.8' height='16' fill='#E69F00'/>
+<rect x='312.0' y='312' width='36.2' height='16' fill='#009E73'/>
+<rect x='348.2' y='312' width='175.7' height='16' fill='#D55E00'/>
+<rect x='523.8' y='312' width='82.7' height='16' fill='#CC79A7'/>
+<rect x='606.5' y='312' width='82.7' height='16' fill='#56B4E9'/>
+<rect x='689.2' y='312' width='67.2' height='16' fill='#F0E442'/>
+<rect x='756.3' y='312' width='113.7' height='16' fill='#eef2f7'/>
+<text x='240.0' y='349.0' font-size='12' text-anchor='end' font-weight='normal' fill='#1f2933'>microsoft/phi-4</text>
+<rect x='250.0' y='338' width='144.7' height='16' fill='#E69F00'/>
+<rect x='394.7' y='338' width='144.7' height='16' fill='#009E73'/>
+<rect x='539.3' y='338' width='118.8' height='16' fill='#D55E00'/>
+<rect x='658.2' y='338' width='98.2' height='16' fill='#CC79A7'/>
+<rect x='756.3' y='338' width='113.7' height='16' fill='#eef2f7'/>
+<text x='240.0' y='375.0' font-size='12' text-anchor='end' font-weight='normal' fill='#1f2933'>meta-llama/llama-3.3-70b-instruct</text>
+<rect x='250.0' y='364' width='289.3' height='16' fill='#E69F00'/>
+<rect x='539.3' y='364' width='93.0' height='16' fill='#009E73'/>
+<rect x='632.3' y='364' width='56.8' height='16' fill='#D55E00'/>
+<rect x='689.2' y='364' width='46.5' height='16' fill='#CC79A7'/>
+<rect x='735.7' y='364' width='25.8' height='16' fill='#56B4E9'/>
+<rect x='761.5' y='364' width='10.3' height='16' fill='#F0E442'/>
+<rect x='771.8' y='364' width='98.2' height='16' fill='#eef2f7'/>
+<text x='240.0' y='401.0' font-size='12' text-anchor='end' font-weight='normal' fill='#1f2933'>mistralai/codestral-2508</text>
+<rect x='250.0' y='390' width='108.5' height='16' fill='#E69F00'/>
+<rect x='358.5' y='390' width='258.3' height='16' fill='#009E73'/>
+<rect x='616.8' y='390' width='108.5' height='16' fill='#D55E00'/>
+<rect x='725.3' y='390' width='62.0' height='16' fill='#CC79A7'/>
+<rect x='787.3' y='390' width='82.7' height='16' fill='#eef2f7'/>
+<text x='240.0' y='427.0' font-size='12' text-anchor='end' font-weight='normal' fill='#1f2933'>google/gemma-3-27b-it</text>
+<rect x='250.0' y='416' width='82.7' height='16' fill='#E69F00'/>
+<rect x='332.7' y='416' width='279.0' height='16' fill='#009E73'/>
+<rect x='611.7' y='416' width='103.3' height='16' fill='#D55E00'/>
+<rect x='715.0' y='416' width='82.7' height='16' fill='#CC79A7'/>
+<rect x='797.7' y='416' width='72.3' height='16' fill='#eef2f7'/>
+<text x='240.0' y='453.0' font-size='12' text-anchor='end' font-weight='normal' fill='#1f2933'>meta-llama/llama-3.1-8b-instruct</text>
+<rect x='250.0' y='442' width='72.3' height='16' fill='#0072B2'/>
+<rect x='322.3' y='442' width='372.0' height='16' fill='#E69F00'/>
+<rect x='694.3' y='442' width='20.7' height='16' fill='#009E73'/>
+<rect x='715.0' y='442' width='20.7' height='16' fill='#D55E00'/>
+<rect x='735.7' y='442' width='82.7' height='16' fill='#CC79A7'/>
+<rect x='818.3' y='442' width='51.7' height='16' fill='#eef2f7'/>
+<text x='240.0' y='479.0' font-size='12' text-anchor='end' font-weight='normal' fill='#1f2933'>google/gemma-3-4b-it</text>
+<rect x='250.0' y='468' width='10.3' height='16' fill='#0072B2'/>
+<rect x='260.3' y='468' width='366.8' height='16' fill='#E69F00'/>
+<rect x='627.2' y='468' width='62.0' height='16' fill='#009E73'/>
+<rect x='689.2' y='468' width='31.0' height='16' fill='#D55E00'/>
+<rect x='720.2' y='468' width='98.2' height='16' fill='#CC79A7'/>
+<rect x='818.3' y='468' width='51.7' height='16' fill='#eef2f7'/>
+<text x='240.0' y='505.0' font-size='12' text-anchor='end' font-weight='normal' fill='#1f2933'>qwen2.5-coder:1.5b</text>
+<rect x='250.0' y='494' width='5.2' height='16' fill='#0072B2'/>
+<rect x='255.2' y='494' width='273.8' height='16' fill='#E69F00'/>
+<rect x='529.0' y='494' width='160.2' height='16' fill='#009E73'/>
+<rect x='689.2' y='494' width='62.0' height='16' fill='#D55E00'/>
+<rect x='751.2' y='494' width='77.5' height='16' fill='#CC79A7'/>
+<rect x='828.7' y='494' width='41.3' height='16' fill='#eef2f7'/>
+</svg>

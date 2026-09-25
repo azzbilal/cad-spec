@@ -193,7 +193,7 @@ parser with one derivation rule 50%, a plain table parser 25%.
 - **The biggest CadQuery weakness is stack semantics.** "Cannot find a solid
   on the stack" is the most common API error (108 answers), and drilling
   repeatedly at one spot (positions computed, never bound to `.hole()`) is
-  the most common failure of gemma-3-27b and codestral, over a third of their
+  the most common failure of gemma-3-27b and codestral, about a third of their
   answers. CadQuery drills at whatever is on its stack; these models write it
   as if it were a move-the-cursor-then-drill tool.
 - **Change orders expose dependent dimensions.** When a change order resizes

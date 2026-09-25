@@ -1,0 +1,228 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='830' height='580' viewBox='0 0 830 580' font-family='Segoe UI, Helvetica, Arial, sans-serif'>
+<title>cad-spec tier heatmap</title>
+<defs><pattern id='hatch' width='6' height='6' patternUnits='userSpaceOnUse' patternTransform='rotate(45)'><rect width='6' height='6' fill='#dfe6ee'/><line x1='0' y1='0' x2='0' y2='6' stroke='#9aa7b5' stroke-width='2'/></pattern></defs>
+<rect width='830' height='580' fill='#ffffff'/>
+<text x='20.0' y='28.0' font-size='17' text-anchor='start' font-weight='bold' fill='#1f2933'>All-requirements pass rate by tier</text>
+<text x='20.0' y='48.0' font-size='11' text-anchor='start' font-weight='normal' fill='#52606d'>L0 template, L1 table (over-dimensioned), L2 derive pitch, L3 prose, L4 change order</text>
+<text x='305.0' y='62.0' font-size='12' text-anchor='middle' font-weight='bold' fill='#1f2933'>L0</text>
+<text x='415.0' y='62.0' font-size='12' text-anchor='middle' font-weight='bold' fill='#1f2933'>L1</text>
+<text x='525.0' y='62.0' font-size='12' text-anchor='middle' font-weight='bold' fill='#1f2933'>L2</text>
+<text x='635.0' y='62.0' font-size='12' text-anchor='middle' font-weight='bold' fill='#1f2933'>L3</text>
+<text x='745.0' y='62.0' font-size='12' text-anchor='middle' font-weight='bold' fill='#1f2933'>L4</text>
+<text x='240.0' y='86.0' font-size='11' text-anchor='end' font-weight='normal' fill='#1f2933'>deepseek/deepseek-chat-v3-0324</text>
+<rect x='250' y='70' width='108' height='22' fill='#0b4f8a'/>
+<text x='304.0' y='86.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#ffffff'>100%</text>
+<rect x='360' y='70' width='108' height='22' fill='#13548e'/>
+<text x='414.0' y='86.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#ffffff'>97%</text>
+<rect x='470' y='70' width='108' height='22' fill='#1a5a91'/>
+<text x='524.0' y='86.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#ffffff'>93%</text>
+<rect x='580' y='70' width='108' height='22' fill='#5f8cb2'/>
+<text x='634.0' y='86.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#ffffff'>63%</text>
+<rect x='690' y='70' width='108' height='22' fill='#6791b6'/>
+<text x='744.0' y='86.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#ffffff'>60%</text>
+<text x='240.0' y='110.0' font-size='11' text-anchor='end' font-weight='normal' fill='#1f2933'>openai/gpt-4.1-nano</text>
+<rect x='250' y='94' width='108' height='22' fill='#13548e'/>
+<text x='304.0' y='110.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#ffffff'>97%</text>
+<rect x='360' y='94' width='108' height='22' fill='#6791b6'/>
+<text x='414.0' y='110.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#ffffff'>60%</text>
+<rect x='470' y='94' width='108' height='22' fill='#0b4f8a'/>
+<text x='524.0' y='110.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#ffffff'>100%</text>
+<rect x='580' y='94' width='108' height='22' fill='#6791b6'/>
+<text x='634.0' y='110.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#ffffff'>60%</text>
+<rect x='690' y='94' width='108' height='22' fill='#a4bdd3'/>
+<text x='744.0' y='110.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>33%</text>
+<text x='240.0' y='134.0' font-size='11' text-anchor='end' font-weight='normal' fill='#1f2933'>qwen/qwen3-coder-next</text>
+<rect x='250' y='118' width='108' height='22' fill='#13548e'/>
+<text x='304.0' y='134.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#ffffff'>97%</text>
+<rect x='360' y='118' width='108' height='22' fill='#4075a4'/>
+<text x='414.0' y='134.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#ffffff'>77%</text>
+<rect x='470' y='118' width='108' height='22' fill='#316a9c'/>
+<text x='524.0' y='134.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#ffffff'>83%</text>
+<rect x='580' y='118' width='108' height='22' fill='#b3c8db'/>
+<text x='634.0' y='134.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>27%</text>
+<rect x='690' y='118' width='108' height='22' fill='#6e96ba'/>
+<text x='744.0' y='134.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#ffffff'>57%</text>
+<text x='240.0' y='158.0' font-size='11' text-anchor='end' font-weight='normal' fill='#1f2933'>qwen/qwen3-235b-a22b-2507</text>
+<rect x='250' y='142' width='108' height='22' fill='#0b4f8a'/>
+<text x='304.0' y='158.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#ffffff'>100%</text>
+<rect x='360' y='142' width='108' height='22' fill='#5786af'/>
+<text x='414.0' y='158.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#ffffff'>67%</text>
+<rect x='470' y='142' width='108' height='22' fill='#316a9c'/>
+<text x='524.0' y='158.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#ffffff'>83%</text>
+<rect x='580' y='142' width='108' height='22' fill='#a4bdd3'/>
+<text x='634.0' y='158.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>33%</text>
+<rect x='690' y='142' width='108' height='22' fill='#769cbd'/>
+<text x='744.0' y='158.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>53%</text>
+<text x='240.0' y='182.0' font-size='11' text-anchor='end' font-weight='normal' fill='#1f2933'>openai/gpt-4o-mini</text>
+<rect x='250' y='166' width='108' height='22' fill='#0b4f8a'/>
+<text x='304.0' y='182.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#ffffff'>100%</text>
+<rect x='360' y='166' width='108' height='22' fill='#f0f4f8'/>
+<text x='414.0' y='182.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>0%</text>
+<rect x='470' y='166' width='108' height='22' fill='#5786af'/>
+<text x='524.0' y='182.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#ffffff'>67%</text>
+<rect x='580' y='166' width='108' height='22' fill='#6791b6'/>
+<text x='634.0' y='182.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#ffffff'>60%</text>
+<rect x='690' y='166' width='108' height='22' fill='#a4bdd3'/>
+<text x='744.0' y='182.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>33%</text>
+<text x='240.0' y='206.0' font-size='11' text-anchor='end' font-weight='normal' fill='#1f2933'>meta-llama/llama-4-maverick</text>
+<rect x='250' y='190' width='108' height='22' fill='#226095'/>
+<text x='304.0' y='206.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#ffffff'>90%</text>
+<rect x='360' y='190' width='108' height='22' fill='#e1e9f1'/>
+<text x='414.0' y='206.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>7%</text>
+<rect x='470' y='190' width='108' height='22' fill='#e8eef4'/>
+<text x='524.0' y='206.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>3%</text>
+<rect x='580' y='190' width='108' height='22' fill='#5080ab'/>
+<text x='634.0' y='206.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#ffffff'>70%</text>
+<rect x='690' y='190' width='108' height='22' fill='#769cbd'/>
+<text x='744.0' y='206.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>53%</text>
+<text x='240.0' y='230.0' font-size='11' text-anchor='end' font-weight='normal' fill='#1f2933'>mistralai/mistral-small-3.2-24b-instruct</text>
+<rect x='250' y='214' width='108' height='22' fill='#2a6599'/>
+<text x='304.0' y='230.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#ffffff'>87%</text>
+<rect x='360' y='214' width='108' height='22' fill='#85a7c5'/>
+<text x='414.0' y='230.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>47%</text>
+<rect x='470' y='214' width='108' height='22' fill='#d9e4ed'/>
+<text x='524.0' y='230.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>10%</text>
+<rect x='580' y='214' width='108' height='22' fill='#c2d3e2'/>
+<text x='634.0' y='230.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>20%</text>
+<rect x='690' y='214' width='108' height='22' fill='#769cbd'/>
+<text x='744.0' y='230.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>53%</text>
+<text x='240.0' y='254.0' font-size='11' text-anchor='end' font-weight='normal' fill='#1f2933'>qwen/qwen3-coder-30b-a3b-instruct</text>
+<rect x='250' y='238' width='108' height='22' fill='#487ba7'/>
+<text x='304.0' y='254.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#ffffff'>73%</text>
+<rect x='360' y='238' width='108' height='22' fill='#e1e9f1'/>
+<text x='414.0' y='254.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>7%</text>
+<rect x='470' y='238' width='108' height='22' fill='#94b2cc'/>
+<text x='524.0' y='254.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>40%</text>
+<rect x='580' y='238' width='108' height='22' fill='#d1dee9'/>
+<text x='634.0' y='254.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>13%</text>
+<rect x='690' y='238' width='108' height='22' fill='#769cbd'/>
+<text x='744.0' y='254.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>53%</text>
+<text x='240.0' y='278.0' font-size='11' text-anchor='end' font-weight='normal' fill='#1f2933'>qwen/qwen3-30b-a3b-instruct-2507</text>
+<rect x='250' y='262' width='108' height='22' fill='#1a5a91'/>
+<text x='304.0' y='278.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#ffffff'>93%</text>
+<rect x='360' y='262' width='108' height='22' fill='#d9e4ed'/>
+<text x='414.0' y='278.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>10%</text>
+<rect x='470' y='262' width='108' height='22' fill='#f0f4f8'/>
+<text x='524.0' y='278.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>0%</text>
+<rect x='580' y='262' width='108' height='22' fill='#cad8e6'/>
+<text x='634.0' y='278.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>17%</text>
+<rect x='690' y='262' width='108' height='22' fill='#85a7c5'/>
+<text x='744.0' y='278.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>47%</text>
+<text x='240.0' y='302.0' font-size='11' text-anchor='end' font-weight='normal' fill='#1f2933'>microsoft/phi-4</text>
+<rect x='250' y='286' width='108' height='22' fill='#1a5a91'/>
+<text x='304.0' y='302.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#ffffff'>93%</text>
+<rect x='360' y='286' width='108' height='22' fill='#9cb8d0'/>
+<text x='414.0' y='302.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>37%</text>
+<rect x='470' y='286' width='108' height='22' fill='#f0f4f8'/>
+<text x='524.0' y='302.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>0%</text>
+<rect x='580' y='286' width='108' height='22' fill='#f0f4f8'/>
+<text x='634.0' y='302.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>0%</text>
+<rect x='690' y='286' width='108' height='22' fill='#9cb8d0'/>
+<text x='744.0' y='302.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>37%</text>
+<text x='240.0' y='326.0' font-size='11' text-anchor='end' font-weight='normal' fill='#1f2933'>meta-llama/llama-3.3-70b-instruct</text>
+<rect x='250' y='310' width='108' height='22' fill='#0b4f8a'/>
+<text x='304.0' y='326.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#ffffff'>100%</text>
+<rect x='360' y='310' width='108' height='22' fill='#f0f4f8'/>
+<text x='414.0' y='326.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>0%</text>
+<rect x='470' y='310' width='108' height='22' fill='#f0f4f8'/>
+<text x='524.0' y='326.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>0%</text>
+<rect x='580' y='310' width='108' height='22' fill='#f0f4f8'/>
+<text x='634.0' y='326.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>0%</text>
+<rect x='690' y='310' width='108' height='22' fill='#5f8cb2'/>
+<text x='744.0' y='326.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#ffffff'>63%</text>
+<text x='240.0' y='350.0' font-size='11' text-anchor='end' font-weight='normal' fill='#1f2933'>mistralai/codestral-2508</text>
+<rect x='250' y='334' width='108' height='22' fill='#0b4f8a'/>
+<text x='304.0' y='350.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#ffffff'>100%</text>
+<rect x='360' y='334' width='108' height='22' fill='#f0f4f8'/>
+<text x='414.0' y='350.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>0%</text>
+<rect x='470' y='334' width='108' height='22' fill='#f0f4f8'/>
+<text x='524.0' y='350.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>0%</text>
+<rect x='580' y='334' width='108' height='22' fill='#f0f4f8'/>
+<text x='634.0' y='350.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>0%</text>
+<rect x='690' y='334' width='108' height='22' fill='#769cbd'/>
+<text x='744.0' y='350.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>53%</text>
+<text x='240.0' y='374.0' font-size='11' text-anchor='end' font-weight='normal' fill='#1f2933'>google/gemma-3-27b-it</text>
+<rect x='250' y='358' width='108' height='22' fill='#0b4f8a'/>
+<text x='304.0' y='374.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#ffffff'>100%</text>
+<rect x='360' y='358' width='108' height='22' fill='#f0f4f8'/>
+<text x='414.0' y='374.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>0%</text>
+<rect x='470' y='358' width='108' height='22' fill='#f0f4f8'/>
+<text x='524.0' y='374.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>0%</text>
+<rect x='580' y='358' width='108' height='22' fill='#f0f4f8'/>
+<text x='634.0' y='374.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>0%</text>
+<rect x='690' y='358' width='108' height='22' fill='#85a7c5'/>
+<text x='744.0' y='374.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>47%</text>
+<text x='240.0' y='398.0' font-size='11' text-anchor='end' font-weight='normal' fill='#1f2933'>meta-llama/llama-3.1-8b-instruct</text>
+<rect x='250' y='382' width='108' height='22' fill='#13548e'/>
+<text x='304.0' y='398.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#ffffff'>97%</text>
+<rect x='360' y='382' width='108' height='22' fill='#f0f4f8'/>
+<text x='414.0' y='398.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>0%</text>
+<rect x='470' y='382' width='108' height='22' fill='#f0f4f8'/>
+<text x='524.0' y='398.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>0%</text>
+<rect x='580' y='382' width='108' height='22' fill='#f0f4f8'/>
+<text x='634.0' y='398.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>0%</text>
+<rect x='690' y='382' width='108' height='22' fill='#a4bdd3'/>
+<text x='744.0' y='398.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>33%</text>
+<text x='240.0' y='422.0' font-size='11' text-anchor='end' font-weight='normal' fill='#1f2933'>google/gemma-3-4b-it</text>
+<rect x='250' y='406' width='108' height='22' fill='#13548e'/>
+<text x='304.0' y='422.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#ffffff'>97%</text>
+<rect x='360' y='406' width='108' height='22' fill='#f0f4f8'/>
+<text x='414.0' y='422.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>0%</text>
+<rect x='470' y='406' width='108' height='22' fill='#f0f4f8'/>
+<text x='524.0' y='422.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>0%</text>
+<rect x='580' y='406' width='108' height='22' fill='#f0f4f8'/>
+<text x='634.0' y='422.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>0%</text>
+<rect x='690' y='406' width='108' height='22' fill='#a4bdd3'/>
+<text x='744.0' y='422.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>33%</text>
+<text x='240.0' y='446.0' font-size='11' text-anchor='end' font-weight='normal' fill='#1f2933'>qwen2.5-coder:1.5b</text>
+<rect x='250' y='430' width='108' height='22' fill='#0b4f8a'/>
+<text x='304.0' y='446.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#ffffff'>100%</text>
+<rect x='360' y='430' width='108' height='22' fill='#f0f4f8'/>
+<text x='414.0' y='446.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>0%</text>
+<rect x='470' y='430' width='108' height='22' fill='#f0f4f8'/>
+<text x='524.0' y='446.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>0%</text>
+<rect x='580' y='430' width='108' height='22' fill='#f0f4f8'/>
+<text x='634.0' y='446.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>0%</text>
+<rect x='690' y='430' width='108' height='22' fill='#b3c8db'/>
+<text x='744.0' y='446.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>27%</text>
+<text x='240.0' y='470.0' font-size='11' text-anchor='end' font-weight='normal' fill='#7b8794'>parser-template  (reference)</text>
+<rect x='250' y='454' width='108' height='22' fill='#0b4f8a'/>
+<text x='304.0' y='470.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#ffffff'>100%</text>
+<rect x='360' y='454' width='108' height='22' fill='#0b4f8a'/>
+<text x='414.0' y='470.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#ffffff'>100%</text>
+<rect x='470' y='454' width='108' height='22' fill='#0b4f8a'/>
+<text x='524.0' y='470.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#ffffff'>100%</text>
+<rect x='580' y='454' width='108' height='22' fill='#0b4f8a'/>
+<text x='634.0' y='470.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#ffffff'>100%</text>
+<rect x='690' y='454' width='108' height='22' fill='#f0f4f8'/>
+<text x='744.0' y='470.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>0%</text>
+<text x='240.0' y='494.0' font-size='11' text-anchor='end' font-weight='normal' fill='#7b8794'>parser-derive  (reference)</text>
+<rect x='250' y='478' width='108' height='22' fill='#0b4f8a'/>
+<text x='304.0' y='494.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#ffffff'>100%</text>
+<rect x='360' y='478' width='108' height='22' fill='#0b4f8a'/>
+<text x='414.0' y='494.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#ffffff'>100%</text>
+<rect x='470' y='478' width='108' height='22' fill='#0b4f8a'/>
+<text x='524.0' y='494.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#ffffff'>100%</text>
+<rect x='580' y='478' width='108' height='22' fill='#f0f4f8'/>
+<text x='634.0' y='494.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>0%</text>
+<rect x='690' y='478' width='108' height='22' fill='#f0f4f8'/>
+<text x='744.0' y='494.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>0%</text>
+<text x='240.0' y='518.0' font-size='11' text-anchor='end' font-weight='normal' fill='#7b8794'>parser-copy  (reference)</text>
+<rect x='250' y='502' width='108' height='22' fill='#0b4f8a'/>
+<text x='304.0' y='518.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#ffffff'>100%</text>
+<rect x='360' y='502' width='108' height='22' fill='#0b4f8a'/>
+<text x='414.0' y='518.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#ffffff'>100%</text>
+<rect x='470' y='502' width='108' height='22' fill='#f0f4f8'/>
+<text x='524.0' y='518.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>0%</text>
+<rect x='580' y='502' width='108' height='22' fill='#f0f4f8'/>
+<text x='634.0' y='518.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>0%</text>
+<rect x='690' y='502' width='108' height='22' fill='#f0f4f8'/>
+<text x='744.0' y='518.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>0%</text>
+<text x='240.0' y='542.0' font-size='11' text-anchor='end' font-weight='normal' fill='#7b8794'>rev-a  (reference)</text>
+<rect x='250' y='526' width='108' height='22' fill='#f5f7fa'/>
+<rect x='360' y='526' width='108' height='22' fill='#f5f7fa'/>
+<rect x='470' y='526' width='108' height='22' fill='#f5f7fa'/>
+<rect x='580' y='526' width='108' height='22' fill='#f5f7fa'/>
+<rect x='690' y='526' width='108' height='22' fill='#f0f4f8'/>
+<text x='744.0' y='542.0' font-size='11' text-anchor='middle' font-weight='normal' fill='#1f2933'>0%</text>
+</svg>
