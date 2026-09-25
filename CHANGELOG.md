@@ -5,6 +5,16 @@ Scores are only comparable within one scorer version
 
 ## Unreleased
 
+### Hint and feedback arms, amendment 1 (before any run)
+- External audit of the analysis, fixed before data: arms restricted to the
+  three registered conditions; an arm is judged only if it matches its
+  registration (settings, exact condition, clean complete run, exactly the
+  30 held-out specs per tier); labels joined by run id, a missing label
+  stops the analysis; intervals resample specs as clusters; retry costs
+  summed call by call; model table on the analysed 120-answer denominator.
+  Recorded as amendment 1 in the pre-registration. `scripts/test_arms.py`
+  now runs run files through the real classifier and analysis (14 checks).
+
 ### Hint and feedback arms (pre-registered, not yet run)
 - `docs/experiments/hint-feedback.md`: question, arms, five models,
   predictions P1 to P3 with thresholds, analysis and budget, committed before

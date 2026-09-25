@@ -36,7 +36,17 @@ def check(ok: bool, what: str) -> bool:
     return ok
 
 
-def runner_feedback_and_hint() -> bool:
+def _run(argv: list[str]) -> bool:
+    """True if the runner accepted the arguments (ran), False if it refused them."""
+    sys.argv = ["run_baseline.py", "--provider", "openai", "--model", "stub", "--tiers", "L1", "--quiet", *argv]
+    try:
+        rb.main()
+        return True
+    except SystemExit:
+        return False
+
+
+def runner_arms() -> bool:
     _, evals = make_splits()
     by_prompt = {prompt_for(s, "L1", "eval"): s for s in evals[:2]}
     calls: list[tuple[str, object]] = []
@@ -46,35 +56,105 @@ def runner_feedback_and_hint() -> bool:
         if isinstance(prompt, str):
             return BROKEN, {"usage": {}, "finish_reason": "stop", "cost_usd": 0.001}
         spec = by_prompt[prompt[0]["content"]]
-        return reference_solution(spec), {"usage": {}, "finish_reason": "stop", "cost_usd": 0.002}
+        # the second spec's retry is unpriced: its first attempt must still count
+        cost = 0.002 if spec is evals[0] else None
+        return reference_solution(spec), {"usage": {}, "finish_reason": "stop", "cost_usd": cost}
 
     rb.model_answer = stub
     ok = True
+    hints = str(ROOT / "prompts" / "cadquery-hints.md")
     with tempfile.TemporaryDirectory() as tmp:
-        out = Path(tmp) / "run.jsonl"
-        sys.argv = ["run_baseline.py", "--provider", "openai", "--model", "stub", "--tiers", "L1", "--limit", "2",
-                    "--arm", "feedback", "--feedback-retries", "1",
-                    "--system-prompt-file", str(ROOT / "prompts" / "cadquery-hints.md"), "--out", str(out), "--quiet"]
-        rb.main()
-        lines = [json.loads(line) for line in out.read_text(encoding="utf-8").splitlines() if line.strip()]
-    meta = lines[0]["meta"]
-    rows = [r for r in lines if "tier" in r]
-    retry_msg = calls[1][1][-1]["content"] if len(calls) > 1 and isinstance(calls[1][1], list) else ""
-    ok &= check(meta["arm"] == "feedback" and "There is no `.holes()`" in meta["system_prompt"],
-                "hint text is appended to the system prompt and the arm is recorded")
+        fb, hint = Path(tmp) / "fb.jsonl", Path(tmp) / "hint.jsonl"
+        _run(["--limit", "2", "--arm", "feedback", "--feedback-retries", "1", "--out", str(fb)])
+        feedback_calls = list(calls)
+        calls.clear()
+        _run(["--limit", "1", "--arm", "hint", "--system-prompt-file", hints, "--out", str(hint)])
+        fb_lines = [json.loads(x) for x in fb.read_text(encoding="utf-8").splitlines() if x.strip()]
+        hint_meta = json.loads(hint.read_text(encoding="utf-8").splitlines()[0])["meta"]
+        refusals = [
+            _run(["--limit", "1", "--system-prompt-file", hints, "--out", str(Path(tmp) / "a.jsonl")]),
+            _run(["--limit", "1", "--arm", "feedback", "--feedback-retries", "1", "--system-prompt-file", hints,
+                  "--out", str(Path(tmp) / "b.jsonl")]),
+            _run(["--limit", "1", "--arm", "hint", "--out", str(Path(tmp) / "c.jsonl")]),
+            _run(["--limit", "1", "--arm", "magic", "--out", str(Path(tmp) / "d.jsonl")]),
+        ]
+    rows = [r for r in fb_lines if "tier" in r]
+    retry_msg = feedback_calls[1][1][-1]["content"] if isinstance(feedback_calls[1][1], list) else ""
+    ok &= check(hint_meta["arm"] == "hint" and "There is no `.holes()`" in hint_meta["system_prompt"],
+                "hint arm: the cheat-sheet is appended to the system prompt and the arm is recorded")
+    ok &= check(fb_lines[0]["meta"]["arm"] == "feedback" and "There is no" not in fb_lines[0]["meta"]["system_prompt"],
+                "feedback arm: standard system prompt, arm recorded")
     ok &= check(len(rows) == 2 and all(r["reward"] == 1.0 and len(r["attempts"]) == 1 for r in rows),
                 "code that does not build gets one retry; the fixed answer is scored; the attempt is kept")
     ok &= check("Running your code failed" in retry_msg and "has no attribute 'holes'" in retry_msg
                 and "[raised in" not in retry_msg, "feedback shows the plain error, without the scorer's tag")
-    ok &= check(all(abs(r["cost_usd"] - 0.003) < 1e-9 for r in rows), "the retry's cost is added to the answer's")
-    sys.argv = ["run_baseline.py", "--provider", "openai", "--model", "stub", "--tiers", "L1", "--limit", "1",
-                "--system-prompt-file", str(ROOT / "prompts" / "cadquery-hints.md"), "--quiet"]
-    try:
-        rb.main()
-        refused = False
-    except SystemExit:
-        refused = True
-    ok &= check(refused, "a changed task without --arm is refused")
+    ok &= check(abs(rows[0]["cost_usd"] - 0.003) < 1e-9 and abs(rows[1]["cost_usd"] - 0.001) < 1e-9,
+                "retry costs add up, and an unpriced retry keeps the first attempt's cost")
+    ok &= check(not any(refusals), "refused: changed task without an arm, hint+feedback together, "
+                "hint without its file, an unregistered arm name")
+    return ok
+
+
+def _arm_file(d: Path, name: str, arm: str, api_errors: int, specs: list[str] | None = None,
+              system_prompt: str | None = None) -> Path:
+    """A run file for one arm: `api_errors` answers fail with a CadQuery API error, the rest pass."""
+    _, evals = make_splits()
+    ids = specs or [s.id for s in evals]
+    rows = []
+    for t in ("L1", "L2", "L3", "L4"):
+        for i, sid in enumerate(ids):
+            fail = i < api_errors // 4 + (1 if t == "L1" and i == api_errors // 4 and api_errors % 4 else 0)
+            rows.append({"run_id": name, "tier": t, "spec_id": sid, "rollout": 0, "reward": 0.0 if fail else 1.0,
+                         "built": not fail, "gates_passed": True, "checks": {} if fail else {"R1": True},
+                         "error": ("execution failed [raised in model code]: AttributeError: "
+                                   "'Workplane' object has no attribute 'holes'") if fail else None,
+                         "api_error": None, "finish_reason": "stop", "completion": "code"})
+    meta = {"run_id": name, "model": "google/gemma-3-27b-it", "arm": arm, "split": "eval", "temperature": 0.0,
+            "max_tokens": 1024, "feedback_retries": 1 if arm == "feedback" else 0,
+            "system_prompt": system_prompt or ca.registered_system_prompt(arm),
+            "planned": {"tiers": ["L1", "L2", "L3", "L4"], "spec_ids": ids, "rollouts": 1, "total": 4 * len(ids)}}
+    path = d / f"{name}.jsonl"
+    path.write_text("\n".join(json.dumps(x) for x in [{"meta": meta}, *rows, {"end": {"status": "complete"}}]) + "\n")
+    return path
+
+
+def analysis_joins_real_labels() -> bool:
+    """Run files -> the real failure classifier -> the real analysis."""
+    _, evals = make_splits()
+    ok = True
+    py, sc = sys.executable, ROOT / "scripts"
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        base = _arm_file(d, "20260101T000000Z-base", "first-shot", api_errors=20)
+        hint = _arm_file(d, "20260102T000000Z-hint", "hint", api_errors=4)
+        stale = d / "stale"
+        subprocess.run([py, str(sc / "failure_modes.py"), str(base), "--out", str(stale)],
+                       check=True, capture_output=True)
+        subprocess.run([py, str(sc / "failure_modes.py"), str(base), str(hint), "--out", str(d)],
+                       check=True, capture_output=True)
+        cmp = subprocess.run([py, str(sc / "compare_arms.py"), str(base), str(hint),
+                              "--failures", str(d / "failure-modes-0.4.0.json"), "--out", str(d / "r.md")],
+                             capture_output=True, text=True)
+        p1 = next((line for line in cmp.stdout.splitlines() if line.startswith("| P1 | google/gemma-3-27b-it")), "")
+        evidence = p1.split("|")[4].strip() if p1 else cmp.stderr[-200:]
+        ok &= check("held" in p1 and "17% -> 3%" in p1 and "unlabelled" not in cmp.stdout,
+                    f"verdict computed from real labels joined by run id ({evidence})")
+        refused = subprocess.run([py, str(sc / "compare_arms.py"), str(base), str(hint),
+                                  "--failures", str(stale / "failure-modes-0.4.0.json"), "--out", str(d / "s.md")],
+                                 capture_output=True, text=True)
+        ok &= check(refused.returncode != 0 and "no failure label" in refused.stdout + refused.stderr,
+                    "a label file that lacks the arm's run stops the analysis")
+        short = _arm_file(d, "20260103T000000Z-hint", "hint", api_errors=4, specs=[s.id for s in evals[:25]])
+        edited = _arm_file(d, "20260104T000000Z-fb", "feedback", api_errors=4, system_prompt="something else")
+        subprocess.run([py, str(sc / "failure_modes.py"), str(base), str(short), str(edited), "--out", str(d)],
+                       check=True, capture_output=True)
+        out = subprocess.run([py, str(sc / "compare_arms.py"), str(base), str(short), str(edited),
+                              "--failures", str(d / "failure-modes-0.4.0.json"), "--out", str(d / "t.md")],
+                             capture_output=True, text=True).stdout
+        ok &= check("| P1 | google/gemma-3-27b-it | no data |" in out and "held-out specs" in out,
+                    "an arm missing held-out specs is excluded, not judged")
+        ok &= check("| P2 | google/gemma-3-27b-it | no data |" in out and "system prompt differs" in out,
+                    "an arm that departs from its registered condition is excluded, with the reason")
     return ok
 
 
@@ -124,7 +204,7 @@ def verdict_rules() -> bool:
 
 
 def main() -> int:
-    results = [runner_feedback_and_hint(), board_is_first_shot_only(), verdict_rules()]
+    results = [runner_arms(), board_is_first_shot_only(), verdict_rules(), analysis_joins_real_labels()]
     return 0 if all(results) else 1
 
 

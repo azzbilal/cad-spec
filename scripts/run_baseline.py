@@ -260,6 +260,9 @@ def model_answer(args: argparse.Namespace, prompt: str | list[dict[str, str]],
     raise ValueError(args.provider)
 
 
+# The registered experiment arms: name -> (system-prompt file, feedback retries).
+ARMS = {"first-shot": (False, False), "hint": (True, False), "feedback": (False, True)}
+
 FEEDBACK_TEMPLATE = (
     "Running your code failed:\n\n{error}\n\n"
     "Fix it and return the complete corrected module as a single Python code block."
@@ -350,8 +353,8 @@ def main() -> int:
     ap.add_argument("--extra-body", default="",
                     help='JSON merged into the request, e.g. \'{"reasoning": {"effort": "low"}}\'')
     ap.add_argument("--quiet", action="store_true", help="no per-rollout progress line")
-    ap.add_argument("--arm", default="first-shot",
-                    help="experiment arm recorded with the run; only 'first-shot' runs enter the leaderboard")
+    ap.add_argument("--arm", default="first-shot", choices=list(ARMS),
+                    help="experiment arm (see docs/experiments/hint-feedback.md); the board ranks first-shot only")
     ap.add_argument("--system-prompt-file", default="",
                     help="text APPENDED to the standard system prompt (hint arm)")
     ap.add_argument("--feedback-retries", type=int, default=0,
@@ -367,8 +370,12 @@ def main() -> int:
     if args.system_prompt_file:
         hints = Path(args.system_prompt_file).read_text(encoding="utf-8").strip()
         args.system_prompt = SYSTEM_PROMPT + "\n" + hints + "\n"
-    if (args.system_prompt_file or args.feedback_retries) and args.arm == "first-shot":
-        ap.error("--system-prompt-file and --feedback-retries change the task; name the run with --arm")
+    # Each registered arm is exactly one condition; a name cannot hide another.
+    wants_hint, wants_feedback = ARMS[args.arm]
+    if bool(args.system_prompt_file) != wants_hint:
+        ap.error(f"arm {args.arm!r} {'requires' if wants_hint else 'does not allow'} --system-prompt-file")
+    if bool(args.feedback_retries) != wants_feedback:
+        ap.error(f"arm {args.arm!r} {'requires' if wants_feedback else 'does not allow'} --feedback-retries")
     if args.feedback_retries and args.provider not in ("openai", "anthropic"):
         ap.error("--feedback-retries needs a model provider")
 
@@ -453,11 +460,14 @@ def main() -> int:
                         gen_s = time.time() - t0
                         consecutive_errors = consecutive_errors + 1 if api_error else 0
                         last_error = api_error or last_error
-                        cost = info.get("cost_usd")
-                        if attempts and cost is not None:
-                            cost = float(cost) + sum(float(a["cost_usd"] or 0.0) for a in attempts)
-                        if cost is None and not api_error and args.provider in ("openai", "anthropic"):
-                            unknown_cost += 1
+                        # Every call is paid for, retries included: sum each known cost on
+                        # its own, so an unpriced or failed retry cannot erase an earlier
+                        # attempt's spend. Unpriced calls are counted.
+                        call_costs = [a["cost_usd"] for a in attempts] + ([] if api_error else [info.get("cost_usd")])
+                        known = [float(c) for c in call_costs if c is not None]
+                        cost = sum(known) if known else None
+                        if args.provider in ("openai", "anthropic"):
+                            unknown_cost += sum(c is None for c in call_costs)
                         spent += float(cost or 0.0)
                         finish = info.get("finish_reason")
                         truncated += finish == "length"

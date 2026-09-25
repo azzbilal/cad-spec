@@ -27,13 +27,16 @@ settings as arm A: temperature 0, 1,024 output tokens, the 30 held-out specs.
 
 ## Models
 
-| Model | Why | First-shot main failure |
+First-shot shares over the 120 answers the experiment analyses (tiers L1 to
+L4; corrected in amendment 1, the first version divided by all 150 answers):
+
+| Model | Why | First-shot main failure (L1 to L4) |
 |---|---|---|
-| google/gemma-3-27b-it | stacked drilling | holes stacked at one point, 36% |
-| mistralai/codestral-2508 | stacked drilling | holes stacked at one point, 33% |
-| meta-llama/llama-3.3-70b-instruct | API misuse | CadQuery API error, 37% |
-| mistralai/mistral-small-3.2-24b-instruct | API misuse | CadQuery API error, 29% |
-| openai/gpt-4o-mini | reasoning control | margin applied twice, 13%; no API errors |
+| google/gemma-3-27b-it | stacked drilling | holes stacked at one point, 54/120 (45%) |
+| mistralai/codestral-2508 | stacked drilling | holes stacked at one point, 50/120 (42%) |
+| meta-llama/llama-3.3-70b-instruct | API misuse | CadQuery API error, 56/120 (47%) |
+| mistralai/mistral-small-3.2-24b-instruct | API misuse | CadQuery API error, 43/120 (36%) |
+| openai/gpt-4o-mini | reasoning control | margin applied twice, 19/120 (16%); no API errors |
 
 ## Measures
 
@@ -82,6 +85,36 @@ these thresholds. It was committed together with this file.
 At most $0.20 per run (5 models x 2 arms, 10 runs, 4 tiers each). A run that
 ends incomplete is rerun once; if it is still incomplete, the model is
 reported as incomplete for that arm and excluded from the verdicts.
+
+## Amendment 1 (2026-09-25, before any run)
+
+An external audit of the analysis code, done before any data was collected,
+found that the analysis could produce verdicts it should not. Changed, with
+the predictions and their thresholds untouched:
+
+- **Arms are exactly the three registered conditions.** The runner accepts
+  only `first-shot`, `hint` (requires the cheat-sheet, no retries) and
+  `feedback` (one retry, no cheat-sheet); the first version accepted any
+  name and let hint and feedback be combined under one.
+- **An arm must match its registration to be judged.** Held-out split,
+  temperature 0, 1,024 output tokens, its exact condition (the cheat-sheet
+  text as committed, or one retry), a clean complete run, and exactly the 30
+  held-out specs once per tier. Anything else is excluded from the verdicts,
+  with its reasons in the report.
+- **Failure labels are joined by run id, and a missing label stops the
+  analysis.** The first version matched labels by model name and counted a
+  failure it could not find as a non-failure, so a stale label file could
+  turn 100% knowledge failures into 0% and a held P1.
+- **Intervals resample specs,** keeping each spec's four tier outcomes
+  together (the same 30 specs appear in every tier); the first version
+  resampled the 120 answers independently. Intervals are reported only; the
+  verdicts use the registered point thresholds, which do not change.
+- **Retry costs** are summed call by call, so an unpriced or failed retry no
+  longer hides the first attempt's spend.
+- **The model table** above now uses the analysed denominator (120 answers).
+
+Each change has a regression case in `scripts/test_arms.py`, including an
+end-to-end test from run files through the real failure classifier.
 
 ## Deviations
 
