@@ -5,6 +5,18 @@ Scores are only comparable within one scorer version
 
 ## Unreleased
 
+### Leaderboard published
+- README: ranking chart, 16-model table, what the board shows (stack
+  semantics, change-order propagation, invented methods, scale), how the
+  labels were checked, and the lower-bound caveats. Results committed:
+  rescored runs, leaderboard, failure analysis.
+- `docs/label-check.md`: method and both label checks. Fresh human-checked
+  sample (seed 20260926): 28/30 labels in the correct category.
+- Fixes from that check: `DispatchError` is a CadQuery API error; an L4
+  answer whose code keeps rev A's pitch on a rev B plate is "change not
+  propagated" even when no hole lands on the plate. Three more named API
+  error kinds. Self-test: 19 modes.
+
 ### Human label check (30 random failed answers, September 2026)
 - Result on the first sample: every label was a true statement about the
   geometry (30/30); 25/30 named the right category. All 5 misses were

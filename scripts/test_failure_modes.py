@@ -20,6 +20,7 @@ sys.path.insert(0, str(ROOT / "environments" / "cad_spec"))
 
 from cad_spec.rubric import score
 from cad_spec.tasks import Spec, edit_source, make_splits, reference_solution
+from failure_modes import api_error_kind
 
 CORNERS = ((-1, -1), (-1, 1), (1, -1), (1, 1))
 LOOP = "r = (cq.Workplane('XY')\n" + "    .rect(5.0, 5.0)\n" * 80
@@ -79,6 +80,19 @@ def cases() -> list[tuple[str, Spec, str, str | None, dict]]:
     out.append(("L3", g, fenced(f"result = (cq.Workplane('XY').box({g.length}, {g.width}, {g.thickness})"
                                 f".faces('>Z').workplane(){cumulative})"), "holes misplaced (other)", {}))
 
+    # Fresh human label check, September 2026 (seed 20260926): the two misses.
+    h = next(v for v in evals if v.id == "gen-0212")
+    out.append(("L1", h, fenced(f"result = (cq.Workplane('XY').box({h.length}, {h.width}, {h.thickness})"
+                                ".faces('>Z').workplane().transformed(location=cq.Location("
+                                "cq.Vector(0, 0, 0), cq.Vector(0, 0, 1), cq.Vector(0, 0, 0))).hole(7.0))"),
+                "CadQuery API error", {}))
+    k = next(v for v in evals if v.id == "gen-0037")
+    ka = edit_source(k)
+    out.append(("L4", k, fenced(f"result = (cq.Workplane('XY').box({k.length}, {k.width}, {k.thickness})"
+                                f".faces('>Z').workplane().rect({ka.pitch_x}, {ka.pitch_y}, forConstruction=True)"
+                                f".vertices().hole({k.hole_diameter}))"),
+                "change not propagated to pitch", {}))
+
     x = next(v for v in evals
              if (edit_source(v).pitch_x, edit_source(v).pitch_y) != (v.pitch_x, v.pitch_y)
              and (edit_source(v).length, edit_source(v).width) != (v.length, v.width))
@@ -117,12 +131,12 @@ def main() -> int:
     rows, want = [], []
     for tier, spec, text, label, extra in cases():
         r = score(text, spec)
-        rows.append({"run_id": "T", "tier": tier, "spec_id": spec.id, "rollout": 0, "reward": r.reward,
+        rows.append({"run_id": "T", "tier": tier, "spec_id": spec.id, "rollout": len(rows), "reward": r.reward,
                      "built": r.parsed, "error": r.error, "checks": {c.name: c.passed for c in r.checks},
                      "completion": text, "finish_reason": extra.get("finish", "stop"),
                      "truncated": extra.get("finish") == "length", "api_error": extra.get("api")})
         if label:
-            want.append(label)
+            want.append((len(rows) - 1, label))
     meta = {"meta": {"run_id": "T", "model": "synthetic", "max_tokens": 1024}}
     with tempfile.TemporaryDirectory() as tmp:
         run = Path(tmp) / "run.jsonl"
@@ -133,14 +147,27 @@ def main() -> int:
             print(proc.stderr[-2000:])
             return 1
         result = json.loads(next(Path(tmp).glob("failure-modes-*.json")).read_text())
-    got = [r["label"] for r in result["rows"]]
+    by_rollout = {r["rollout"]: r["label"] for r in result["rows"]}  # match by answer, not by order
     api = [r.get("api_kind") for r in result["rows"] if r["label"] == "CadQuery API error"]
-    if api != ["no such method: Workplane.nonexistent"]:
+    if sorted(api) != ["no matching signature for Location()", "no such method: Workplane.nonexistent"]:
         print(f"[BAD] API error kind: {api}")
         return 1
-    print("[ok ] API error kind: no such method: Workplane.nonexistent")
+    print("[ok ] API error kinds: no such method, no matching signature")
+    kinds = {
+        "execution failed: ValueError: No pending wires present": "operation needs a sketch or wire",
+        "execution failed: TypeError: 'float' object cannot be interpreted as an integer": "non-integer count",
+        "execution failed: ValueError: Do not know how to handle until argument of type <class 'str'>":
+            "invalid extrude or cut argument",
+    }
+    for err, want_kind in kinds.items():
+        got_kind = api_error_kind(err)
+        if got_kind != want_kind:
+            print(f"[BAD] {err!r} -> {got_kind!r}, want {want_kind!r}")
+            return 1
+    print("[ok ] API error kinds from the label check: wires, integer counts, extrude arguments")
     bad = 0
-    for w, g in zip(want, got, strict=True):
+    for rollout, w in want:
+        g = by_rollout.get(rollout, "(not classified)")
         bad += w != g
         print(f"[{'ok ' if w == g else 'BAD'}] want {w:32s} got {g}")
     print(f"\n{len(want) - bad}/{len(want)} failure modes classified correctly")

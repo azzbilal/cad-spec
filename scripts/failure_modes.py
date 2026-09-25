@@ -84,7 +84,9 @@ def _unbuilt_label(row: dict) -> str:
         return "timeout"
     if re.search(r"SyntaxError|IndentationError", err):
         return "syntax error"
-    if re.search(r"execution failed: (AttributeError|TypeError|ValueError|NameError|IndexError|KeyError|"
+    # DispatchError: CadQuery's multimethod dispatch found no signature for the
+    # arguments given (label check #15, cq.Location with three vectors).
+    if re.search(r"execution failed: (AttributeError|TypeError|ValueError|NameError|IndexError|KeyError|DispatchError|"
                  r"Standard_\w+|OCP|StdFail)", err):
         return "CadQuery API error"
     if re.search(r"did not define|no CadQuery shape|no solid|no code|not a shape", err) or not err:
@@ -183,6 +185,11 @@ def _pattern_label(points: list[tuple[float, float]], spec: Spec, code: str = ""
 
 
 _API_KINDS = (
+    (re.compile(r"DispatchError: \('(\w+): \d+ methods found', \(<class '[\w.]*?(\w+)'>"),
+     "no matching signature for {1}.{0}()"),
+    (re.compile(r"No pending wires present"), "operation needs a sketch or wire"),
+    (re.compile(r"cannot be interpreted as an integer"), "non-integer count"),
+    (re.compile(r"Do not know how to handle until argument"), "invalid extrude or cut argument"),
     (re.compile(r"AttributeError: '(\w+)' object has no attribute '(\w+)'"), "no such method: {0}.{1}"),
     (re.compile(r"AttributeError: module '([\w.]+)' has no attribute '(\w+)'"), "no such function: {0}.{1}"),
     (re.compile(r"TypeError: (?:[\w.]+\.)?(\w+)\(\) (?:takes|got|missing)"), "wrong arguments to {0}()"),
@@ -197,13 +204,18 @@ def api_error_kind(error: str) -> str:
     for pattern, template in _API_KINDS:
         m = pattern.search(error or "")
         if m:
-            return template.format(*m.groups())
+            return template.format(*m.groups()).replace(".__init__()", "()")
     m = re.search(r"execution failed: (\w+)", error or "")
     return m.group(1) if m else "unknown"
 
 
-def _l4_label(m, spec: Spec) -> str | None:
-    """Change-order specific failures, judged against rev A and rev B."""
+def _l4_label(m, spec: Spec, code: str = "") -> str | None:
+    """Change-order specific failures, judged against rev A and rev B.
+
+    The geometry decides when it can. When the stale pattern cannot be seen
+    (every hole landed off the new, smaller plate: label check #25), the code
+    decides: a rev B plate whose .rect() still carries rev A's pitch.
+    """
     rev_a = edit_source(spec)
     size = (m.length, m.width, m.thickness)
     size_a = (rev_a.length, rev_a.width, rev_a.thickness)
@@ -222,6 +234,12 @@ def _l4_label(m, spec: Spec) -> str | None:
     pitch_changes = not same((rev_a.pitch_x, rev_a.pitch_y), (spec.pitch_x, spec.pitch_y))
     if pitch_changes and same(size, size_b) and same(pitch, (rev_a.pitch_x, rev_a.pitch_y)):
         return "change not propagated to pitch"
+    if pitch_changes and same(size, size_b):
+        rects = [(float(a), float(b)) for a, b in re.findall(r"\.rect\(\s*([\d.]+)\s*,\s*([\d.]+)", code)]
+        stale = any(same(r, (rev_a.pitch_x, rev_a.pitch_y)) for r in rects)
+        fresh = any(same(r, (spec.pitch_x, spec.pitch_y)) for r in rects)
+        if stale and not fresh:
+            return "change not propagated to pitch"
     return None
 
 
@@ -266,7 +284,7 @@ def _classify(row: dict, spec: Spec, max_tokens: int | None, detail: dict) -> st
         detail["error"] = str(exc)[:300]
         return "build failed"
     if row.get("tier") == "L4":
-        label = _l4_label(m, spec)
+        label = _l4_label(m, spec, row.get("completion", ""))
         if label:
             return label
     # Hole pattern before gates: misplaced holes often overlap or break out
