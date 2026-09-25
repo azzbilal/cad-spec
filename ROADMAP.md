@@ -20,8 +20,8 @@ the evidence that meets it.
    local), all tiers, greedy, rescored under 0.4.0; board, charts and
    failure fingerprints in `results/leaderboard/`, labels human-checked
    (`docs/label-check.md`, AI-assisted). Still to do: a human label check
-   on a new seed (the 28/30 so far is AI-assisted), and four reasoning
-   models at `--max-tokens 8000`.
+   on seed 20260928 (the two 28/30 samples so far are AI-assisted), and
+   four reasoning models at `--max-tokens 8000`.
 2. **Knowledge or reasoning? Hint and feedback tracks.** Rerun weak models
    with a short CadQuery cheat-sheet (stack semantics, `hole`/`rect`/`rarray`
    signatures), then with one retry after a build error. Predicted before

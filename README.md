@@ -20,7 +20,7 @@ What this is, and what it is not:
 | Scorer validated against labelled mutants | yes: 1,230 mutants, 0 false full credit on 600 wrong parts, 0 false rejection on 600 correct parts ([results](results/scorer-validation-0.4.0.md)) |
 | Separates "copying numbers" from "reading a spec" | partly: five prompt tiers, reported separately; L0 to L2 are solved by simple parsers, and L3 by a parser that knows its wording templates ([baselines](results/baselines-deterministic.md)) |
 | Runs untrusted model code safely | per-rollout sandbox on POSIX, container for untrusted scale ([SECURITY.md](SECURITY.md)) |
-| Ranks real models and shows *how* each one fails | yes: 16 models (15 hosted, 1 local), about $0.27 of API calls; failure labels checked by an AI-assisted review of a fresh random sample, 28/30 correct; a human check is still to do ([leaderboard](#leaderboard)) |
+| Ranks real models and shows *how* each one fails | yes: 16 models (15 hosted, 1 local), about $0.27 of API calls; failure labels checked by AI-assisted reviews of two fresh random samples, 28/30 correct each; a human check is still to do ([leaderboard](#leaderboard)) |
 | Shows that RL training improves a model | **not yet**: tooling is ready, no training run is published |
 | Broad text-to-CAD benchmark, new part families | **no**: one family; see [ROADMAP.md](ROADMAP.md) |
 | "Material" means alloy, strength, fit, manufacturability | **no**: R6 is volume consistency only |
@@ -207,11 +207,12 @@ parser with one derivation rule 50%, a plain table parser 25%.
   llama-3.3-70b (16%).
 
 **How the failure labels were checked.** `scripts/failure_modes.py` labels
-every failed answer from its re-measured geometry and code. An AI agent
-reviewed a fresh random sample of 30 (seed 20260926, drawn from 1,318 failed
-answers): **28/30 in the correct category.** This is an AI-assisted check, not
-a human validation; a human review of a new sample is still to do. Both misses
-were fixed afterwards; the 28/30 is the figure measured before the fix. An
+every failed answer from its re-measured geometry and code. AI agents
+reviewed two fresh random samples of 30 (seeds 20260926 and 20260927, drawn
+from over 1,300 failed answers): **28/30 in the correct category, both
+times.** These are AI-assisted checks, not a human validation; a human review
+of a new sample is still to do. Each sample's misses were fixed afterwards;
+the figures are as measured before the fixes. An
 earlier sample was used to develop the rules and is not counted as evidence.
 A later external audit of the analysis code found four more classifier and
 ranking defects, all fixed with regression tests. Details:

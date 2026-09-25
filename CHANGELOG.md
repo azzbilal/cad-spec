@@ -5,6 +5,18 @@ Scores are only comparable within one scorer version
 
 ## Unreleased
 
+### Label check, seed 20260927 (AI-assisted, 28/30)
+- Error origin tag moved to the start of the error text: the 300-character
+  cap on sandbox error text cut an end tag from long messages, so 11 answers
+  of CadQuery misuse were labelled "build failed". The tag also names the
+  innermost CadQuery function (`[raised in cadquery: Workplane.rect]`), and
+  generic errors are reported as "TypeError in Workplane.rect()". Only the
+  scorer writes the prefix, so model code cannot forge it. Tested through
+  the real sandbox, cap included. Rescore saved runs with `--force`.
+- New label "geometry kernel failure": kernel refusals of valid calls (a
+  fillet too large for its edge) are no longer counted as API misuse.
+- "Cannot union type" is a named API error kind.
+
 ### External audit of the publish patch (fixed before release)
 - Headline inflation: a model is ranked only if every headline tier covers
   exactly the 30 held-out specs (derived from the sampler, not the run file);

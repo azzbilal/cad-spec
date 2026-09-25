@@ -241,20 +241,28 @@ def extract_code(completion: str) -> str:
 
 def _raised_in(exc: BaseException) -> str:
     """Where an exception from model code was raised: "model code",
-    "cadquery" (CadQuery, its OCP kernel bindings or its multimethod dispatch)
-    or "other library". Failure analysis only; it never affects a score.
-    Argument errors and missing attributes are raised at the caller, so this
-    alone does not prove who is at fault; the message says the rest.
+    "cadquery: <function>" (CadQuery, its OCP kernel bindings or its
+    multimethod dispatch; the innermost CadQuery function named) or "other
+    library". Failure analysis only; it never affects a score. Argument
+    errors and missing attributes are raised at the caller, so this alone
+    does not prove who is at fault; the message says the rest.
     """
     tb = exc.__traceback__
-    last = None
+    last, cq_func, origin_is_cq = None, None, False
     while tb is not None:
-        last = tb.tb_frame.f_code.co_filename
+        code = tb.tb_frame.f_code
+        last = code.co_filename
+        if any(part in last.replace("\\", "/") for part in ("/cadquery/", "/OCP", "/multimethod")):
+            if "/cadquery/" in last.replace("\\", "/"):
+                cq_func = getattr(code, "co_qualname", code.co_name)
+            origin_is_cq = True
+        else:
+            origin_is_cq = False
         tb = tb.tb_next
     if last is None or last == "<model>":
         return "model code"
-    if any(part in last.replace("\\", "/") for part in ("/cadquery/", "/OCP", "/multimethod")):
-        return "cadquery"
+    if origin_is_cq:
+        return f"cadquery: {cq_func}" if cq_func else "cadquery"
     return "other library"
 
 
@@ -267,7 +275,11 @@ def _exec_result(code: str) -> Any:
     try:
         exec(compile(code, "<model>", "exec"), namespace)
     except Exception as exc:
-        raise BuildError(f"execution failed: {type(exc).__name__}: {exc} [raised in {_raised_in(exc)}]") from exc
+        # The tag goes FIRST: error text is capped (_MAX_ERROR_CHARS) where it
+        # leaves the sandbox, and a tag at the end was cut off long messages
+        # (label check, seed 20260927). Only the scorer writes this prefix, so
+        # a model cannot forge it through its own exception message.
+        raise BuildError(f"execution failed [raised in {_raised_in(exc)}]: {type(exc).__name__}: {exc}") from exc
     obj = namespace.get("result")
     if obj is None:
         raise BuildError("code did not define `result`")

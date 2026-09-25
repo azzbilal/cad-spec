@@ -63,8 +63,8 @@ from summarize_results import load, select_runs
 
 TOL = 0.5  # mm, same class as the rubric's position tolerance
 UNFINISHED = ("API error", "degenerate loop", "cut off")
-NOT_BUILT = ("syntax error", "CadQuery API error", "Python error in model code", "no part produced", "timeout",
-             "build failed")
+NOT_BUILT = ("syntax error", "CadQuery API error", "geometry kernel failure", "Python error in model code",
+             "no part produced", "timeout", "build failed")
 ORDER = UNFINISHED + NOT_BUILT + (
     "change order ignored", "change not propagated to pitch",
     "holes stacked at one point", "no holes", "pattern anchored at a corner", "margin applied twice",
@@ -88,7 +88,7 @@ _CADQUERY_MESSAGE = re.compile(
     rf"AttributeError: '{_CQ_TYPES}' object has no attribute"
     r"|AttributeError: module 'cadquery[\w.]*' has no attribute"
     rf"|TypeError: {_CQ_TYPES}\.\w+\(\)"
-    r"|DispatchError|Standard_\w+|StdFail|TopoDS|BRep_API"
+    r"|DispatchError"
     r"|Cannot find a solid on the stack|No pending wires present|No pending edges"
     r"|Do not know how to handle until argument|Cannot union type"
 )
@@ -122,6 +122,27 @@ def _rect_literals(completion: str) -> list[tuple[float, float]]:
     return out
 
 
+# The OCC kernel refused a VALID call on geometry it cannot build (a fillet
+# radius larger than the edge allows, a negative box height): a modelling
+# failure, not API misuse (label check, seed 20260927, #10).
+_KERNEL_FAILURE = re.compile(r"Standard_\w+|StdFail|BRep_API|TopoDS")
+# Where the error was raised, as tagged by the scorer: at the start of the text
+# since 0.4.0 fixes (a tag at the end was cut by the error-length cap), at the
+# end in earlier files.
+_ORIGIN = re.compile(r"^execution failed \[raised in (model code|cadquery(?:: ([\w.<>]+))?|other library)\]")
+_ORIGIN_OLD = re.compile(r"\[raised in ([\w ]+)\]\s*$")
+
+
+def error_origin(err: str) -> tuple[str | None, str | None]:
+    """(origin, CadQuery function) from a scorer error text; (None, None) if untagged."""
+    m = _ORIGIN.search(err or "")
+    if m:
+        origin = "cadquery" if m.group(1).startswith("cadquery") else m.group(1)
+        return origin, m.group(2)
+    m = _ORIGIN_OLD.search(err or "")
+    return (m.group(1), None) if m else (None, None)
+
+
 def _unbuilt_label(row: dict) -> str:
     err = row.get("error") or ""
     if row.get("timeout") or "execution budget" in err:
@@ -133,11 +154,13 @@ def _unbuilt_label(row: dict) -> str:
     # scorer records where). Missing methods and bad arguments are raised at
     # the caller, so the message decides those. A plain Python error in the
     # model's own code is not a CadQuery weakness (audit, September 2026).
-    if err.startswith("execution failed:"):
-        origin = re.search(r"\[raised in ([\w ]+)\]\s*$", err)
-        if _CADQUERY_MESSAGE.search(err) or (origin and origin.group(1) == "cadquery"):
+    if err.startswith("execution failed"):
+        origin, _ = error_origin(err)
+        if _KERNEL_FAILURE.search(err):
+            return "geometry kernel failure"
+        if _CADQUERY_MESSAGE.search(err) or origin == "cadquery":
             return "CadQuery API error"
-        if origin and origin.group(1) == "model code":
+        if origin == "model code":
             return "Python error in model code"
         return "build failed"
     if re.search(r"did not define|no CadQuery shape|no solid|no code|not a shape", err) or not err:
@@ -252,7 +275,7 @@ _API_KINDS = (
     (re.compile(r"TypeError: (?:[\w.]+\.)?(\w+)\(\) (?:takes|got|missing)"), "wrong arguments to {0}()"),
     (re.compile(r"Cannot find a solid on the stack"), "operation needs a solid on the stack"),
     (re.compile(r"NameError: name '(\w+)' is not defined"), "undefined name"),
-    (re.compile(r"Standard_\w+|StdFail|BRep_API|OCP"), "geometry kernel refused the operation"),
+    (re.compile(r"Cannot union type"), "union needs a solid or shape"),
 )
 
 
@@ -262,8 +285,12 @@ def api_error_kind(error: str) -> str:
         m = pattern.search(error or "")
         if m:
             return template.format(*m.groups()).replace(".__init__()", "()")
-    m = re.search(r"execution failed: (\w+)", error or "")
-    return m.group(1) if m else "unknown"
+    m = re.search(r"execution failed(?: \[[^\]]*\])?: (\w+)", error or "")
+    exc = m.group(1) if m else "unknown"
+    _, func = error_origin(error)
+    # A generic exception type names nothing; the CadQuery function that
+    # raised it does (label check, seed 20260927, #29).
+    return f"{exc} in {func}()" if func else exc
 
 
 def _l4_label(m, spec: Spec, code: str = "") -> str | None:
