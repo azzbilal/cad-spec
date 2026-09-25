@@ -42,8 +42,9 @@ FONT = "font-family='Segoe UI, Helvetica, Arial, sans-serif'"
 PALETTE = ["#0072B2", "#E69F00", "#009E73", "#D55E00", "#CC79A7", "#56B4E9", "#F0E442", "#999999"]
 FAILURE_GROUPS = {
     "did not finish": ("API error", "degenerate loop", "cut off"),
-    "code did not build": ("syntax error", "CadQuery API error", "Python error in model code", "no part produced",
-                           "timeout", "build failed", "classifier error"),
+    "code did not build": ("syntax error", "CadQuery API error", "geometry kernel failure",
+                           "Python error in model code", "no part produced", "timeout", "build failed",
+                           "classifier error"),
     "holes not bound to positions": ("holes stacked at one point", "no holes"),
     "hole pattern misread": ("pattern anchored at a corner", "margin applied twice", "X and Y swapped",
                              "pitch read as coordinates", "one axis misplaced", "some holes right, some wrong",

@@ -469,7 +469,18 @@ def test_scorer_unavailable_is_not_a_build_error():
 def test_error_records_where_it_was_raised():
     from cad_spec.measure import _exec_result
 
-    with pytest.raises(BuildError, match=r"\[raised in model code\]$"):
+    with pytest.raises(BuildError, match=r"^execution failed \[raised in model code\]: ValueError"):
         _exec_result("n = int('abc')")
-    with pytest.raises(BuildError, match=r"No pending wires.*\[raised in cadquery\]$"):
+    cq_origin = r"^execution failed \[raised in cadquery: [\w.]+\]: .*No pending wires"
+    with pytest.raises(BuildError, match=cq_origin):
         _exec_result("import cadquery as cq\nresult = cq.Workplane('XY').extrude(5)")
+
+
+def test_origin_tag_survives_the_error_cap():
+    """Through the real sandbox, where error text is capped: a long pybind
+    message (every accepted signature listed) must keep its origin tag."""
+    code = ("import cadquery as cq\nresult = cq.Workplane('XY').box(20, 20, 4)"
+            ".faces('>Z').workplane().hole(11.0, 'through')")
+    with pytest.raises(BuildError) as info:
+        build_and_measure(code)
+    assert str(info.value).startswith("execution failed [raised in cadquery"), str(info.value)[:120]

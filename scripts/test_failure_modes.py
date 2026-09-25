@@ -108,6 +108,14 @@ def cases() -> list[tuple[str, Spec, str, str | None, dict]]:
                                 f".faces('>Z').workplane().rarray(2, 2, {s.pitch_x / 2}, {s.pitch_y / 2}).hole(5))"),
                 "CadQuery API error", {}))
 
+    # Label check, seed 20260927: a long pybind error (the origin tag used to
+    # be cut by the error-length cap) and a kernel refusal of a valid call.
+    box3 = f"cq.Workplane('XY').box({s.length}, {s.width}, {s.thickness})"
+    out.append(("L1", s, fenced(f"result = {box3}.faces('>Z').workplane().hole({s.hole_diameter}, 'through')"),
+                "CadQuery API error", {}))
+    out.append(("L1", s, fenced(f"result = {box3}.edges('|Z').fillet({s.width}).edges('|Z').fillet({s.width})"),
+                "geometry kernel failure", {}))
+
     x = next(v for v in evals
              if (edit_source(v).pitch_x, edit_source(v).pitch_y) != (v.pitch_x, v.pitch_y)
              and (edit_source(v).length, edit_source(v).width) != (v.length, v.width))
@@ -164,8 +172,8 @@ def main() -> int:
         result = json.loads(next(Path(tmp).glob("failure-modes-*.json")).read_text())
     by_rollout = {r["rollout"]: r["label"] for r in result["rows"]}  # match by answer, not by order
     api = [r.get("api_kind") for r in result["rows"] if r["label"] == "CadQuery API error"]
-    if sorted(api) != ["no matching signature for Location()", "no such method: Workplane.nonexistent",
-                       "non-integer count"]:
+    if sorted(api) != ["TypeError in Solid.makeCylinder()", "no matching signature for Location()",
+                       "no such method: Workplane.nonexistent", "non-integer count"]:
         print(f"[BAD] API error kind: {api}")
         return 1
     print("[ok ] API error kinds: no such method, no matching signature")

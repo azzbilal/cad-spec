@@ -63,6 +63,28 @@ three generic error kinds (pending wires, non-integer counts, invalid extrude
 arguments); they are now named. The 28/30 stays the published figure; a new
 sample is needed to measure the fixed rules.
 
+## Sample 3 (seed 20260927, AI-assisted)
+
+30 answers drawn after the audit fixes. Reviewed by an AI agent, like sample
+2; planned as the human check, it is recorded for what it was.
+
+**28/30 in the correct category (93%), AI-assisted.**
+
+| Entry | Label given | Correct label | Why it was missed |
+|---|---|---|---|
+| 6 | build failed | CadQuery API error | `.hole(11.0, "through")`: the error was raised inside CadQuery, but the scorer put the origin tag at the END of the error text, and the 300-character cap on error text (a sandbox safety limit) cut it from long messages. 11 answers had this pattern |
+| 10 | CadQuery API error | geometry kernel failure | a fillet too large for its edge is a valid call on impossible geometry; kernel refusals were filed as API misuse |
+
+Fixed afterwards: the origin tag now comes first, where the cap cannot reach
+it, and names the CadQuery function that raised the error (so a generic
+`TypeError` reads "TypeError in Workplane.rect()"); kernel refusals have their
+own label, "geometry kernel failure"; "Cannot union type" is a named kind. The
+tag test now runs through the real sandbox, cap included; the earlier test
+called the inner function directly and could not see the cap.
+
+The human check moves to a new seed (20260928): the reviewer of a sample must
+not have seen another reviewer's verdicts on it.
+
 ## External audit of the analysis code
 
 A later audit of the publish patch probed the classifier and the leaderboard
