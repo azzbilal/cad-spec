@@ -186,9 +186,9 @@ parser with one derivation rule 50%, a plain table parser 25%.
 
 **What the board shows**
 
-- **Only one model beats a regex.** deepseek (78%) is the only model above
-  the template-aware parser (75%), and every model scores below a plain table
-  parser on L1. Turning a clear, complete spec into correct CadQuery is
+- **No model clearly beats a regex.** deepseek (78%) is the only model above
+  the template-aware parser (75%), and its 95% interval (72% to 85%) still
+  includes 75%. Every model scores below a plain table parser on L1. Turning a clear, complete spec into correct CadQuery is
   unreliable for all of them.
 - **The biggest CadQuery weakness is stack semantics.** "Cannot find a solid
   on the stack" is the most common API error (108 answers), and drilling
