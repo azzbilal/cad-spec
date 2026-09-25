@@ -32,7 +32,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "environments" / "cad_spec"))
 
-from summarize_results import load, select_runs
+from summarize_results import load, run_arm, select_runs
 
 HEADLINE_TIERS = ("L1", "L2", "L3", "L4")
 ALL_TIERS = ("L0", *HEADLINE_TIERS)
@@ -119,6 +119,10 @@ def collect(paths: list[str]) -> tuple[dict[str, dict], dict[str, dict]]:
     board. Run ids start with a UTC timestamp, so they sort by time.
     """
     metas, groups, ends = load(paths)
+    # The board ranks first-shot answers only: hint and feedback arms change the
+    # task and are compared separately (scripts/compare_arms.py).
+    keep = {rid for rid, meta in metas.items() if run_arm(meta) == "first-shot"}
+    groups = {key: rows for key, rows in groups.items() if key[0] in keep}
     by_model: dict[str, dict] = defaultdict(lambda: {"tiers": {}, "notes": [], "cost": 0.0, "runs": {}})
     for (name, tier), run in select_runs(metas, groups, ends).items():
         entry = by_model[name]

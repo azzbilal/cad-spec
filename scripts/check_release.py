@@ -15,7 +15,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 DOCS = ["README.md", "ROADMAP.md", "SECURITY.md", "CHANGELOG.md",
-        *sorted(str(p.relative_to(ROOT)) for p in (ROOT / "docs").glob("*.md"))]
+        *sorted(str(p.relative_to(ROOT)) for p in (ROOT / "docs").rglob("*.md"))]
 LINK = re.compile(r"!?\[[^\]]*\]\(([^)\s#]+)(?:#[^)]*)?\)")
 
 

@@ -265,6 +265,12 @@ anything, and stops with instructions if it is not (typically: the virtual
 environment is not active in this terminal). A scorer that cannot run never
 records a score.
 
+Experiment arms change the task, so they are named and kept off the
+first-shot board: `--arm hint --system-prompt-file prompts/cadquery-hints.md`
+appends a CadQuery cheat-sheet to the system prompt; `--arm feedback
+--feedback-retries 1` shows the model its build error and allows a retry.
+See [`docs/experiments/hint-feedback.md`](docs/experiments/hint-feedback.md).
+
 Reasoning models need `--max-tokens 8000` or more; otherwise they spend the
 budget thinking and return nothing. The summary flags any run where that
 happened.
@@ -325,6 +331,7 @@ scripts/
   rescore.py          replay saved answers through the current scorer
   failure_modes.py    label every failed answer (geometry + code)
   label_check.py      random sample of failure labels, with evidence, for review
+  compare_arms.py     hint and feedback arms vs first-shot, pre-registered verdicts
   leaderboard.py      ranked table + SVG charts
   openrouter_models.py  live model catalogue with run cost estimates
   run_baseline.py     any provider, any tier, JSONL with provenance

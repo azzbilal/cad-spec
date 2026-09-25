@@ -46,7 +46,7 @@ def load(paths: list[str]) -> tuple[dict[str, dict], dict[tuple[str, str], list[
     ends: dict[str, dict] = {}
     for p in paths:
         run_in_file = None
-        with open(p) as fh:
+        with open(p, encoding="utf-8") as fh:
             for line in fh:
                 if not line.strip():
                     continue
@@ -118,6 +118,19 @@ def _cut_off(row: dict, max_tokens: int | None) -> bool:
     return _hit_cap(row, max_tokens) and not _is_loop(row, max_tokens)
 
 
+def run_label(meta: dict) -> str:
+    """Display name of a run: the model, plus its experiment arm unless it is
+    the plain first-shot evaluation ("google/gemma-3-27b-it [hint]"). Arms
+    therefore never merge with, or replace, the first-shot rows."""
+    arm = meta.get("arm") or "first-shot"
+    model = meta.get("model", "?")
+    return model if arm == "first-shot" else f"{model} [{arm}]"
+
+
+def run_arm(meta: dict) -> str:
+    return meta.get("arm") or "first-shot"
+
+
 def select_runs(metas: dict[str, dict], groups: dict[tuple[str, str], list[dict]],
                 ends: dict[str, dict]) -> dict[tuple[str, str], dict]:
     """Choose ONE run per (model, tier). Shared by the leaderboard, the failure
@@ -134,7 +147,7 @@ def select_runs(metas: dict[str, dict], groups: dict[tuple[str, str], list[dict]
         problems = completeness_problems(run_id, tier, rows, meta, ends)
         if s["truncated"] + s["api_errors"] > 0.05 * len(rows):
             problems.append(f"{s['truncated']} cut off, {s['api_errors']} API errors")
-        candidates[(meta.get("model", "?"), tier)].append((run_id, rows, problems, s["cost_usd"], meta))
+        candidates[(run_label(meta), tier)].append((run_id, rows, problems, s["cost_usd"], meta))
     chosen = {}
     for key, runs in candidates.items():
         runs.sort(key=lambda r: r[0])

@@ -202,15 +202,22 @@ def _is_openrouter(args: argparse.Namespace) -> bool:
     return "openrouter.ai" in args.base_url
 
 
-def model_answer(args: argparse.Namespace, prompt: str, seed: int) -> tuple[str, dict[str, Any]]:
-    """Returns (answer text, call info: usage, finish_reason, cost_usd)."""
+def model_answer(args: argparse.Namespace, prompt: str | list[dict[str, str]],
+                 seed: int) -> tuple[str, dict[str, Any]]:
+    """Returns (answer text, call info: usage, finish_reason, cost_usd).
+
+    `prompt` is the user prompt, or a whole conversation (user, assistant,
+    user...) for a feedback retry. The system prompt comes from the run's arm.
+    """
+    turns = [{"role": "user", "content": prompt}] if isinstance(prompt, str) else prompt
+    system = getattr(args, "system_prompt", SYSTEM_PROMPT)
     if args.provider == "openai":
         key = os.environ.get(args.key_env, "")
         if _is_openrouter(args) and not key:
             raise RuntimeError(f"environment variable {args.key_env} is empty")
         body: dict[str, Any] = {
             "model": args.model,
-            "messages": [{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": prompt}],
+            "messages": [{"role": "system", "content": system}, *turns],
             "temperature": args.temperature,
             "max_tokens": args.max_tokens,
             "seed": seed,
@@ -238,8 +245,8 @@ def model_answer(args: argparse.Namespace, prompt: str, seed: int) -> tuple[str,
     if args.provider == "anthropic":
         body = {
             "model": args.model,
-            "system": SYSTEM_PROMPT,
-            "messages": [{"role": "user", "content": prompt}],
+            "system": system,
+            "messages": turns,
             "temperature": args.temperature,
             "max_tokens": args.max_tokens,
         }
@@ -251,6 +258,23 @@ def model_answer(args: argparse.Namespace, prompt: str, seed: int) -> tuple[str,
         return text, {"usage": out.get("usage") or {}, "cost_usd": None,
                       "finish_reason": "length" if stop == "max_tokens" else stop}
     raise ValueError(args.provider)
+
+
+FEEDBACK_TEMPLATE = (
+    "Running your code failed:\n\n{error}\n\n"
+    "Fix it and return the complete corrected module as a single Python code block."
+)
+
+
+def build_feedback(error: str) -> str:
+    """What a Python interpreter would tell the model, and nothing more.
+
+    Only for code that did not build: a wrong part that builds gets no
+    feedback, because that would leak the grader. The scorer's origin tag is
+    removed; the exception type and message stay, as in a traceback.
+    """
+    plain = re.sub(r"^execution failed \[raised in [^\]]*\]", "execution failed", error or "")
+    return FEEDBACK_TEMPLATE.format(error=plain)
 
 
 def answer(args: argparse.Namespace, spec: Spec, tier: str, prompt: str, seed: int) -> tuple[str, dict[str, Any]]:
@@ -326,6 +350,12 @@ def main() -> int:
     ap.add_argument("--extra-body", default="",
                     help='JSON merged into the request, e.g. \'{"reasoning": {"effort": "low"}}\'')
     ap.add_argument("--quiet", action="store_true", help="no per-rollout progress line")
+    ap.add_argument("--arm", default="first-shot",
+                    help="experiment arm recorded with the run; only 'first-shot' runs enter the leaderboard")
+    ap.add_argument("--system-prompt-file", default="",
+                    help="text APPENDED to the standard system prompt (hint arm)")
+    ap.add_argument("--feedback-retries", type=int, default=0,
+                    help="after code that does not build, show the error and retry up to N times (feedback arm)")
     args = ap.parse_args()
     try:
         require_cadquery()
@@ -333,6 +363,14 @@ def main() -> int:
         raise SystemExit(f"cad-spec: {exc}") from None
     if args.provider in ("openai", "anthropic") and not args.model:
         ap.error("--model is required for model providers")
+    args.system_prompt = SYSTEM_PROMPT
+    if args.system_prompt_file:
+        hints = Path(args.system_prompt_file).read_text(encoding="utf-8").strip()
+        args.system_prompt = SYSTEM_PROMPT + "\n" + hints + "\n"
+    if (args.system_prompt_file or args.feedback_retries) and args.arm == "first-shot":
+        ap.error("--system-prompt-file and --feedback-retries change the task; name the run with --arm")
+    if args.feedback_retries and args.provider not in ("openai", "anthropic"):
+        ap.error("--feedback-retries needs a model provider")
 
     train, evals = make_splits()
     specs = evals if args.split == "eval" else train
@@ -356,7 +394,8 @@ def main() -> int:
         # The planned sample manifest: what a complete run contains.
         "planned": {"tiers": args.tiers, "spec_ids": [s.id for s in specs], "rollouts": args.rollouts,
                     "total": len(args.tiers) * len(specs) * args.rollouts},
-        "sandbox": sandbox_info(), "system_prompt": SYSTEM_PROMPT,
+        "sandbox": sandbox_info(), "system_prompt": args.system_prompt, "arm": args.arm,
+        "system_prompt_file": args.system_prompt_file or None, "feedback_retries": args.feedback_retries,
         "base_url": args.base_url if args.provider == "openai" else None,
         "extra_body": args.extra_body or None, "budget_usd": args.budget or None,
     }
@@ -394,11 +433,29 @@ def main() -> int:
                             api_error = None
                         except Exception as exc:  # network / API errors are data too
                             text, info, api_error = "", {"usage": {}}, f"{type(exc).__name__}: {exc}"
+                        report = score(text, spec)
+                        attempts: list[dict[str, Any]] = []
+                        # Feedback arm: code that did not build gets its error and a retry.
+                        while (not api_error and not report.parsed and report.error
+                               and len(attempts) < args.feedback_retries):
+                            attempts.append({"completion": text, "error": report.error, "reward": report.reward,
+                                             "cost_usd": info.get("cost_usd"), "usage": info.get("usage") or {},
+                                             "finish_reason": info.get("finish_reason")})
+                            convo = [{"role": "user", "content": prompt}]
+                            for a in attempts:
+                                convo += [{"role": "assistant", "content": a["completion"]},
+                                          {"role": "user", "content": build_feedback(a["error"])}]
+                            try:
+                                text, info = model_answer(args, convo, args.seed + k)
+                            except Exception as exc:
+                                text, info, api_error = "", {"usage": {}}, f"{type(exc).__name__}: {exc}"
+                            report = score(text, spec)
                         gen_s = time.time() - t0
                         consecutive_errors = consecutive_errors + 1 if api_error else 0
                         last_error = api_error or last_error
-                        report = score(text, spec)
                         cost = info.get("cost_usd")
+                        if attempts and cost is not None:
+                            cost = float(cost) + sum(float(a["cost_usd"] or 0.0) for a in attempts)
                         if cost is None and not api_error and args.provider in ("openai", "anthropic"):
                             unknown_cost += 1
                         spent += float(cost or 0.0)
@@ -420,6 +477,7 @@ def main() -> int:
                             "served_model": info.get("served_model"),
                             "completion_chars": len(text), "usage": info.get("usage") or {},
                             "gen_seconds": round(gen_s, 3), "prompt": prompt, "completion": text,
+                            "attempts": attempts,
                         }
                         fh.write(json.dumps(row) + "\n")
                         fh.flush()

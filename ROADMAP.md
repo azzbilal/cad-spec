@@ -22,12 +22,11 @@ the evidence that meets it.
    (`docs/label-check.md`: AI-assisted review of three fresh samples,
    28/30, 28/30, 27/30). Still to add: four reasoning models at
    `--max-tokens 8000`.
-2. **Knowledge or reasoning? Hint and feedback tracks.** Rerun weak models
-   with a short CadQuery cheat-sheet (stack semantics, `hole`/`rect`/`rarray`
-   signatures), then with one retry after a build error. Predicted before
-   running: stacked drilling and API errors drop sharply; margin-twice and
-   change-not-propagated do not. Reported as separate tracks, never mixed
-   into the first-shot board.
+2. **Knowledge or reasoning? Hint and feedback arms. Pre-registered:**
+   [`docs/experiments/hint-feedback.md`](docs/experiments/hint-feedback.md)
+   (five models, a CadQuery cheat-sheet arm and a one-retry feedback arm,
+   predictions P1 to P3 with thresholds, analysis script committed with it).
+   Runs to do; reported separately, never on the first-shot board.
 3. **One training run.** On the tiers with spread (expected L2/L3), Prime
    hosted RL, evaluate base vs adapter per `docs/EVALUATION_PROTOCOL.md`.
 4. **Tag v0.4.0** once 1 and 3 are in `results/`; `prime env push`.
