@@ -116,6 +116,19 @@ def cases() -> list[tuple[str, Spec, str, str | None, dict]]:
     out.append(("L1", s, fenced(f"result = {box3}.edges('|Z').fillet({s.width}).edges('|Z').fillet({s.width})"),
                 "geometry kernel failure", {}))
 
+    # Label check, seed 20260928 (maintainer-confirmed): side-face drilling,
+    # and right extremes that are not a shifted rectangle.
+    side = f"cq.Workplane('XY').box({s.length}, {s.width}, {s.thickness})"
+    loop = (f"plate = {side}\nfor x, y in [(1, 1), (2, 2), (3, 3), (4, 4)]:\n"
+            f"    plate = plate.faces('>X').workplane().hole(3.0)\nresult = plate")
+    out.append(("L1", s, fenced(loop), "holes stacked at one point", {}))
+    out.append(("L1", s, fenced(f"result = {side}.faces('>X').workplane().pushPoints([(-1.5, 0), (1.5, 0)]).hole(1.0)"),
+                "holes drilled along the wrong axis", {}))
+    g13 = next(v for v in evals if v.id == "gen-0021")
+    gx, gy = g13.pitch_x / 2, g13.pitch_y / 2
+    out.append(("L1", g13, at_points(g13, [(-gx, gy), (gx, gy), (0, 0), (0, 2 * gy)]),
+                "some holes right, some wrong", {}))
+
     x = next(v for v in evals
              if (edit_source(v).pitch_x, edit_source(v).pitch_y) != (v.pitch_x, v.pitch_y)
              and (edit_source(v).length, edit_source(v).width) != (v.length, v.width))

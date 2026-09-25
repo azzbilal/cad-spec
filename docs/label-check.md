@@ -47,9 +47,7 @@ fixes. Reviewed by an AI agent working from the review file, without access to
 any prior verdict on this sample.
 
 **28/30 in the correct category (93%), AI-assisted.** This is not a human
-validation. A human review of a new sample (new seed) is still to do and is
-listed in the roadmap; until then, the labels should be read as checked by
-software and an AI reviewer only.
+validation (see "Method" below).
 
 | Entry | Label given | Correct label | Why it was missed |
 |---|---|---|---|
@@ -82,8 +80,47 @@ own label, "geometry kernel failure"; "Cannot union type" is a named kind. The
 tag test now runs through the real sandbox, cap included; the earlier test
 called the inner function directly and could not see the cap.
 
-The human check moves to a new seed (20260928): the reviewer of a sample must
-not have seen another reviewer's verdicts on it.
+Independence rule: a reviewer must not have seen another reviewer's verdicts
+on the same sample, so a sample reviewed once is not reviewed "fresh" again.
+
+## Sample 4 (seed 20260928, AI-assisted)
+
+30 answers. Reviewed by an AI agent; the maintainer then reviewed and
+confirmed its three disagreements. The maintainer had seen the AI verdicts, so
+this is a confirmation, not an independent human check.
+
+**27/30 in the correct category (90%), AI-assisted, disagreements confirmed
+by the maintainer.**
+
+| Entry | Label given | Correct label | Why it was missed |
+|---|---|---|---|
+| 1 | no holes | holes stacked at one point | the model drilled four times into the plate's SIDE, along X, without using its computed positions; the scorer measures Z bores only (as the spec requires), so it saw no hole |
+| 13 | pattern anchored at a corner | some holes right, some wrong | two holes exactly right, two between them: the extremes had the span of a corner-anchored rectangle, and the mistake patterns checked only extremes |
+| 14 | holes misplaced (other) | pattern anchored at a corner | a correct pattern started at the origin; three of its four holes fell off the plate, and holes that were never cut leave no geometry to classify |
+
+Fixed afterwards: the measurement counts closed concave bores along other
+axes (reported, never scored), and an answer with no Z bore but a side bore is
+"holes stacked at one point" when its drilling repeats without moving,
+otherwise "holes drilled along the wrong axis"; every mistake pattern (corner,
+margin twice, swapped, pitch as coordinates) must now place every measured
+hole on the grid it predicts. #14 is a known limitation (below).
+
+## Method
+
+The failure labels are checked by AI-assisted review of independent random
+samples (seeds 20260926, 20260927, 20260928: 28/30, 28/30, 27/30), each
+drawn fresh and reviewed without access to earlier verdicts on it. The
+maintainer rules on taxonomy questions the reviews raise. No human-validated
+accuracy figure is claimed. Every figure is reported as measured before the
+fixes it prompted.
+
+## Known limitations
+
+- **Holes that land off the plate.** When most of a pattern falls outside
+  the plate, only the holes that were actually cut can be classified, so a
+  correct but misplaced pattern can read as "holes misplaced (other)"
+  (sample 4, #14). The proper fix is to record where each `.hole()` call
+  aims during the rebuild; it is on the roadmap.
 
 ## External audit of the analysis code
 
