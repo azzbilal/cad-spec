@@ -5,6 +5,27 @@ Scores are only comparable within one scorer version
 
 ## Unreleased
 
+### Human label check (30 random failed answers, September 2026)
+- Result on the first sample: every label was a true statement about the
+  geometry (30/30); 25/30 named the right category. All 5 misses were
+  answers drilling repeatedly at one spot (.hole() calls separated by
+  .translate(), .faces().workplane() or mirror calls) filed as "other".
+- Stacked rule rewritten: two or more .hole() calls (or one in a loop that
+  never uses its variable) with nothing that sets a new position
+  (transformed, moveTo, pushPoints, vertices, rarray, polarArray, a non-zero
+  center). Answers whose holes were really placed apart but mostly landed
+  off the plate (cumulative .transformed() offsets) stay "other".
+- One shared run selection (`select_runs`) for the leaderboard, the failure
+  analysis and the label check: superseded reruns are no longer
+  double-counted in the failure table.
+- `scripts/label_check.py`: writes the review file keyed by run id (the
+  hand-made first version mixed two phi-4 runs and showed one run's code
+  beside the other's measurements), with the correct hole centres worked out,
+  the plate's global position, and the full prompt and code; refuses to show
+  code it cannot match to one answer. Use a new --seed for every check.
+- Failure details record the plate's bounding box; self-test now 17 modes
+  plus a superseded-run check.
+
 ### A scorer that cannot run never scores
 - New `ScorerUnavailableError` (not a `BuildError`): raised when CadQuery is
   not importable or the scorer worker cannot start, and never caught by

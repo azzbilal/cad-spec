@@ -218,6 +218,13 @@ python scripts/failure_modes.py results/rescored/0.4.0/*.jsonl
 python scripts/leaderboard.py results/rescored/0.4.0/*.jsonl --failures results/failure-modes-0.4.0.json
 ```
 
+To check the failure labels by hand on a fresh random sample (use a new
+seed each time; a sample used to tune the rules cannot measure them):
+
+```bash
+python scripts/label_check.py results/rescored/0.4.0/*.jsonl --seed 20260925
+```
+
 `results/leaderboard/` then holds a ranked table and three SVG charts. The
 failure classifier labels each failed answer from its re-measured geometry
 and code (for example "holes stacked at one point": positions computed but
@@ -242,6 +249,7 @@ scripts/
   validate_scorer.py  mutation suite -> results/scorer-validation-*.md
   rescore.py          replay saved answers through the current scorer
   failure_modes.py    label every failed answer (geometry + code)
+  label_check.py      random sample of labels for a human to verify
   leaderboard.py      ranked table + SVG charts
   openrouter_models.py  live model catalogue with run cost estimates
   run_baseline.py     any provider, any tier, JSONL with provenance

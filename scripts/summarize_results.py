@@ -109,6 +109,40 @@ def _cut_off(row: dict, max_tokens: int | None) -> bool:
     return _hit_cap(row, max_tokens) and not _is_loop(row, max_tokens)
 
 
+def select_runs(metas: dict[str, dict], groups: dict[tuple[str, str], list[dict]],
+                ends: dict[str, dict]) -> dict[tuple[str, str], dict]:
+    """Choose ONE run per (model, tier). Shared by the leaderboard, the failure
+    analysis and the label check, so no analysis counts a superseded run.
+
+    Rule: the latest run with no problems (complete, under 5% cut off or API
+    errors); if every run has problems, the latest one. Run ids start with a
+    UTC timestamp, so they sort by time.
+    """
+    candidates: dict[tuple[str, str], list[tuple]] = defaultdict(list)
+    for (run_id, tier), rows in groups.items():
+        meta = metas.get(run_id, {})
+        s = summarize(rows, meta.get("max_tokens"))
+        problems = completeness_problems(run_id, tier, rows, meta, ends)
+        if s["truncated"] + s["api_errors"] > 0.05 * len(rows):
+            problems.append(f"{s['truncated']} cut off, {s['api_errors']} API errors")
+        candidates[(meta.get("model", "?"), tier)].append((run_id, rows, problems, s["cost_usd"], meta))
+    chosen = {}
+    for key, runs in candidates.items():
+        runs.sort(key=lambda r: r[0])
+        clean = [r for r in runs if not r[2]]
+        run_id, rows, problems, cost, meta = (clean or runs)[-1]
+        chosen[key] = {"run_id": run_id, "rows": rows, "problems": list(dict.fromkeys(problems)),
+                       "cost": cost, "meta": meta, "superseded": len(runs) - 1}
+    return chosen
+
+
+def _gates_ok(row: dict) -> bool:
+    """Recorded gate verdict, or derived from the checks for rows without it."""
+    if "gates_passed" in row:
+        return bool(row["gates_passed"])
+    return all(v for k, v in (row.get("checks") or {}).items() if k.startswith("gate:"))
+
+
 def summarize(rows: list[dict], max_tokens: int | None = None) -> dict:
     by_spec: dict[str, list[dict]] = defaultdict(list)
     for r in rows:
@@ -122,7 +156,7 @@ def summarize(rows: list[dict], max_tokens: int | None = None) -> dict:
         "median_reward": statistics.median(r["reward"] for r in rows),
         "all_requirements_pass": statistics.fmean(spec_full), "all_requirements_pass_ci95": bootstrap_ci(spec_full),
         "built_rate": len(built) / len(rows),
-        "gate_hit_rate": sum(1 for r in built if not r["gates_passed"]) / max(1, len(built)),
+        "gate_hit_rate": sum(1 for r in built if not _gates_ok(r)) / max(1, len(built)),
         "timeouts": sum(r.get("timeout", False) for r in rows),
         # Truncated answers split in two: cut off mid-answer (budget too small:
         # a configuration problem) and degenerate loops (a model failure).
