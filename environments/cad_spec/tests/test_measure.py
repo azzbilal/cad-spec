@@ -462,3 +462,14 @@ def test_scorer_unavailable_is_not_a_build_error():
     from cad_spec.measure import ScorerUnavailableError
 
     assert not issubclass(ScorerUnavailableError, BuildError)
+
+
+# --- failure analysis: record where an error was raised (never scored) ------
+
+def test_error_records_where_it_was_raised():
+    from cad_spec.measure import _exec_result
+
+    with pytest.raises(BuildError, match=r"\[raised in model code\]$"):
+        _exec_result("n = int('abc')")
+    with pytest.raises(BuildError, match=r"No pending wires.*\[raised in cadquery\]$"):
+        _exec_result("import cadquery as cq\nresult = cq.Workplane('XY').extrude(5)")

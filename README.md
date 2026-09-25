@@ -20,6 +20,7 @@ What this is, and what it is not:
 | Scorer validated against labelled mutants | yes: 1,230 mutants, 0 false full credit on 600 wrong parts, 0 false rejection on 600 correct parts ([results](results/scorer-validation-0.4.0.md)) |
 | Separates "copying numbers" from "reading a spec" | partly: five prompt tiers, reported separately; L0 to L2 are solved by simple parsers, and L3 by a parser that knows its wording templates ([baselines](results/baselines-deterministic.md)) |
 | Runs untrusted model code safely | per-rollout sandbox on POSIX, container for untrusted scale ([SECURITY.md](SECURITY.md)) |
+| Ranks real models and shows *how* each one fails | yes: 16 models (15 hosted, 1 local), about $0.27 of API calls; failure labels checked by an AI-assisted review of a fresh random sample, 28/30 correct; a human check is still to do ([leaderboard](#leaderboard)) |
 | Shows that RL training improves a model | **not yet**: tooling is ready, no training run is published |
 | Broad text-to-CAD benchmark, new part families | **no**: one family; see [ROADMAP.md](ROADMAP.md) |
 | "Material" means alloy, strength, fit, manufacturability | **no**: R6 is volume consistency only |
@@ -151,6 +152,76 @@ misplaced". Pinned as `LIMIT_hole_breakout`.
 same correct part converted to NURBS surfaces (`toNURBS()`) scores 0. Models
 do not produce this unprompted. Pinned as `LIMIT_nurbs_surfaces`.
 
+## Leaderboard
+
+![ranking](results/leaderboard/ranking.svg)
+
+One greedy, first-shot answer per spec (temperature 0, no CadQuery hints, no
+retries), 30 held-out specs per tier. Score = all-requirements pass rate
+averaged over L1 to L4, with a 95% bootstrap interval over specs. Full table,
+tier heatmap and failure fingerprints:
+[`results/leaderboard/leaderboard.md`](results/leaderboard/leaderboard.md).
+
+| # | Model | Score [95% CI] | L1 | L2 | L3 | L4 |
+|---:|---|---|---:|---:|---:|---:|
+| 1 | deepseek-chat-v3-0324 | 78% [72, 85] | 97% | 93% | 63% | 60% |
+| 2 | gpt-4.1-nano | 63% [56, 71] | 60% | 100% | 60% | 33% |
+| 3 | qwen3-coder-next | 61% [54, 68] | 77% | 83% | 27% | 57% |
+| 4 | qwen3-235b-a22b-2507 | 59% [51, 67] | 67% | 83% | 33% | 53% |
+| 5 | gpt-4o-mini | 40% [33, 46] | 0% | 67% | 60% | 33% |
+| 6 | llama-4-maverick | 33% [26, 41] | 7% | 3% | 70% | 53% |
+| 7 | mistral-small-3.2-24b | 32% [25, 40] | 47% | 10% | 20% | 53% |
+| 8 | qwen3-coder-30b-a3b | 28% [22, 36] | 7% | 40% | 13% | 53% |
+| 9 | qwen3-30b-a3b-instruct | 18% [14, 22] | 10% | 0% | 17% | 47% |
+| 10 | phi-4 | 18% [13, 23] | 37% | 0% | 0% | 37% |
+| 11 | llama-3.3-70b | 16% [12, 20] | 0% | 0% | 0% | 63% |
+| 12 | codestral-2508 | 13% [9, 18] | 0% | 0% | 0% | 53% |
+| 13 | gemma-3-27b | 12% [8, 16] | 0% | 0% | 0% | 47% |
+| 14 | llama-3.1-8b | 8% [4, 12] | 0% | 0% | 0% | 33% |
+| 15 | gemma-3-4b | 8% [4, 12] | 0% | 0% | 0% | 33% |
+| 16 | qwen2.5-coder 1.5B (local) | 7% [3, 11] | 0% | 0% | 0% | 27% |
+
+Reference programs, no model: a template-aware regex scores 75%, a table
+parser with one derivation rule 50%, a plain table parser 25%.
+
+**What the board shows**
+
+- **Only one model beats a regex.** deepseek (78%) is the only model above
+  the template-aware parser (75%), and every model scores below a plain table
+  parser on L1. Turning a clear, complete spec into correct CadQuery is
+  unreliable for all of them.
+- **The biggest CadQuery weakness is stack semantics.** "Cannot find a solid
+  on the stack" is the most common API error (108 answers), and drilling
+  repeatedly at one spot (positions computed, never bound to `.hole()`) is
+  the most common failure of gemma-3-27b and codestral, about a third of their
+  answers. CadQuery drills at whatever is on its stack; these models write it
+  as if it were a move-the-cursor-then-drill tool.
+- **Change orders expose dependent dimensions.** When a change order resizes
+  the plate or moves the edge margin, models update the dimension they were
+  told about and keep the old hole pitch that depends on it. It is the most
+  common failure of the two top models.
+- **Invented methods that sound right:** `.holes()`, `.centered()`,
+  `.rectArray()`, `.rectangularPattern()`, `.push()`; none exists.
+- **Size is not everything.** Within a family bigger is better (Qwen3 30B
+  18% to 235B 59%), but gpt-4.1-nano (63%) beats qwen3-235b and
+  llama-3.3-70b (16%).
+
+**How the failure labels were checked.** `scripts/failure_modes.py` labels
+every failed answer from its re-measured geometry and code. An AI agent
+reviewed a fresh random sample of 30 (seed 20260926, drawn from 1,318 failed
+answers): **28/30 in the correct category.** This is an AI-assisted check, not
+a human validation; a human review of a new sample is still to do. Both misses
+were fixed afterwards; the 28/30 is the figure measured before the fix. An
+earlier sample was used to develop the rules and is not counted as evidence.
+A later external audit of the analysis code found four more classifier and
+ranking defects, all fixed with regression tests. Details:
+[`docs/label-check.md`](docs/label-check.md).
+
+**Read these numbers as a lower bound.** First-shot, no documentation, no
+feedback, one run. Ranks inside overlapping intervals (for example 2 to 4)
+are not meaningful. L1 states the hole position twice (pitch and margin),
+which some models double-count.
+
 ## Evidence
 
 | File | What it shows |
@@ -161,9 +232,12 @@ do not produce this unprompted. Pinned as `LIMIT_nurbs_surfaces`.
 | [`results/baselines-deterministic.md`](results/baselines-deterministic.md) | reference, regex copier, copier + derivation, template-aware parser, and "ignore the change order" baselines per tier |
 | [`docs/audit-2026-09.md`](docs/audit-2026-09.md), [`docs/audit-2026-09-reference.md`](docs/audit-2026-09-reference.md) | the two external audits this release responds to |
 | `results/runs/*.jsonl` | every rollout behind those tables, with scorer version, git revision and sandbox mode |
+| [`results/leaderboard/`](results/leaderboard/leaderboard.md) | the 16-model board: table, ranking chart, tier heatmap, failure fingerprints |
+| [`results/failure-modes-0.4.0.md`](results/failure-modes-0.4.0.md) | every failed answer labelled, plus what the CadQuery API errors were |
+| [`docs/label-check.md`](docs/label-check.md) | how the failure labels were checked by hand, both samples |
+| `results/rescored/0.4.0/*.jsonl` | every model answer behind the board, scored under 0.4.0 |
 
-No model baseline or training result is published for 0.3.0 yet. The last
-model numbers were measured on the 0.2 scorer and are not comparable.
+No training result is published yet.
 
 ## Running a model
 

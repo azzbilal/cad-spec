@@ -59,6 +59,12 @@ jobs:
       - name: Failure-mode classifier self-test
         working-directory: .
         run: python scripts/test_failure_modes.py
+      - name: Leaderboard ranking rules self-test
+        working-directory: .
+        run: python scripts/test_leaderboard.py
+      - name: Release check (every linked evidence file exists)
+        working-directory: .
+        run: python scripts/check_release.py
       - name: Mutation validation gate
         working-directory: .
         run: python scripts/validate_scorer.py --specs 10 --out /tmp/validation

@@ -43,6 +43,7 @@ takes a few minutes for a full board (only failed, built answers are rebuilt).
 from __future__ import annotations
 
 import argparse
+import ast
 import json
 import re
 import sys
@@ -52,7 +53,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "environments" / "cad_spec"))
 
-from cad_spec.measure import BuildError, ScorerUnavailableError, build_and_measure, require_cadquery
+from cad_spec.measure import BuildError, ScorerUnavailableError, build_and_measure, extract_code, require_cadquery
 from cad_spec.rubric import SCORER_VERSION
 from cad_spec.tasks import TASKS, Spec, edit_source, make_splits
 
@@ -62,7 +63,8 @@ from summarize_results import load, select_runs
 
 TOL = 0.5  # mm, same class as the rubric's position tolerance
 UNFINISHED = ("API error", "degenerate loop", "cut off")
-NOT_BUILT = ("syntax error", "CadQuery API error", "no part produced", "timeout", "build failed")
+NOT_BUILT = ("syntax error", "CadQuery API error", "Python error in model code", "no part produced", "timeout",
+             "build failed")
 ORDER = UNFINISHED + NOT_BUILT + (
     "change order ignored", "change not propagated to pitch",
     "holes stacked at one point", "no holes", "pattern anchored at a corner", "margin applied twice",
@@ -72,10 +74,52 @@ ORDER = UNFINISHED + NOT_BUILT + (
     "gate: is_plate", "wrong plate size", "off Z datum", "wrong hole diameter", "wrong hole count",
     "material off", "edge margin off", "other",
 )
+# Last: an answer the classifier itself could not read (never silently dropped).
+ORDER = (*ORDER, "classifier error")
 
 
 def close(a: float, b: float) -> bool:
     return abs(a - b) <= TOL
+
+
+_CQ_TYPES = (r"(?:Workplane|Sketch|Assembly|Shape|Solid|Compound|Face|Wire|Edge|Vertex|Shell"
+             r"|Vector|Location|Plane|Matrix)")
+_CADQUERY_MESSAGE = re.compile(
+    rf"AttributeError: '{_CQ_TYPES}' object has no attribute"
+    r"|AttributeError: module 'cadquery[\w.]*' has no attribute"
+    rf"|TypeError: {_CQ_TYPES}\.\w+\(\)"
+    r"|DispatchError|Standard_\w+|StdFail|TopoDS|BRep_API"
+    r"|Cannot find a solid on the stack|No pending wires present|No pending edges"
+    r"|Do not know how to handle until argument|Cannot union type"
+)
+
+
+def executable_code(completion: str) -> str:
+    """The answer's code with comments and formatting normalised away, so
+    code-based rules see what runs, not what a comment says. Falls back to
+    the raw code when it does not parse."""
+    code = extract_code(completion or "")
+    try:
+        return ast.unparse(ast.parse(code))
+    except (SyntaxError, ValueError, RecursionError):
+        return code
+
+
+def _rect_literals(completion: str) -> list[tuple[float, float]]:
+    """Literal (x, y) arguments of every .rect() call in the executable code."""
+    try:
+        tree = ast.parse(extract_code(completion or ""))
+    except (SyntaxError, ValueError, RecursionError):
+        return []
+    out = []
+    for node in ast.walk(tree):
+        if (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
+                and node.func.attr == "rect" and len(node.args) >= 2):
+            try:
+                out.append((float(ast.literal_eval(node.args[0])), float(ast.literal_eval(node.args[1]))))
+            except (ValueError, TypeError, SyntaxError):
+                continue
+    return out
 
 
 def _unbuilt_label(row: dict) -> str:
@@ -84,9 +128,18 @@ def _unbuilt_label(row: dict) -> str:
         return "timeout"
     if re.search(r"SyntaxError|IndentationError", err):
         return "syntax error"
-    if re.search(r"execution failed: (AttributeError|TypeError|ValueError|NameError|IndexError|KeyError|"
-                 r"Standard_\w+|OCP|StdFail)", err):
-        return "CadQuery API error"
+    # CadQuery misuse needs evidence: the message names a CadQuery object or a
+    # CadQuery-only condition, or the error was raised inside CadQuery (the
+    # scorer records where). Missing methods and bad arguments are raised at
+    # the caller, so the message decides those. A plain Python error in the
+    # model's own code is not a CadQuery weakness (audit, September 2026).
+    if err.startswith("execution failed:"):
+        origin = re.search(r"\[raised in ([\w ]+)\]\s*$", err)
+        if _CADQUERY_MESSAGE.search(err) or (origin and origin.group(1) == "cadquery"):
+            return "CadQuery API error"
+        if origin and origin.group(1) == "model code":
+            return "Python error in model code"
+        return "build failed"
     if re.search(r"did not define|no CadQuery shape|no solid|no code|not a shape", err) or not err:
         return "no part produced"
     return "build failed"
@@ -160,8 +213,16 @@ def _pattern_label(points: list[tuple[float, float]], spec: Spec, code: str = ""
     ax = _axis([p[0] for p in points], spec.pitch_x, spec.pitch_y, spec.edge_margin)
     ay = _axis([p[1] for p in points], spec.pitch_y, spec.pitch_x, spec.edge_margin)
     kinds = {ax, ay}
+    nominal = [(a * spec.pitch_x / 2, b * spec.pitch_y / 2) for a in (-1, 1) for b in (-1, 1)]
+    hits = sum(any(close(x, nx) and close(y, ny) for x, y in points) for nx, ny in nominal)
     if kinds == {"ok"}:
-        return None
+        # Right extremes are not a right pattern: every hole must sit at a
+        # nominal corner (two right corners plus two holes between them
+        # passed as "edge margin off"; audit, September 2026).
+        stray = [p for p in points if not any(close(p[0], nx) and close(p[1], ny) for nx, ny in nominal)]
+        if not stray:
+            return None
+        return "some holes right, some wrong" if hits else "holes misplaced (other)"
     if "corner" in kinds and kinds <= {"corner", "ok"}:
         return "pattern anchored at a corner"
     if "margin twice" in kinds and kinds <= {"margin twice", "ok"}:
@@ -173,8 +234,6 @@ def _pattern_label(points: list[tuple[float, float]], spec: Spec, code: str = ""
     # Exact hits first: a true one-axis error puts NO hole at a nominal
     # position, while a partly right pattern can span the right distance on
     # one axis by coincidence.
-    nominal = [(a * spec.pitch_x / 2, b * spec.pitch_y / 2) for a in (-1, 1) for b in (-1, 1)]
-    hits = sum(any(close(x, nx) and close(y, ny) for x, y in points) for nx, ny in nominal)
     if 0 < hits < 4:
         return "some holes right, some wrong"
     if "ok" in kinds:
@@ -183,6 +242,11 @@ def _pattern_label(points: list[tuple[float, float]], spec: Spec, code: str = ""
 
 
 _API_KINDS = (
+    (re.compile(r"DispatchError: \('(\w+): \d+ methods found', \(<class '[\w.]*?(\w+)'>"),
+     "no matching signature for {1}.{0}()"),
+    (re.compile(r"No pending wires present"), "operation needs a sketch or wire"),
+    (re.compile(r"cannot be interpreted as an integer"), "non-integer count"),
+    (re.compile(r"Do not know how to handle until argument"), "invalid extrude or cut argument"),
     (re.compile(r"AttributeError: '(\w+)' object has no attribute '(\w+)'"), "no such method: {0}.{1}"),
     (re.compile(r"AttributeError: module '([\w.]+)' has no attribute '(\w+)'"), "no such function: {0}.{1}"),
     (re.compile(r"TypeError: (?:[\w.]+\.)?(\w+)\(\) (?:takes|got|missing)"), "wrong arguments to {0}()"),
@@ -197,13 +261,18 @@ def api_error_kind(error: str) -> str:
     for pattern, template in _API_KINDS:
         m = pattern.search(error or "")
         if m:
-            return template.format(*m.groups())
+            return template.format(*m.groups()).replace(".__init__()", "()")
     m = re.search(r"execution failed: (\w+)", error or "")
     return m.group(1) if m else "unknown"
 
 
-def _l4_label(m, spec: Spec) -> str | None:
-    """Change-order specific failures, judged against rev A and rev B."""
+def _l4_label(m, spec: Spec, code: str = "") -> str | None:
+    """Change-order specific failures, judged against rev A and rev B.
+
+    The geometry decides when it can. When the stale pattern cannot be seen
+    (every hole landed off the new, smaller plate: label check #25), the code
+    decides: a rev B plate whose .rect() still carries rev A's pitch.
+    """
     rev_a = edit_source(spec)
     size = (m.length, m.width, m.thickness)
     size_a = (rev_a.length, rev_a.width, rev_a.thickness)
@@ -222,6 +291,12 @@ def _l4_label(m, spec: Spec) -> str | None:
     pitch_changes = not same((rev_a.pitch_x, rev_a.pitch_y), (spec.pitch_x, spec.pitch_y))
     if pitch_changes and same(size, size_b) and same(pitch, (rev_a.pitch_x, rev_a.pitch_y)):
         return "change not propagated to pitch"
+    if pitch_changes and same(size, size_b):
+        rects = _rect_literals(code)
+        stale = any(same(r, (rev_a.pitch_x, rev_a.pitch_y)) for r in rects)
+        fresh = any(same(r, (spec.pitch_x, spec.pitch_y)) for r in rects)
+        if stale and not fresh:
+            return "change not propagated to pitch"
     return None
 
 
@@ -266,7 +341,7 @@ def _classify(row: dict, spec: Spec, max_tokens: int | None, detail: dict) -> st
         detail["error"] = str(exc)[:300]
         return "build failed"
     if row.get("tier") == "L4":
-        label = _l4_label(m, spec)
+        label = _l4_label(m, spec, row.get("completion", ""))
         if label:
             return label
     # Hole pattern before gates: misplaced holes often overlap or break out
@@ -277,7 +352,7 @@ def _classify(row: dict, spec: Spec, max_tokens: int | None, detail: dict) -> st
     # Where the plate IS, not only its size: a moved plate puts correct-looking
     # holes "outside the footprint" (label check #26).
     detail["plate_bbox"] = {"x": [m.x_min, m.x_max], "y": [m.y_min, m.y_max], "z": [m.z_min, m.z_max]}
-    pattern = _pattern_label(points, spec, row.get("completion", ""))
+    pattern = _pattern_label(points, spec, executable_code(row.get("completion", "")))
     return pattern or _checks_label(row["checks"])
 
 
@@ -310,7 +385,12 @@ def main() -> int:
             totals[model] += 1
             if bool(row.get("checks")) and all(row["checks"].values()):
                 continue
-            label, detail = classify(row, specs[row["spec_id"]], max_tokens)
+            try:
+                label, detail = classify(row, specs[row["spec_id"]], max_tokens)
+            except ScorerUnavailableError:
+                raise
+            except Exception as exc:  # one unreadable answer never stops the analysis
+                label, detail = "classifier error", {"error": f"{type(exc).__name__}: {exc}"[:300]}
             if "api_kind" in detail:
                 api_kinds[detail["api_kind"]][model] += 1
             per_model[model][label] += 1

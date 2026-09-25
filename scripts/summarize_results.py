@@ -68,17 +68,26 @@ def load(paths: list[str]) -> tuple[dict[str, dict], dict[tuple[str, str], list[
 def completeness_problems(run_id: str, tier: str, rows: list[dict], meta: dict, ends: dict[str, dict]) -> list[str]:
     """Why this (run, tier) is not a complete, clean evaluation; empty if it is."""
     problems = []
-    planned = meta.get("planned")
-    if planned:
-        expected = len(planned["spec_ids"]) * planned["rollouts"] if tier in planned["tiers"] else 0
-        if len(rows) < expected:
-            problems.append(f"{len(rows)}/{expected} planned rollouts")
+    planned = meta.get("planned") or {}
+    seen = Counter((r.get("spec_id"), r.get("rollout", 0)) for r in rows)
+    if planned and tier in planned.get("tiers", []):
+        spec_ids, rollouts = planned.get("spec_ids"), planned.get("rollouts", 1)
+        if not spec_ids:
+            problems.append("run plan lists no spec ids")
+        else:
+            # Exact coverage, not a row count: a row count can be met by rows
+            # for specs that were never planned (audit, September 2026).
+            expected = {(sid, k) for sid in spec_ids for k in range(rollouts)}
+            missing, extra = len(expected - set(seen)), len(set(seen) - expected)
+            if missing:
+                problems.append(f"{missing}/{len(expected)} planned rollouts missing")
+            if extra:
+                problems.append(f"{extra} rollouts for specs not in the plan")
     end = ends.get(run_id)
     if planned and end is None:
         problems.append("no end record (run interrupted or still running)")
     elif end and end.get("status") != "complete":
         problems.append(f"run ended: {end.get('status')}")
-    seen = Counter((r["spec_id"], r.get("rollout", 0)) for r in rows)
     dup = sum(c - 1 for c in seen.values() if c > 1)
     if dup:
         problems.append(f"{dup} duplicate rollouts")
