@@ -13,7 +13,7 @@ Score: all-requirements pass rate averaged over L1 to L4 (L0 excluded, a regex s
 | 5 | openai/gpt-4o-mini | 40% [33%, 46%] | 100% | 0% | 67% | 60% | 33% | 0.021 | margin applied twice |  |
 | 6 | meta-llama/llama-4-maverick | 33% [26%, 41%] | 90% | 7% | 3% | 70% | 53% | 0.025 | CadQuery API error |  |
 | 7 | mistralai/mistral-small-3.2-24b-instruct | 32% [25%, 40%] | 87% | 47% | 10% | 20% | 53% | 0.008 | CadQuery API error |  |
-| 8 | qwen/qwen3-coder-30b-a3b-instruct | 28% [22%, 36%] | 73% | 7% | 40% | 13% | 53% | 0.012 | no part produced |  |
+| 8 | qwen/qwen3-coder-30b-a3b-instruct | 28% [22%, 36%] | 73% | 7% | 40% | 13% | 53% | 0.012 | holes misplaced (other) |  |
 | 9 | qwen/qwen3-30b-a3b-instruct-2507 | 18% [14%, 22%] | 93% | 10% | 0% | 17% | 47% | 0.012 | some holes right, some wrong |  |
 | 10 | microsoft/phi-4 | 18% [13%, 23%] | 93% | 37% | 0% | 0% | 37% | 0.007 | CadQuery API error | 1 earlier run(s) superseded by reruns |
 | 11 | meta-llama/llama-3.3-70b-instruct | 16% [12%, 20%] | 100% | 0% | 0% | 0% | 63% | 0.016 | CadQuery API error |  |
