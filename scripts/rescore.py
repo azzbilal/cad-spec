@@ -30,12 +30,12 @@ sys.path.insert(0, str(ROOT / "environments" / "cad_spec"))
 
 from cad_spec.measure import ScorerUnavailableError, require_cadquery
 from cad_spec.rubric import SCORER_VERSION, score
-from cad_spec.tasks import TASKS, make_splits
+from cad_spec.tasks import TASKS, make_splits, make_test_split
 
 
 def spec_table() -> dict:
     train, evals = make_splits()
-    return {s.id: s for s in [*train, *evals, *TASKS]}
+    return {s.id: s for s in [*train, *evals, *make_test_split(), *TASKS]}
 
 
 def rescore_file(src: Path, dst: Path, specs: dict) -> tuple[int, int, int]:

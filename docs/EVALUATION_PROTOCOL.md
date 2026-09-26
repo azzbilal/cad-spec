@@ -1,7 +1,7 @@
 # Evaluation protocol
 
 What must be true before a number from cad-spec goes into a README, a post,
-or a CV. Written against scorer 0.4.0.
+or a CV. Written against scorer 0.4.0 (package 0.4.1).
 
 ## 1. Freeze before training
 
@@ -10,6 +10,18 @@ or a CV. Written against scorer 0.4.0.
 - Splits: `make_splits(SAMPLE_SEED)`; 200 train / 30 eval per tier. Eval specs
   are disjoint numeric tuples; L3 eval wordings never occur in train
   (tested in `test_l3_eval_wording_never_appears_in_train`).
+- Locked test split (0.4.1): `make_test_split(TEST_SEED)`, 60 specs disjoint
+  from every train and eval spec, pinned by `TEST_SPLIT_SHA256` and a test.
+  The 30 eval specs shaped the leaderboard, the failure taxonomy and the
+  hint/feedback experiment, so they are now the **development** set: model
+  screening, intermediate validation during training, checkpoint choice. The
+  test split is evaluated **once**, for the registered final comparison
+  (`run_baseline.py --split test --unlock-test`), and no analysis script
+  (leaderboard, failure modes, label check) ever selects a test-split run.
+- Prompts: `cad_spec/prompts.py` is the one source of the system prompt and
+  the cheat-sheet, for the environment and the runner alike; every run
+  records `system_prompt_sha256`. The texts are pinned to the fingerprints
+  of the published runs.
 - Dependencies: `constraints.txt`. Record its git revision with the run
   (`run_baseline.py` records the revision automatically).
 
@@ -64,11 +76,18 @@ template-aware shortcut goes.
 - Train only on train-split prompts. Choose tiers where the base model has
   spread (roughly 10% to 80% all-pass); outside that there is no gradient or
   nothing to learn.
-- Evaluate the base model and the trained adapter on the frozen eval split,
-  all tiers, same decoding, same seeds.
-- A gain is claimed only if the intervals do not overlap on the tier trained
-  on, and the other tiers are reported alongside (regressions included).
-- Ablation for any new reward design: the equal-weight k/8 reward is the
+- Pre-register the claim before training (as for the hint/feedback
+  experiment): target tier, minimum worthwhile all-pass gain, the paired
+  analysis, the cost ceiling, and regression checks on every other tier.
+- The primary comparison isolates training: base + cheat-sheet versus
+  adapter + the same cheat-sheet (`hints=True` / `--hints`), identical
+  decoding, identical scorer, both served by the same inference stack.
+- Develop on the eval split; judge on the locked test split, once. Never use
+  the test split to choose a checkpoint.
+- Report paired per-tier all-pass changes with intervals, mean reward, build
+  and gate rates, reasoning-failure rates and total spend, regressions
+  included.
+- Ablation for any new reward design: the equal-weight k/9 reward is the
   comparator.
 
 ## 6. What the numbers may be called

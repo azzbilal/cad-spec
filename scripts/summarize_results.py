@@ -143,6 +143,10 @@ def select_runs(metas: dict[str, dict], groups: dict[tuple[str, str], list[dict]
     candidates: dict[tuple[str, str], list[tuple]] = defaultdict(list)
     for (run_id, tier), rows in groups.items():
         meta = metas.get(run_id, {})
+        # These analyses describe the held-out eval split. Runs on the train
+        # split, and above all on the locked test split, never enter them.
+        if meta.get("split", "eval") != "eval":
+            continue
         s = summarize(rows, meta.get("max_tokens"))
         problems = completeness_problems(run_id, tier, rows, meta, ends)
         if s["truncated"] + s["api_errors"] > 0.05 * len(rows):

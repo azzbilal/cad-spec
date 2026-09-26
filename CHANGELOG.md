@@ -3,7 +3,52 @@
 Scores are only comparable within one scorer version
 (`cad_spec.rubric.SCORER_VERSION`).
 
-## Unreleased
+## 0.4.1 (unreleased): training preparation
+
+Scorer unchanged (0.4.0): every published score stands.
+
+### Hub
+- 0.4.0 published to the Prime Environments Hub as `bazzouzi/cad-spec`
+  (wheel SHA-256 `c49371e9a9fad83f33fe553dbfd9f740bfce29a7e69c74b8e858bffb1f062691`),
+  verified by downloading the served wheel and comparing fingerprints.
+- `scripts/verify_hub.py`: re-scores saved answers with an installed copy of
+  the package and requires identical rewards and check verdicts; refuses to
+  run against the repository's own source.
+- Package README (the Hub page): headline results, ranking chart, the
+  `hints` option, links to the evidence.
+
+### One prompt, one cheat-sheet
+- `cad_spec/prompts.py` holds the system prompt; `cad_spec/hints.md` ships the
+  cheat-sheet inside the package. The environment and `run_baseline.py`
+  both import them (before, each kept its own copy of the system prompt).
+  Tests pin both texts to the fingerprints recorded in the published runs.
+- `load_environment(hints=True)`: cheat-sheet in the system prompt of
+  training and eval rows alike, byte-identical to the experiment's hint arm.
+- `run_baseline.py --hints`: the same text from the package; runs record
+  `hints_source` and `system_prompt_sha256`.
+
+### Locked test split
+- `make_test_split()`: 60 specs from `TEST_SEED`, disjoint from all 230
+  train and eval specs, pinned by `TEST_SPLIT_SHA256`; every spec solvable
+  at every tier (tested). L3 uses the held-out wording.
+- `run_baseline.py --split test` refuses to run without `--unlock-test`;
+  `select_runs` (leaderboard, failure modes, label check) never selects a
+  run that is not on the eval split. Regenerated reports are byte-identical.
+- `docs/EVALUATION_PROTOCOL.md`: the eval split becomes the development set;
+  the training claim is judged once, on the test split, base + cheat-sheet
+  versus adapter + cheat-sheet.
+
+### Cost tracking on any provider
+- `--price-in` / `--price-out` (USD per 1M tokens): a call's cost is computed
+  from its token counts when the provider reports none, so `--budget` binds
+  on Prime Inference too. Rows record `cost_source` (provider or computed).
+- A missing API key now fails fast for every remote endpoint, not only
+  OpenRouter.
+
+### Roadmap
+- The six-step training plan replaces the single "one training run" item.
+
+## Unreleased (0.4.0 follow-ups, merged)
 
 ### Knowledge or reasoning? Outcome of the pre-registered experiment
 - All ten arm runs complete (five models x hint and feedback, 120 answers

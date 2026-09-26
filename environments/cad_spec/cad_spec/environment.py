@@ -15,18 +15,15 @@ from typing import Any
 import verifiers as vf
 from datasets import Dataset
 
+from .prompts import SYSTEM_PROMPT, system_prompt
 from .rubric import Report, score
 from .tasks import TIERS, Spec, make_splits, prompt_for
 
 TRAIN_SPECS, EVAL_SPECS = make_splits()
 SPECS: dict[str, Spec] = {s.id: s for s in TRAIN_SPECS + EVAL_SPECS}
 
-SYSTEM_PROMPT = """\
-You are a mechanical design engineer who writes CadQuery.
-Return a single Python code block and nothing else.
-Import cadquery as cq and bind the finished part to a variable named `result`.
-Build solids with the Workplane API, for example cq.Workplane("XY").box(l, w, h).
-"""
+# SYSTEM_PROMPT is imported from prompts.py, the one copy shared with the runner.
+__all__ = ["SYSTEM_PROMPT", "load_environment"]
 
 # Floor awarded to code that executes and yields a solid but satisfies nothing.
 # It exists to give a near-zero baseline model a first rung to climb; folding it
@@ -184,6 +181,7 @@ def load_environment(
     tier: str | Sequence[str] = "L0",
     eval_tier: str | Sequence[str] | None = None,
     metrics: bool = True,
+    hints: bool = False,
     **kwargs,
 ) -> vf.Environment:
     """Build the environment.
@@ -195,6 +193,10 @@ def load_environment(
                with info["tier"] so results can be split per tier.
     metrics    add zero-weight per-check diagnostics (built, gates, R1..R7).
                They reuse the cached report: no extra builds.
+    hints      append the packaged CadQuery cheat-sheet (cad_spec/hints.md) to
+               the system prompt, for training AND evaluation alike. It is the
+               hint arm of the registered experiment, byte for byte: API facts
+               only, no spec numbers, so the reward still measures the design.
     """
     train_tiers = _tiers(tier)
     eval_tiers = _tiers(eval_tier) if eval_tier is not None else train_tiers
@@ -208,7 +210,7 @@ def load_environment(
     kwargs.setdefault("eval_dataset", _build_eval_dataset(eval_tiers))
     return vf.SingleTurnEnv(
         dataset=_build_dataset(train_tiers),
-        system_prompt=SYSTEM_PROMPT,
+        system_prompt=system_prompt(hints),
         rubric=rubric,
         **kwargs,
     )

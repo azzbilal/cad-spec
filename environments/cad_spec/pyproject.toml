@@ -2,7 +2,7 @@
 name = "cad-spec"
 description = "RL reward environment: write CadQuery from a dimensioned plate spec, scored by measuring the built B-rep in a trusted process. 9 requirements (dimensions, holes, pattern and Z datums, material volume, edge margin) behind 5 anti-reward-hacking gates; sandboxed per-rollout execution; five prompt tiers; mutation-validated scorer (0 false full credit over 1,230 mutants). 200 train / 30 held-out specs per tier."
 tags = ["cad", "engineering", "code-generation", "cadquery", "geometry", "train", "eval"]
-version = "0.4.0"
+version = "0.4.1"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 # verifiers/datasets stay in the core set because `prime env push` installs the
