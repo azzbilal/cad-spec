@@ -24,6 +24,7 @@ from __future__ import annotations
 import argparse
 import json
 import random
+import re
 import statistics
 import sys
 from collections import defaultdict
@@ -70,13 +71,20 @@ def arm_problems(meta: dict, arm: str) -> list[str]:
     return out
 
 
-def answers_by_arm(paths: list[str], failures: dict) -> tuple[dict, dict]:
-    """(model -> arm -> (tier, spec) -> "pass" or label, model -> arm -> reasons excluded)."""
+def _error_core(error: str | None) -> str:
+    """The exception and message, without the scorer's prefix, for comparing two errors."""
+    return re.sub(r"^execution failed(?: \[[^\]]*\])?: ", "", error or "")[:80]
+
+
+def answers_by_arm(paths: list[str], failures: dict) -> tuple[dict, dict, dict]:
+    """(model -> arm -> (tier, spec) -> "pass" or label, model -> arm -> reasons excluded,
+    model -> feedback-retry counts). The retry counts are exploratory, not pre-registered."""
     metas, groups, ends = load(paths)
     held_out = {s.id for s in make_splits()[1]}
     labels = {(r.get("run_id"), r["tier"], r["spec_id"], r.get("rollout", 0)): r["label"] for r in failures["rows"]}
     data: dict = defaultdict(lambda: defaultdict(dict))
     excluded: dict = defaultdict(lambda: defaultdict(list))
+    retry: dict[str, dict[str, int]] = defaultdict(lambda: {"retried": 0, "built": 0, "passed": 0, "same error": 0})
     missing = 0
     for (_, tier), run in sorted(select_runs(metas, groups, ends).items()):
         meta = run["meta"]
@@ -91,6 +99,13 @@ def answers_by_arm(paths: list[str], failures: dict) -> tuple[dict, dict]:
             continue
         for r in run["rows"]:
             key = (tier, r["spec_id"])
+            if arm == FEEDBACK and r.get("attempts"):
+                c = retry[model]
+                c["retried"] += 1
+                c["built"] += bool(r.get("built"))
+                c["passed"] += bool(r.get("checks")) and all(r["checks"].values())
+                c["same error"] += (not r.get("built")
+                                    and _error_core(r.get("error")) == _error_core(r["attempts"][0].get("error")))
             if bool(r.get("checks")) and all(r["checks"].values()):
                 data[model][arm][key] = "pass"
                 continue
@@ -108,7 +123,7 @@ def answers_by_arm(paths: list[str], failures: dict) -> tuple[dict, dict]:
             if excluded[model].get(arm) or tiers != set(TIERS):
                 excluded[model][arm] = excluded[model].get(arm) or [f"tiers present: {sorted(tiers)}"]
                 del data[model][arm]
-    return data, excluded
+    return data, excluded, retry
 
 
 def share(answers: dict[tuple[str, str], str], wanted: tuple[str, ...]) -> float:
@@ -180,7 +195,7 @@ def summary(results: list[tuple[str, str, str, str]]) -> dict[str, str]:
             for p, v in sorted(by_pred.items())}
 
 
-def report(data: dict, excluded: dict | None = None) -> str:
+def report(data: dict, excluded: dict | None = None, retry: dict | None = None) -> str:
     cols = (("all pass", ("pass",)), ("API error", (API,)), ("stacked", (STACKED,)),
             ("margin twice", (REASONING[0],)), ("not propagated", (REASONING[1],)))
     md = ["# Hint and feedback arms: results", "",
@@ -206,7 +221,8 @@ def report(data: dict, excluded: dict | None = None) -> str:
                     cells.append(f"{s:.0%} ({d:+.0%} [{lo:+.0%}, {hi:+.0%}])")
             md.append(f"| {arm} | {len(arms[arm])} | " + " | ".join(cells) + " |")
         md.append("")
-    gone = [(m, a, r) for m, arms in sorted((excluded or {}).items()) for a, r in sorted(arms.items()) if r]
+    gone = [(m, a, r) for m, arms in sorted((excluded or {}).items()) for a, r in sorted(arms.items())
+            if r and m in ALL_MODELS]
     if gone:
         md += ["## Arms excluded from the verdicts", "", "| Model | Arm | Why |", "|---|---|---|"]
         md += [f"| {m} | {a} | {'; '.join(r[:3])} |" for m, a, r in gone]
@@ -216,6 +232,16 @@ def report(data: dict, excluded: dict | None = None) -> str:
     md += [f"| {p} | {v} |" for p, v in summary(results).items()]
     md += ["", "| Prediction | Model | Verdict | Evidence |", "|---|---|---|---|"]
     md += [f"| {p} | {m} | {v} | {e} |" for p, m, v, e in results]
+    shown = [m for m in ALL_MODELS if (retry or {}).get(m, {}).get("retried")]
+    if shown:
+        md += ["", "## Exploratory, not pre-registered: what the feedback retry did", "",
+               "Answers whose first attempt did not build, and so got the error and one retry. \"Same error "
+               "again\" counts retries that failed with the same exception and message as the first attempt.", "",
+               "| Model | Retried | Built after retry | Passed after retry | Same error again |",
+               "|---|---:|---:|---:|---:|"]
+        for m in shown:
+            c = retry[m]
+            md.append(f"| {m} | {c['retried']} | {c['built']} | {c['passed']} | {c['same error']} |")
     return "\n".join(md) + "\n"
 
 
@@ -225,8 +251,8 @@ def main() -> int:
     ap.add_argument("--failures", required=True)
     ap.add_argument("--out", default=str(ROOT / "results" / "experiments" / "hint-feedback-results.md"))
     args = ap.parse_args()
-    data, excluded = answers_by_arm(args.paths, json.loads(Path(args.failures).read_text(encoding="utf-8")))
-    text = report(data, excluded)
+    data, excluded, retry = answers_by_arm(args.paths, json.loads(Path(args.failures).read_text(encoding="utf-8")))
+    text = report(data, excluded, retry)
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     Path(args.out).write_text(text, encoding="utf-8")
     print(text)

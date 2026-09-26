@@ -5,6 +5,21 @@ Scores are only comparable within one scorer version
 
 ## Unreleased
 
+### Knowledge or reasoning? Outcome of the pre-registered experiment
+- All ten arm runs complete (five models x hint and feedback, 120 answers
+  each, $0.18). P1 confirmed 4/4, P2 not confirmed (stacking half 4/4,
+  API-error half 1/4), P3 confirmed 10/10. Reproduced on a second machine
+  from the committed runs with identical tables and verdicts.
+- README section "Knowledge or reasoning?"; Outcome section in the
+  pre-registration; exploratory findings labelled as such (retries mostly
+  repeat the same error; the cheat-sheet lowered the control model).
+- `compare_arms.py`: exploratory feedback-retry counts (retried, built,
+  passed, same error again); the exclusion list covers experiment models
+  only.
+- Failure report: tables and API-error counts cover first-shot answers
+  only, with experiment arms in their own section (mixing them had raised
+  "solid on the stack" from 108 to 166). The label file keeps every label.
+
 ### Hint and feedback arms, amendment 1 (before any run)
 - External audit of the analysis, fixed before data: arms restricted to the
   three registered conditions; an arm is judged only if it matches its

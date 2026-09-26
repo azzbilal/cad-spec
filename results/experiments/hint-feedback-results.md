@@ -42,13 +42,6 @@ Pre-registered in [docs/experiments/hint-feedback.md](../../docs/experiments/hin
 | hint | 120 | 31% (-9% [-18%, +0%]) | 3% (+3% [+1%, +7%]) | 0% (+0% [+0%, +0%]) | 12% (-3% [-8%, +1%]) | 12% (-3% [-7%, -1%]) |
 | feedback | 120 | 40% (+0% [-8%, +8%]) | 0% (+0% [+0%, +0%]) | 0% (+0% [+0%, +0%]) | 13% (-2% [-7%, +2%]) | 16% (+1% [-2%, +4%]) |
 
-## Arms excluded from the verdicts
-
-| Model | Arm | Why |
-|---|---|---|
-| meta-llama/llama-3.1-8b-instruct | first-shot | L1: max_tokens=2048, registered 1024; L2: max_tokens=2048, registered 1024; L3: max_tokens=2048, registered 1024 |
-| rev-a | first-shot | tiers present: ['L4'] |
-
 ## Pre-registered predictions
 
 | Prediction | Result |
@@ -77,3 +70,14 @@ Pre-registered in [docs/experiments/hint-feedback.md](../../docs/experiments/hin
 | P3 | mistralai/mistral-small-3.2-24b-instruct [feedback] | held | margin applied twice +0%; change not propagated to pitch +2% |
 | P3 | openai/gpt-4o-mini [hint] | held | margin applied twice -3%; change not propagated to pitch -3% |
 | P3 | openai/gpt-4o-mini [feedback] | held | margin applied twice -2%; change not propagated to pitch +1% |
+
+## Exploratory, not pre-registered: what the feedback retry did
+
+Answers whose first attempt did not build, and so got the error and one retry. "Same error again" counts retries that failed with the same exception and message as the first attempt.
+
+| Model | Retried | Built after retry | Passed after retry | Same error again |
+|---|---:|---:|---:|---:|
+| google/gemma-3-27b-it | 9 | 0 | 0 | 8 |
+| mistralai/codestral-2508 | 17 | 3 | 0 | 11 |
+| meta-llama/llama-3.3-70b-instruct | 61 | 13 | 0 | 38 |
+| mistralai/mistral-small-3.2-24b-instruct | 40 | 16 | 14 | 9 |
