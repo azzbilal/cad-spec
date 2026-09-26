@@ -21,6 +21,7 @@ What this is, and what it is not:
 | Separates "copying numbers" from "reading a spec" | partly: five prompt tiers, reported separately; L0 to L2 are solved by simple parsers, and L3 by a parser that knows its wording templates ([baselines](results/baselines-deterministic.md)) |
 | Runs untrusted model code safely | per-rollout sandbox on POSIX, container for untrusted scale ([SECURITY.md](SECURITY.md)) |
 | Ranks real models and shows *how* each one fails | yes: 16 models (15 hosted, 1 local), about $0.27 of API calls; failure labels checked by AI-assisted review of three fresh random samples: 28/30, 28/30, 27/30 ([leaderboard](#leaderboard)) |
+| Separates knowledge failures from reasoning failures | yes: a pre-registered experiment ([below](#knowledge-or-reasoning-a-pre-registered-experiment)); a 7-line CadQuery cheat-sheet lifts four models by 42 to 56 points, while reasoning failures do not move |
 | Shows that RL training improves a model | **not yet**: tooling is ready, no training run is published |
 | Broad text-to-CAD benchmark, new part families | **no**: one family; see [ROADMAP.md](ROADMAP.md) |
 | "Material" means alloy, strength, fit, manufacturability | **no**: R6 is volume consistency only |
@@ -195,7 +196,8 @@ parser with one derivation rule 50%, a plain table parser 25%.
   repeatedly at one spot (positions computed, never bound to `.hole()`) is
   the most common failure of gemma-3-27b and codestral, about a third of their
   answers. CadQuery drills at whatever is on its stack; these models write it
-  as if it were a move-the-cursor-then-drill tool.
+  as if it were a move-the-cursor-then-drill tool. A seven-line cheat-sheet removes this
+  failure entirely ([experiment](#knowledge-or-reasoning-a-pre-registered-experiment)).
 - **Change orders expose dependent dimensions.** When a change order resizes
   the plate or moves the edge margin, models update the dimension they were
   told about and keep the old hole pitch that depends on it. It is the most
@@ -223,6 +225,45 @@ feedback, one run. Ranks inside overlapping intervals (for example 2 to 4)
 are not meaningful. L1 states the hole position twice (pitch and margin),
 which some models double-count.
 
+## Knowledge or reasoning? A pre-registered experiment
+
+The board shows *which* failures happen. This experiment asked *why*: which
+come from missing CadQuery knowledge, and which from reasoning about the
+drawing. The predictions, thresholds and analysis were committed before any
+run ([pre-registration](docs/experiments/hint-feedback.md)); the results were
+reproduced on a second machine from the committed run files.
+
+Five models answered the same 30 held-out specs on L1 to L4 under three
+arms: **first-shot** (the leaderboard runs), **hint** (the same prompt plus
+[seven lines of general CadQuery facts](prompts/cadquery-hints.md), no spec
+numbers) and **feedback** (the build error and one retry when the code does
+not run).
+
+| Model | First-shot | + Cheat-sheet | + Error and retry |
+|---|---:|---:|---:|
+| mistral-small-3.2-24b | 32% | **83%** | 43% |
+| gemma-3-27b | 12% | **68%** | 12% |
+| llama-3.3-70b | 16% | **62%** | 13% |
+| codestral-2508 | 13% | **55%** | 12% |
+| gpt-4o-mini (control) | 40% | 31% | 40% |
+
+All-pass rate on L1 to L4 (120 answers per cell). Paired changes with 95%
+intervals: [`results/experiments/hint-feedback-results.md`](results/experiments/hint-feedback-results.md).
+
+- **Confirmed: CadQuery failures are knowledge failures.** The cheat-sheet
+  cut API misuse plus stacked drilling from 46 to 59% of answers to 0 to 4%
+  for all four models; stacked drilling disappeared entirely. With it, a 24B
+  model (83%) matches the best first-shot result on the board.
+- **Not confirmed: error messages do not substitute for documentation.** The
+  prediction was that one retry after a build error would halve API errors;
+  it did for one model of four. In an exploratory count (not pre-registered),
+  11% of retried answers then passed and 52% repeated the same error.
+- **Confirmed: reasoning failures are untouched.** Margin applied twice and
+  change orders not propagated to the hole pitch moved by at most 3 points
+  under either arm. These are what training, not prompting, has to fix.
+- **Exploratory:** the cheat-sheet lowered the control model, gpt-4o-mini,
+  from 40% to 31%.
+
 ## Evidence
 
 | File | What it shows |
@@ -235,7 +276,8 @@ which some models double-count.
 | `results/runs/*.jsonl` | every rollout behind those tables, with scorer version, git revision and sandbox mode |
 | [`results/leaderboard/`](results/leaderboard/leaderboard.md) | the 16-model board: table, ranking chart, tier heatmap, failure fingerprints |
 | [`results/failure-modes-0.4.0.md`](results/failure-modes-0.4.0.md) | every failed answer labelled, plus what the CadQuery API errors were |
-| [`docs/label-check.md`](docs/label-check.md) | how the failure labels were checked by hand, both samples |
+| [`docs/label-check.md`](docs/label-check.md) | how the failure labels were checked |
+| [`docs/experiments/hint-feedback.md`](docs/experiments/hint-feedback.md) | the knowledge-or-reasoning experiment: pre-registration, amendment, outcome |
 | `results/rescored/0.4.0/*.jsonl` | every model answer behind the board, scored under 0.4.0 |
 
 No training result is published yet.

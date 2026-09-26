@@ -118,5 +118,53 @@ end-to-end test from run files through the real failure classifier.
 
 ## Deviations
 
-None yet. Any deviation from this plan is added here with its date and
-reason before the results are reported.
+None. All ten runs (five models, two arms) completed on 2026-09-26 with 120
+answers each and no API errors; total spend $0.18. No arm was excluded by
+the registration checks.
+
+## Outcome (2026-09-26)
+
+Full tables, intervals and per-model verdicts:
+[`results/experiments/hint-feedback-results.md`](../../results/experiments/hint-feedback-results.md).
+The analysis was reproduced independently on a second machine (Linux,
+Windows first) from the committed run files, with identical tables,
+intervals and verdicts.
+
+| Prediction | Result |
+|---|---|
+| P1, the hint halves knowledge failures | **confirmed, 4 of 4 models**: 46 to 59% of answers down to 0 to 4% |
+| P2, feedback halves API errors but not stacking | **not confirmed**: the stacking half held for 4 of 4 models; the API-error half held for 1 of 4 (mistral-small, 36% to 18%) and failed for 3 (gemma 11% to 8%, codestral 18% to 10%, llama-3.3 47% to 40%) |
+| P3, neither arm moves reasoning failures by more than 5 points | **confirmed, 10 of 10 arms**: the largest move was 3 points |
+
+All-pass rate on L1 to L4, with the paired change against first-shot and its
+95% interval (resampling specs):
+
+| Model | First-shot | Hint | Feedback |
+|---|---:|---:|---:|
+| mistral-small-3.2-24b | 32% | 83% (+51 [+42, +59]) | 43% (+11 [+2, +19]) |
+| gemma-3-27b | 12% | 68% (+56 [+50, +62]) | 12% (+0 [+0, +0]) |
+| llama-3.3-70b | 16% | 62% (+47 [+40, +53]) | 13% (-2 [-5, +0]) |
+| codestral-2508 | 13% | 55% (+42 [+35, +48]) | 12% (-1 [-2, +0]) |
+| gpt-4o-mini (control) | 40% | 31% (-9 [-18, +0]) | 40% (+0 [-8, +8]) |
+
+**Reading.** The failures the leaderboard attributes to CadQuery (API misuse
+and stacked drilling) are knowledge failures: seven lines of general API
+facts remove them almost entirely, and stacked drilling disappears for every
+model (gemma 45% to 0%, codestral 42% to 0%). A build error and one retry do
+not do the same: P2's API-error half failed. The reasoning failures (margin
+applied twice, a change order not propagated to the pitch) are unmoved by
+either arm, and "change not propagated" becomes the main remaining failure
+once the knowledge gap is closed (gemma 13% under every arm).
+
+**Exploratory, not pre-registered.** These were noticed in the data, not
+predicted, and are hypotheses for a future registered test:
+
+- *Retries mostly repeat the error.* Across the four models, 127 answers got
+  their build error and a retry; 14 (11%) then passed and 66 (52%) failed
+  with the same exception and message as the first attempt. This is
+  consistent with error messages naming the symptom ("cannot find a solid on
+  the stack") rather than the fix, but that explanation was not tested.
+- *The hint hurt the control model.* gpt-4o-mini, which made no API errors,
+  fell from 40% to 31% with the cheat-sheet (interval -18 to 0 points; its
+  "no holes" and misplaced-hole failures rose). Documentation aimed at one
+  failure can disturb a model that did not have it.

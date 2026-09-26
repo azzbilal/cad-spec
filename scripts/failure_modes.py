@@ -59,7 +59,7 @@ from cad_spec.tasks import TASKS, Spec, edit_source, make_splits
 
 DETERMINISTIC = {"reference", "parser-copy", "parser-derive", "parser-template", "rev-a"}
 from degenerate import is_degenerate
-from summarize_results import load, select_runs
+from summarize_results import load, run_arm, select_runs
 
 TOL = 0.5  # mm, same class as the rubric's position tolerance
 UNFINISHED = ("API error", "degenerate loop", "cut off")
@@ -439,10 +439,12 @@ def main() -> int:
     totals: Counter = Counter()
     labelled = []
     api_kinds: dict[str, Counter] = defaultdict(Counter)
+    arm_of: dict[str, str] = {}
     metas, groups, ends = load(args.paths)
     for (model, tier), run in sorted(select_runs(metas, groups, ends).items()):
         if tier not in args.tiers:
             continue
+        arm_of[model] = run_arm(run["meta"])
         max_tokens = run["meta"].get("max_tokens")
         for row in run["rows"]:
             if row.get("spec_id") not in specs:
@@ -486,8 +488,14 @@ def main() -> int:
             out.append(f"| {model} | " + " | ".join(cells) + f" | {1 - failed / n:.0%} |")
         return out
 
-    models = [m for m in per_model if m not in DETERMINISTIC]
+    # The tables describe first-shot answers, like the leaderboard. Experiment
+    # arms (hint, feedback) change the task: they get their own section, and
+    # never enter the first-shot counts (they had inflated "solid on the
+    # stack" from 108 to 166). The JSON keeps every label for compare_arms.
+    first_shot = {m for m in per_model if arm_of.get(m, "first-shot") == "first-shot"}
+    models = [m for m in per_model if m in first_shot and m not in DETERMINISTIC]
     refs = [m for m in per_model if m in DETERMINISTIC]
+    arms = [m for m in per_model if m not in first_shot]
     md = [f"# Failure modes, cad-spec {SCORER_VERSION}", "",
           f"Tiers {', '.join(args.tiers)}. Each failed answer gets one label (first match, in column order). "
           "Cells are the share of ALL the model's answers; the last column is the all-pass rate.", "",
@@ -495,12 +503,19 @@ def main() -> int:
     if refs:
         md += ["", "## Reference programs (no model; they answer only what their rule can parse)", "",
                *header, *table_rows(refs)]
-    if api_kinds:
-        md += ["", "## What the CadQuery API errors were", "",
+    fs_kinds = {k: Counter({m: n for m, n in by.items() if m in first_shot}) for k, by in api_kinds.items()}
+    fs_kinds = {k: by for k, by in fs_kinds.items() if by}
+    if fs_kinds:
+        md += ["", "## What the CadQuery API errors were (first-shot answers)", "",
                "| Error | Answers | Models with the most |", "|---|---:|---|"]
-        for kind, by in sorted(api_kinds.items(), key=lambda kv: -sum(kv[1].values()))[:15]:
+        for kind, by in sorted(fs_kinds.items(), key=lambda kv: -sum(kv[1].values()))[:15]:
             top = ", ".join(f"{m} ({n})" for m, n in by.most_common(3))
             md.append(f"| {kind} | {sum(by.values())} | {top} |")
+    if arms:
+        md += ["", "## Experiment arms (not first-shot; see docs/experiments/)", "",
+               "These answers were produced with a changed task (a CadQuery cheat-sheet, or a retry after a build "
+               "error). They are labelled for the experiment's analysis and kept out of every table above.", "",
+               *header, *table_rows(arms)]
     Path(f"{stem}.md").write_text("\n".join(md) + "\n")
     print("\n".join(md))
     print(f"\nwrote {stem}.json and .md", file=sys.stderr)
