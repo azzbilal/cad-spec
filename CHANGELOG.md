@@ -5,6 +5,29 @@ Scores are only comparable within one scorer version
 
 ## Unreleased
 
+### Hint and feedback arms, amendment 1 (before any run)
+- External audit of the analysis, fixed before data: arms restricted to the
+  three registered conditions; an arm is judged only if it matches its
+  registration (settings, exact condition, clean complete run, exactly the
+  30 held-out specs per tier); labels joined by run id, a missing label
+  stops the analysis; intervals resample specs as clusters; retry costs
+  summed call by call; model table on the analysed 120-answer denominator.
+  Recorded as amendment 1 in the pre-registration. `scripts/test_arms.py`
+  now runs run files through the real classifier and analysis (14 checks).
+
+### Hint and feedback arms (pre-registered, not yet run)
+- `docs/experiments/hint-feedback.md`: question, arms, five models,
+  predictions P1 to P3 with thresholds, analysis and budget, committed before
+  any run.
+- Runner: `--arm`, `--system-prompt-file` (appended to the standard system
+  prompt) and `--feedback-retries` (the plain build error, then a retry; only
+  for code that does not build; every attempt recorded and its cost added).
+  A task-changing run without `--arm` is refused.
+- Runs are named by arm ("model [hint]"); the leaderboard ranks first-shot
+  runs only. `scripts/compare_arms.py` computes paired changes with bootstrap
+  intervals and the pre-registered verdicts. `scripts/test_arms.py` in CI.
+- Run files are read as UTF-8 on every platform.
+
 ### Label check, seed 20260928 (AI-assisted, 27/30)
 - Measurements report `off_axis_bores`: closed concave bores along X, Y or
   any non-Z axis (same concavity and completeness tests as Z bores).
