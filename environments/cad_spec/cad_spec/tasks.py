@@ -172,6 +172,52 @@ def make_splits(seed: int = SAMPLE_SEED) -> tuple[list[Spec], list[Spec]]:
     return train_specs, eval_specs
 
 
+# --- locked test split ---------------------------------------------------------
+#
+# The 30 eval specs shaped the leaderboard, the failure taxonomy and the
+# hint/feedback experiment, so a training claim judged on them would inherit
+# those decisions. The test split is drawn with its own seed, disjoint from
+# every train and eval spec by parameters, locked by fingerprint BEFORE any
+# training, and evaluated once, for the final comparison
+# (docs/EVALUATION_PROTOCOL.md). Changing it changes the fingerprint and fails
+# the test suite.
+
+TEST_SEED = 20260927
+N_TEST = 60
+TEST_SPLIT_SHA256 = "019d197efecedc079209fcb5900c7d5b2ff894481bc6cc85954826070c30c51b"
+
+
+def _params(spec: Spec) -> tuple[float, ...]:
+    return (spec.length, spec.width, spec.thickness, spec.hole_diameter, spec.edge_margin)
+
+
+def make_test_split(seed: int = TEST_SEED, n: int = N_TEST) -> list[Spec]:
+    """The locked test split: `n` feasible specs, none sharing parameters with
+    any train or eval spec or with each other. Ids are test-0001 upwards."""
+    train, evals = make_splits()
+    seen = {_params(s) for s in train + evals}
+    rng = random.Random(seed)
+    out: list[Spec] = []
+    i = 0
+    while len(out) < n:
+        spec = sample_spec(rng, i)
+        i += 1
+        if _params(spec) in seen:
+            continue
+        seen.add(_params(spec))
+        out.append(replace(spec, id=f"test-{len(out) + 1:04d}"))
+    return out
+
+
+def split_fingerprint(specs: list[Spec]) -> str:
+    """SHA-256 over the ids and parameters of a split, in order."""
+    import hashlib
+    import json
+
+    canon = json.dumps([[s.id, *_params(s)] for s in specs], separators=(",", ":"))
+    return hashlib.sha256(canon.encode("utf-8")).hexdigest()
+
+
 # --- tiers -------------------------------------------------------------------
 
 TIERS = ("L0", "L1", "L2", "L3", "L4")
@@ -255,7 +301,9 @@ def _stable_pick(key: str, choices: tuple[int, ...]) -> int:
 
 
 def _prose(spec: Spec, split: str) -> str:
-    idx = _stable_pick(spec.id, _PROSE_EVAL if split == "eval" else _PROSE_TRAIN)
+    # The locked test split uses the held-out wording too: training never
+    # sees it, whichever held-out set a spec belongs to.
+    idx = _stable_pick(spec.id, _PROSE_EVAL if split in ("eval", "test") else _PROSE_TRAIN)
     return _PROSE[idx].format(
         L=_fmt(spec.length), W=_fmt(spec.width), T=_fmt(spec.thickness),
         D=_fmt(spec.hole_diameter), R=_fmt(spec.hole_diameter / 2),

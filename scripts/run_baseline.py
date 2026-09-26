@@ -69,20 +69,31 @@ sys.path.insert(0, str(ROOT / "environments" / "cad_spec"))
 
 from cad_spec import __version__
 from cad_spec.measure import ScorerUnavailableError, require_cadquery, sandbox_info
+from cad_spec.prompts import SYSTEM_PROMPT as _PACKAGE_SYSTEM_PROMPT
+from cad_spec.prompts import fingerprint, hints_text
 from cad_spec.rubric import SCORER_VERSION, score
-from cad_spec.tasks import SAMPLE_SEED, TIERS, Spec, edit_source, make_splits, prompt_for, reference_solution
+from cad_spec.tasks import (
+    SAMPLE_SEED,
+    TEST_SEED,
+    TEST_SPLIT_SHA256,
+    TIERS,
+    Spec,
+    edit_source,
+    make_splits,
+    make_test_split,
+    prompt_for,
+    reference_solution,
+    split_fingerprint,
+)
 from degenerate import is_degenerate
 
 # A wrong key or model id fails every call; stop early instead of recording
 # a whole run of errors.
 MAX_CONSECUTIVE_API_ERRORS = 5
 
-SYSTEM_PROMPT = (
-    "You are a mechanical design engineer who writes CadQuery.\n"
-    "Return a single Python code block and nothing else.\n"
-    "Import cadquery as cq and bind the finished part to a variable named `result`.\n"
-    'Build solids with the Workplane API, for example cq.Workplane("XY").box(l, w, h).\n'
-)
+# The system prompt lives in the package (cad_spec/prompts.py), shared with the
+# environment Prime trains on; a test pins its text to the leaderboard's.
+SYSTEM_PROMPT = _PACKAGE_SYSTEM_PROMPT
 
 _TEMPLATE = """import cadquery as cq
 result = (
@@ -202,6 +213,22 @@ def _is_openrouter(args: argparse.Namespace) -> bool:
     return "openrouter.ai" in args.base_url
 
 
+def _is_local(args: argparse.Namespace) -> bool:
+    return any(h in args.base_url for h in ("localhost", "127.0.0.1", "[::1]"))
+
+
+def _priced(args: argparse.Namespace, cost: Any, tokens_in: Any, tokens_out: Any) -> tuple[Any, str | None]:
+    """(cost, source). The provider's own figure when it reports one (OpenRouter
+    does); otherwise tokens x --price-in/--price-out, so --budget still binds on
+    providers that report tokens but no cost (Prime Inference)."""
+    if cost is not None:
+        return cost, "provider"
+    price_in, price_out = getattr(args, "price_in", None), getattr(args, "price_out", None)
+    if price_in is None or tokens_in is None:
+        return None, None
+    return (float(tokens_in) * price_in + float(tokens_out or 0) * price_out) / 1e6, "computed"
+
+
 def model_answer(args: argparse.Namespace, prompt: str | list[dict[str, str]],
                  seed: int) -> tuple[str, dict[str, Any]]:
     """Returns (answer text, call info: usage, finish_reason, cost_usd).
@@ -213,7 +240,7 @@ def model_answer(args: argparse.Namespace, prompt: str | list[dict[str, str]],
     system = getattr(args, "system_prompt", SYSTEM_PROMPT)
     if args.provider == "openai":
         key = os.environ.get(args.key_env, "")
-        if _is_openrouter(args) and not key:
+        if not key and not _is_local(args):
             raise RuntimeError(f"environment variable {args.key_env} is empty")
         body: dict[str, Any] = {
             "model": args.model,
@@ -233,10 +260,13 @@ def model_answer(args: argparse.Namespace, prompt: str | list[dict[str, str]],
             raise RuntimeError(f"API error: {out['error']}")
         choice = out["choices"][0]
         usage = out.get("usage") or {}
+        cost, cost_source = _priced(args, usage.get("cost"), usage.get("prompt_tokens"),
+                                    usage.get("completion_tokens"))
         info = {
             "usage": usage,
             "finish_reason": choice.get("finish_reason") or choice.get("native_finish_reason"),
-            "cost_usd": usage.get("cost"),
+            "cost_usd": cost,
+            "cost_source": cost_source,
             "provider": out.get("provider"),
             "served_model": out.get("model"),
             "retries": len(retries),
@@ -255,7 +285,9 @@ def model_answer(args: argparse.Namespace, prompt: str | list[dict[str, str]],
         out = _post("https://api.anthropic.com/v1/messages", headers, body, args.timeout)
         text = "".join(b.get("text", "") for b in out.get("content", []) if b.get("type") == "text")
         stop = out.get("stop_reason")
-        return text, {"usage": out.get("usage") or {}, "cost_usd": None,
+        usage = out.get("usage") or {}
+        cost, cost_source = _priced(args, None, usage.get("input_tokens"), usage.get("output_tokens"))
+        return text, {"usage": usage, "cost_usd": cost, "cost_source": cost_source,
                       "finish_reason": "length" if stop == "max_tokens" else stop}
     raise ValueError(args.provider)
 
@@ -340,7 +372,10 @@ def main() -> int:
     ap.add_argument("--base-url", default="http://localhost:11434/v1")
     ap.add_argument("--key-env", default="OPENAI_API_KEY")
     ap.add_argument("--tiers", nargs="+", default=["L0"], choices=list(TIERS))
-    ap.add_argument("--split", default="eval", choices=["eval", "train"])
+    ap.add_argument("--split", default="eval", choices=["eval", "train", "test"],
+                    help="test = the locked final-comparison split; needs --unlock-test")
+    ap.add_argument("--unlock-test", action="store_true",
+                    help="confirm this is the registered final evaluation on the locked test split")
     ap.add_argument("--limit", type=int, default=0, help="first N specs only (0 = all)")
     ap.add_argument("--rollouts", type=int, default=1)
     ap.add_argument("--temperature", type=float, default=0.0)
@@ -357,6 +392,13 @@ def main() -> int:
                     help="experiment arm (see docs/experiments/hint-feedback.md); the board ranks first-shot only")
     ap.add_argument("--system-prompt-file", default="",
                     help="text APPENDED to the standard system prompt (hint arm)")
+    ap.add_argument("--hints", action="store_true",
+                    help="append the cheat-sheet shipped in the package (hint arm); identical text "
+                         "to prompts/cadquery-hints.md and to the environment's hints=True")
+    ap.add_argument("--price-in", type=float, default=None,
+                    help="USD per 1M prompt tokens; computes a call's cost when the provider reports none")
+    ap.add_argument("--price-out", type=float, default=None,
+                    help="USD per 1M completion tokens (see --price-in)")
     ap.add_argument("--feedback-retries", type=int, default=0,
                     help="after code that does not build, show the error and retry up to N times (feedback arm)")
     args = ap.parse_args()
@@ -366,21 +408,36 @@ def main() -> int:
         raise SystemExit(f"cad-spec: {exc}") from None
     if args.provider in ("openai", "anthropic") and not args.model:
         ap.error("--model is required for model providers")
+    if args.system_prompt_file and args.hints:
+        ap.error("pass --hints or --system-prompt-file, not both")
+    if (args.price_in is None) != (args.price_out is None):
+        ap.error("pass --price-in and --price-out together")
+    if args.split == "test" and not args.unlock_test:
+        ap.error("the test split is locked for the final comparison (docs/EVALUATION_PROTOCOL.md); "
+                 "pass --unlock-test only for that registered run")
     args.system_prompt = SYSTEM_PROMPT
     if args.system_prompt_file:
         hints = Path(args.system_prompt_file).read_text(encoding="utf-8").strip()
         args.system_prompt = SYSTEM_PROMPT + "\n" + hints + "\n"
+    elif args.hints:
+        args.system_prompt = SYSTEM_PROMPT + "\n" + hints_text() + "\n"
+    has_hint = bool(args.system_prompt_file or args.hints)
     # Each registered arm is exactly one condition; a name cannot hide another.
     wants_hint, wants_feedback = ARMS[args.arm]
-    if bool(args.system_prompt_file) != wants_hint:
-        ap.error(f"arm {args.arm!r} {'requires' if wants_hint else 'does not allow'} --system-prompt-file")
+    if has_hint != wants_hint:
+        ap.error(f"arm {args.arm!r} {'requires' if wants_hint else 'does not allow'} --hints or --system-prompt-file")
     if bool(args.feedback_retries) != wants_feedback:
         ap.error(f"arm {args.arm!r} {'requires' if wants_feedback else 'does not allow'} --feedback-retries")
     if args.feedback_retries and args.provider not in ("openai", "anthropic"):
         ap.error("--feedback-retries needs a model provider")
 
     train, evals = make_splits()
-    specs = evals if args.split == "eval" else train
+    if args.split == "test":
+        specs = make_test_split()
+        if split_fingerprint(specs) != TEST_SPLIT_SHA256:
+            raise SystemExit("cad-spec: the test split no longer matches its locked fingerprint")
+    else:
+        specs = evals if args.split == "eval" else train
     if args.limit:
         specs = specs[: args.limit]
     # Microseconds + random suffix: two runs can never share an id (0.3.x
@@ -403,6 +460,10 @@ def main() -> int:
                     "total": len(args.tiers) * len(specs) * args.rollouts},
         "sandbox": sandbox_info(), "system_prompt": args.system_prompt, "arm": args.arm,
         "system_prompt_file": args.system_prompt_file or None, "feedback_retries": args.feedback_retries,
+        "hints_source": ("package" if args.hints else "file" if args.system_prompt_file else None),
+        "system_prompt_sha256": fingerprint(args.system_prompt),
+        "test_split": ({"seed": TEST_SEED, "sha256": TEST_SPLIT_SHA256} if args.split == "test" else None),
+        "price_per_mtok": ({"in": args.price_in, "out": args.price_out} if args.price_in is not None else None),
         "base_url": args.base_url if args.provider == "openai" else None,
         "extra_body": args.extra_body or None, "budget_usd": args.budget or None,
     }

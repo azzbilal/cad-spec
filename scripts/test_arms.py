@@ -95,6 +95,60 @@ def runner_arms() -> bool:
     return ok
 
 
+def runner_training_prep() -> bool:
+    """0.4.1: packaged cheat-sheet, locked test split, token-priced costs, run selection."""
+    import argparse
+
+    import summarize_results as sr
+    from cad_spec.tasks import TEST_SPLIT_SHA256
+
+    def stub(args, prompt, seed):
+        return "", {"usage": {}, "finish_reason": "stop", "cost_usd": 0.0}
+
+    rb.model_answer = stub
+    ok = True
+    file_hints = str(ROOT / "prompts" / "cadquery-hints.md")
+    with tempfile.TemporaryDirectory() as tmp:
+        t = Path(tmp)
+        _run(["--limit", "1", "--arm", "hint", "--system-prompt-file", file_hints, "--out", str(t / "f.jsonl")])
+        _run(["--limit", "1", "--arm", "hint", "--hints", "--out", str(t / "p.jsonl")])
+        _run(["--limit", "1", "--split", "test", "--unlock-test", "--out", str(t / "t.jsonl")])
+        refused = [
+            _run(["--limit", "1", "--arm", "hint", "--hints", "--system-prompt-file", file_hints,
+                  "--out", str(t / "x1.jsonl")]),
+            _run(["--limit", "1", "--hints", "--out", str(t / "x2.jsonl")]),
+            _run(["--limit", "1", "--split", "test", "--out", str(t / "x3.jsonl")]),
+            _run(["--limit", "1", "--price-in", "0.2", "--out", str(t / "x4.jsonl")]),
+        ]
+        meta = {k: json.loads((t / f"{k}.jsonl").read_text(encoding="utf-8").splitlines()[0])["meta"]
+                for k in ("f", "p", "t")}
+    ok &= check(meta["p"]["system_prompt"] == meta["f"]["system_prompt"]
+                and meta["p"]["hints_source"] == "package" and meta["f"]["hints_source"] == "file"
+                and meta["p"]["system_prompt_sha256"] == meta["f"]["system_prompt_sha256"],
+                "--hints (packaged) gives the exact hint-arm prompt of --system-prompt-file, fingerprinted")
+    ok &= check(meta["t"]["split"] == "test" and meta["t"]["test_split"]["sha256"] == TEST_SPLIT_SHA256
+                and meta["t"]["planned"]["spec_ids"] == ["test-0001"],
+                "the locked test split runs only when unlocked, and records its fingerprint")
+    ok &= check(not any(refused), "refused: --hints with a file, --hints outside the hint arm, "
+                "the test split without --unlock-test, one price without the other")
+
+    args = argparse.Namespace(price_in=0.2, price_out=0.6)
+    ok &= check(rb._priced(args, 0.5, 1000, 1000) == (0.5, "provider")
+                and rb._priced(args, None, 1_000_000, 500_000) == (0.2 + 0.3, "computed")
+                and rb._priced(argparse.Namespace(), None, 10, 10) == (None, None),
+                "cost: the provider's figure wins; otherwise tokens x price; unknown without prices")
+
+    rows = [{"spec_id": "test-0001", "tier": "L1", "reward": 1.0, "built": True, "checks": {},
+             "gates_passed": True, "cost_usd": 0.0, "finish_reason": "stop", "api_error": None,
+             "completion_chars": 10, "error": None}]
+    groups = {("r-test", "L1"): rows, ("r-eval", "L1"): [dict(rows[0], spec_id="gen-0000")]}
+    metas = {"r-test": {"model": "m", "split": "test"}, "r-eval": {"model": "m", "split": "eval"}}
+    chosen = sr.select_runs(metas, groups, {})
+    ok &= check(all(v["run_id"] != "r-test" for v in chosen.values()),
+                "board, failure analysis and label check never select a test-split run")
+    return ok
+
+
 def _arm_file(d: Path, name: str, arm: str, api_errors: int, specs: list[str] | None = None,
               system_prompt: str | None = None) -> Path:
     """A run file for one arm: `api_errors` answers fail with a CadQuery API error, the rest pass."""
@@ -204,7 +258,8 @@ def verdict_rules() -> bool:
 
 
 def main() -> int:
-    results = [runner_arms(), board_is_first_shot_only(), verdict_rules(), analysis_joins_real_labels()]
+    results = [runner_arms(), runner_training_prep(), board_is_first_shot_only(), verdict_rules(),
+               analysis_joins_real_labels()]
     return 0 if all(results) else 1
 
 

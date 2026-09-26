@@ -307,9 +307,24 @@ anything, and stops with instructions if it is not (typically: the virtual
 environment is not active in this terminal). A scorer that cannot run never
 records a score.
 
+Prime Inference (the stack that also serves trained adapters) reports tokens
+but no cost, so give the model's prices and the budget still binds:
+
+```bash
+export PRIME_API_KEY=...                                      # key with the Inference permission
+python scripts/run_baseline.py --provider openai --base-url https://api.pinference.ai/api/v1 \
+    --key-env PRIME_API_KEY --model Qwen/Qwen3.5-9B --arm hint --hints \
+    --price-in 0.18 --price-out 0.54 --budget 1.00 --tiers L1 L2 L3 L4 \
+    --out results/training/screening/qwen3.5-9b-greedy.jsonl
+```
+
+Screening and training runs go under `results/training/`, outside
+`results/runs/`, so they never mix with the board's inputs.
+
 Experiment arms change the task, so they are named and kept off the
-first-shot board: `--arm hint --system-prompt-file prompts/cadquery-hints.md`
-appends a CadQuery cheat-sheet to the system prompt; `--arm feedback
+first-shot board: `--arm hint --hints` (or `--system-prompt-file
+prompts/cadquery-hints.md`, the same text) appends a CadQuery cheat-sheet to
+the system prompt; `--arm feedback
 --feedback-retries 1` shows the model its build error and allows a retry.
 See [`docs/experiments/hint-feedback.md`](docs/experiments/hint-feedback.md).
 
@@ -322,12 +337,19 @@ The summary reports, per tier: mean reward and all-requirements pass rate with
 pass rate of every check. The protocol for a training claim is in
 [docs/EVALUATION_PROTOCOL.md](docs/EVALUATION_PROTOCOL.md).
 
-With Prime Intellect:
+With Prime Intellect (installed from the Hub as `bazzouzi/cad-spec`):
 
 ```python
 from cad_spec import load_environment
 env = load_environment(tier=["L1", "L2", "L3"], eval_tier=["L0", "L1", "L2", "L3", "L4"])
+env = load_environment(tier=["L2", "L4"], hints=True)   # cheat-sheet for training and eval
 ```
+
+`python scripts/verify_hub.py`, run with the Python of an environment where
+the package came from the Hub, re-scores saved answers with that copy and
+requires identical rewards and checks. The locked test split
+(`make_test_split`) is never loaded by the environment; it is reserved for
+the final comparison (`docs/EVALUATION_PROTOCOL.md`).
 
 Zero-weight metrics (`built`, `gates_passed`, `m_R1_length` ... `m_R8_z_datum`)
 give per-check learning curves; all functions of one rollout share that
