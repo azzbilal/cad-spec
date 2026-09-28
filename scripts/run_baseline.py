@@ -218,15 +218,17 @@ def _is_local(args: argparse.Namespace) -> bool:
 
 
 def _priced(args: argparse.Namespace, cost: Any, tokens_in: Any, tokens_out: Any) -> tuple[Any, str | None]:
-    """(cost, source). The provider's own figure when it reports one (OpenRouter
-    does); otherwise tokens x --price-in/--price-out, so --budget still binds on
-    providers that report tokens but no cost (Prime Inference)."""
+    """(cost, source). Given prices win: tokens x --price-in/--price-out, because
+    a provider's figure can be rounded (Prime Inference reports cost rounded up
+    to $0.0001, 14x the true cost of a short answer). Without prices, the
+    provider's own figure (OpenRouter's is exact). The raw reported figure
+    always stays in the row's usage record."""
+    price_in, price_out = getattr(args, "price_in", None), getattr(args, "price_out", None)
+    if price_in is not None and tokens_in is not None:
+        return (float(tokens_in) * price_in + float(tokens_out or 0) * price_out) / 1e6, "computed"
     if cost is not None:
         return cost, "provider"
-    price_in, price_out = getattr(args, "price_in", None), getattr(args, "price_out", None)
-    if price_in is None or tokens_in is None:
-        return None, None
-    return (float(tokens_in) * price_in + float(tokens_out or 0) * price_out) / 1e6, "computed"
+    return None, None
 
 
 def model_answer(args: argparse.Namespace, prompt: str | list[dict[str, str]],
@@ -396,7 +398,8 @@ def main() -> int:
                     help="append the cheat-sheet shipped in the package (hint arm); identical text "
                          "to prompts/cadquery-hints.md and to the environment's hints=True")
     ap.add_argument("--price-in", type=float, default=None,
-                    help="USD per 1M prompt tokens; computes a call's cost when the provider reports none")
+                    help="USD per 1M prompt tokens; when given, a call's cost is computed from its tokens "
+                         "(overrides the provider's figure, which can be rounded)")
     ap.add_argument("--price-out", type=float, default=None,
                     help="USD per 1M completion tokens (see --price-in)")
     ap.add_argument("--feedback-retries", type=int, default=0,

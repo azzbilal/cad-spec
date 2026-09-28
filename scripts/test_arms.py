@@ -133,10 +133,18 @@ def runner_training_prep() -> bool:
                 "the test split without --unlock-test, one price without the other")
 
     args = argparse.Namespace(price_in=0.2, price_out=0.6)
-    ok &= check(rb._priced(args, 0.5, 1000, 1000) == (0.5, "provider")
+    ok &= check(rb._priced(args, 0.5, 1_000_000, 500_000) == (0.2 + 0.3, "computed")
                 and rb._priced(args, None, 1_000_000, 500_000) == (0.2 + 0.3, "computed")
+                and rb._priced(argparse.Namespace(), 0.5, 1000, 1000) == (0.5, "provider")
+                and rb._priced(args, 0.5, None, None) == (0.5, "provider")
                 and rb._priced(argparse.Namespace(), None, 10, 10) == (None, None),
-                "cost: the provider's figure wins; otherwise tokens x price; unknown without prices")
+                "cost: given prices win over the provider's figure; otherwise the provider's; "
+                "unknown without either")
+    # Prime Inference, probe of 27 Sep 2026: 27 in / 4 out reported as $0.0001 (rounded up)
+    prime = argparse.Namespace(price_in=0.18, price_out=0.54)
+    cost, source = rb._priced(prime, 0.0001, 27, 4)
+    ok &= check(source == "computed" and abs(cost - 7.02e-6) < 1e-12,
+                "a rounded provider figure (Prime: $0.0001 for 27+4 tokens) is replaced by the exact $0.000007")
 
     rows = [{"spec_id": "test-0001", "tier": "L1", "reward": 1.0, "built": True, "checks": {},
              "gates_passed": True, "cost_usd": 0.0, "finish_reason": "stop", "api_error": None,
