@@ -10,6 +10,7 @@
    must be named with --arm.
 2. The leaderboard ranks first-shot runs only.
 3. The pre-registered verdict rules in compare_arms.py.
+4. The HTTP client: a named User-Agent, and error bodies kept in the message.
 """
 
 from __future__ import annotations
@@ -265,9 +266,51 @@ def verdict_rules() -> bool:
     return ok
 
 
+def http_client() -> bool:
+    """Prime Inference (Cloudflare) refused Python's default User-Agent with 403
+    "error code: 1010"; the runner names itself and keeps error bodies."""
+    import io
+    import urllib.error
+    import urllib.request
+
+    sent: dict[str, str | None] = {}
+
+    class Resp(io.BytesIO):
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+    def ok_open(req, timeout=None):
+        sent["ua"] = req.get_header("User-agent")
+        return Resp(b'{"choices": []}')
+
+    def blocked_open(req, timeout=None):
+        raise urllib.error.HTTPError(req.full_url, 403, "Forbidden", None, io.BytesIO(b"error code: 1010\n"))
+
+    real = urllib.request.urlopen
+    try:
+        urllib.request.urlopen = ok_open
+        rb._post("https://example.test/v1/chat/completions", {"Authorization": "Bearer x"}, {}, 5)
+        ok = check((sent.get("ua") or "").startswith("cad-spec-baseline/"),
+                   f"requests carry a named User-Agent ({sent.get('ua')}), not Python-urllib")
+        urllib.request.urlopen = blocked_open
+        try:
+            rb._post("https://example.test/v1/chat/completions", {}, {}, 5)
+            msg, kind = "", ""
+        except urllib.error.HTTPError as exc:
+            msg, kind = str(exc), type(exc).__name__
+        ok &= check(kind == "HTTPError" and "403" in msg and "error code: 1010" in msg,
+                    f"a refused call keeps its body in the error ({msg})")
+    finally:
+        urllib.request.urlopen = real
+    return ok
+
+
 def main() -> int:
     results = [runner_arms(), runner_training_prep(), board_is_first_shot_only(), verdict_rules(),
-               analysis_joins_real_labels()]
+               analysis_joins_real_labels(), http_client()]
     return 0 if all(results) else 1
 
 

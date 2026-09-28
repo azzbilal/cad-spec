@@ -171,6 +171,10 @@ def parser_template_answer(prompt: str) -> str:
 # Retry-After when the provider sends it. 429 = rate limited (gemma-3-4b hit
 # this twice in September 2026); 5xx = provider trouble.
 RETRY_STATUS = {429, 500, 502, 503, 504}
+# Python's default "Python-urllib/3.x" is refused by Cloudflare-fronted APIs
+# with 403 "error code: 1010" (Prime Inference, probe of 28 Sep 2026); curl
+# and a named client pass. Callers may still override it per request.
+USER_AGENT = f"cad-spec-baseline/{__version__}"
 MAX_ATTEMPTS = 6
 MAX_WAIT_S = 60.0
 
@@ -178,6 +182,7 @@ MAX_WAIT_S = 60.0
 def _post(url: str, headers: dict[str, str], body: dict[str, Any], timeout: float,
           retries: list[int] | None = None) -> dict[str, Any]:
     data = json.dumps(body).encode()
+    headers = {"User-Agent": USER_AGENT, **headers}
     for attempt in range(1, MAX_ATTEMPTS + 1):
         req = urllib.request.Request(url, data=data, headers=headers, method="POST")
         try:
@@ -185,7 +190,7 @@ def _post(url: str, headers: dict[str, str], body: dict[str, Any], timeout: floa
                 return json.loads(resp.read())
         except urllib.error.HTTPError as exc:
             if exc.code not in RETRY_STATUS or attempt == MAX_ATTEMPTS:
-                raise
+                raise _with_body(exc) from exc
             hint = exc.headers.get("Retry-After") if exc.headers else None
             try:
                 wait = float(hint) if hint else 2.0 ** attempt
@@ -201,6 +206,19 @@ def _post(url: str, headers: dict[str, str], body: dict[str, Any], timeout: floa
               file=sys.stderr)
         time.sleep(min(wait, MAX_WAIT_S))
     raise RuntimeError("unreachable")
+
+
+def _with_body(exc: urllib.error.HTTPError) -> urllib.error.HTTPError:
+    """The same HTTPError, with the start of the response body in its message:
+    "HTTP Error 403: Forbidden" alone hid Cloudflare's "error code: 1010"."""
+    try:
+        raw = exc.read() if exc.fp is not None else b""
+    except Exception:  # the body is a courtesy, never a new failure
+        raw = b""
+    detail = " ".join(raw.decode("utf-8", "replace").split())[:300]
+    if not detail:
+        return exc
+    return urllib.error.HTTPError(exc.url, exc.code, f"{exc.msg} ({detail})", exc.headers, None)
 
 
 def _transient(exc: Exception) -> bool:
@@ -577,7 +595,7 @@ def main() -> int:
                                          "truncated": truncated, "degenerate": loops}}) + "\n")
     print(file=sys.stderr)
     if aborted:
-        print(f"ABORTED after {MAX_CONSECUTIVE_API_ERRORS} API errors in a row (key, model id or network?). "
+        print(f"ABORTED after {MAX_CONSECUTIVE_API_ERRORS} API errors in a row (key, model id, network or firewall?). "
               f"Last error: {aborted}", file=sys.stderr)
     if stopped_on_budget:
         print(f"BUDGET THRESHOLD REACHED (${spent:.4f} of ${args.budget:.2f}): stopped after {n}/{total} rollouts",
