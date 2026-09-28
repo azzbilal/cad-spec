@@ -3,6 +3,18 @@
 Scores are only comparable within one scorer version
 (`cad_spec.rubric.SCORER_VERSION`).
 
+## Unreleased
+
+### Runner
+- `--price-in` / `--price-out` now take precedence over the provider's
+  reported cost. Prime Inference reports cost rounded up to $0.0001 per call
+  (a 27-in / 4-out probe: reported $0.0001, true $0.000007), so the recorded
+  spend and the `--budget` stop now use the exact token-priced figure. The
+  reported figure stays in each row's `usage`. Without prices, nothing
+  changes (OpenRouter's exact figure is used, as in every published run).
+- README screening example: `--extra-body` switches Qwen3.5 thinking off
+  (on by default; 287 output tokens instead of 4 in the probe).
+
 ## 0.4.1 (unreleased): training preparation
 
 Scorer unchanged (0.4.0): every published score stands.
@@ -11,6 +23,10 @@ Scorer unchanged (0.4.0): every published score stands.
 - 0.4.0 published to the Prime Environments Hub as `bazzouzi/cad-spec`
   (wheel SHA-256 `c49371e9a9fad83f33fe553dbfd9f740bfce29a7e69c74b8e858bffb1f062691`),
   verified by downloading the served wheel and comparing fingerprints.
+- 0.4.1 published to the Hub (wheel SHA-256
+  `567d593f8ba92d8b230b78ab03b807d45376b2c803f1823a19dae3025f9a25fb`); the
+  served wheel matches and `verify_hub.py` re-scored 200 saved answers
+  IDENTICAL with it.
 - `scripts/verify_hub.py`: re-scores saved answers with an installed copy of
   the package and requires identical rewards and check verdicts; refuses to
   run against the repository's own source.

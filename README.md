@@ -307,14 +307,18 @@ anything, and stops with instructions if it is not (typically: the virtual
 environment is not active in this terminal). A scorer that cannot run never
 records a score.
 
-Prime Inference (the stack that also serves trained adapters) reports tokens
-but no cost, so give the model's prices and the budget still binds:
+Prime Inference (the stack that also serves trained adapters) reports a cost
+rounded up to $0.0001 per call, so give the model's prices: the cost is then
+computed from tokens and the budget binds on the true spend. Qwen3.5 thinks by
+default (a 4-token answer became 287 tokens in the probe); switch it off to
+match the board:
 
 ```bash
 export PRIME_API_KEY=...                                      # key with the Inference permission
 python scripts/run_baseline.py --provider openai --base-url https://api.pinference.ai/api/v1 \
     --key-env PRIME_API_KEY --model Qwen/Qwen3.5-9B --arm hint --hints \
     --price-in 0.18 --price-out 0.54 --budget 1.00 --tiers L1 L2 L3 L4 \
+    --extra-body '{"chat_template_kwargs": {"enable_thinking": false}}' \
     --out results/training/screening/qwen3.5-9b-greedy.jsonl
 ```
 
