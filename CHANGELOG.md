@@ -12,6 +12,14 @@ Scores are only comparable within one scorer version
   spend and the `--budget` stop now use the exact token-priced figure. The
   reported figure stays in each row's `usage`. Without prices, nothing
   changes (OpenRouter's exact figure is used, as in every published run).
+- Requests carry `User-Agent: cad-spec-baseline/<version>`. Prime Inference
+  sits behind Cloudflare, which refused Python's default `Python-urllib/3.x`
+  with 403 "error code: 1010" (the first screening run aborted after 5 calls;
+  the same request with a named client returned 200). OpenRouter never
+  blocked it, so no published run is affected.
+- A refused call now keeps the start of the response body in its error
+  message (`HTTP Error 403: Forbidden (error code: 1010)`), so the next
+  failure explains itself.
 - README screening example: `--extra-body` switches Qwen3.5 thinking off
   (on by default; 287 output tokens instead of 4 in the probe).
 
