@@ -5,7 +5,18 @@ Scores are only comparable within one scorer version
 
 ## Unreleased
 
+### Screening (training plan, step 3)
+- `scripts/screening.py`: per tier, all-pass, pass@k, mean reward (also over
+  finished answers only), the learning signal of each group of samples
+  (share of groups whose samples differ; flat groups split into all solved,
+  all zero, same partial; mean group standard deviation and mean
+  |advantage|), and truncation split into cut off (budget too small) and
+  degenerate (loop), with output-token percentiles of finished answers.
+  Self-test `scripts/test_screening.py` in CI.
+
 ### Runner
+- Every row now records `cost_source` (`computed` or `provider`). 0.4.1
+  computed it but never wrote it into the row.
 - `--price-in` / `--price-out` now take precedence over the provider's
   reported cost. Prime Inference reports cost rounded up to $0.0001 per call
   (a 27-in / 4-out probe: reported $0.0001, true $0.000007), so the recorded

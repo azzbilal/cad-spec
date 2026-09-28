@@ -324,6 +324,10 @@ python scripts/run_baseline.py --provider openai --base-url https://api.pinferen
 
 Screening and training runs go under `results/training/`, outside
 `results/runs/`, so they never mix with the board's inputs.
+`python scripts/screening.py results/training/screening/*.jsonl` reports,
+per tier, the scores, the learning signal of each group of samples (RL
+learns nothing from a group whose samples all score the same) and the
+truncation split into cut off and degenerate.
 
 Experiment arms change the task, so they are named and kept off the
 first-shot board: `--arm hint --hints` (or `--system-prompt-file
