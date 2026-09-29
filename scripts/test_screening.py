@@ -45,6 +45,14 @@ def main() -> int:
                "flat groups split into all solved / all zero / same partial; one group in four has signal")
     ok &= check(abs(s["mean_group_std"] - 0.5 / 4) < 1e-12 and abs(s["mean_abs_advantage"] - 0.5 / 4) < 1e-12,
                 "group std and mean |advantage|: 0.5 for the mixed group, 0 elsewhere, averaged over 4")
+    # Binary view: a (1.0, 5/9 flat) group stays flat; the mixed group d is
+    # (1, 1, 0, 0): signal 1/4, |adv| 0.5 each, 0.5/4 over all groups.
+    ok &= check(s["binary_signal"] == 0.25 and abs(s["binary_mean_abs_advantage"] - 0.5 / 4) < 1e-12
+                and s["binary_abs_advantage_per_useful_group"] == 0.5,
+                "binary view: same groups scored 1 only when all pass; strength per useful group")
+    partial = sc.tier_stats([row("p", 1.0), row("p", 7 / 9), row("p", 1.0), row("p", 7 / 9)])
+    ok &= check(abs(partial["mean_abs_advantage"] - 1 / 9) < 1e-12 and partial["binary_mean_abs_advantage"] == 0.5,
+                "the L4 failure (7/9 vs 1.0): |adv| 0.111 continuous, 0.5 binary")
     ok &= check(abs(s["all_pass"] - 6 / 16) < 1e-12 and s["pass_at_k"] == 0.5,
                 "all-pass counts answers (6/16); pass@k counts specs solved at least once (2/4)")
     ok &= check(s["truncated"] == 2 / 16 and s["cut_off"] == 1 / 16 and s["degenerate"] == 1 / 16

@@ -3,7 +3,26 @@
 Scores are only comparable within one scorer version
 (`cad_spec.rubric.SCORER_VERSION`).
 
-## Unreleased
+## 0.4.2: binary training reward
+
+Scorer unchanged (`SCORER_VERSION` 0.4.0): every published score keeps its
+meaning, and the default environment is identical to 0.4.1.
+
+### Environment
+- `load_environment(reward="binary")`: trains on `all_pass_reward`, 1.0 only
+  when all nine requirements are met (gates passed), else 0.0. Same build,
+  same checks. With metrics on, the continuous `spec_reward` is logged at
+  zero weight. `reward="continuous"` (default) is the 0.4.1 rubric exactly;
+  any other value is refused.
+- Why: prime-rl's GRPO advantage is reward minus the group mean, with no
+  division by the standard deviation. The typical L4 failure (change order
+  not propagated to the hole pitch: R5 and R7 fail) scores 7/9 = 0.78, only
+  0.22 below a correct answer. Screening Qwen3.5-9B at temperature 0.7: L4
+  mean |advantage| 0.044 continuous, 0.093 binary (2.1x); L1 to L3 1.3x to
+  1.6x. The training reward then equals the metric the claim is judged on.
+- Tests: default rubric unchanged, binary weighting, refusal of unknown
+  values, and the real L4 failure (new plate, old pitch) scoring 7/9
+  continuous and 0 binary.
 
 ### Screening (training plan, step 3)
 - `scripts/screening.py`: per tier, all-pass, pass@k, mean reward (also over
@@ -13,6 +32,9 @@ Scores are only comparable within one scorer version
   |advantage|), and truncation split into cut off (budget too small) and
   degenerate (loop), with output-token percentiles of finished answers.
   Self-test `scripts/test_screening.py` in CI.
+- The report also shows each tier's learning signal under the binary
+  training reward (share of useful groups, mean |advantage|, and its
+  strength per useful group).
 
 ### Runner
 - Every row now records `cost_source` (`computed` or `provider`). 0.4.1
