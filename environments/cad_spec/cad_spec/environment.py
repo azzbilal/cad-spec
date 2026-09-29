@@ -140,6 +140,25 @@ def spec_reward(completion, answer="", info=None, **kwargs) -> float:
     return max(report.reward, PARSE_FLOOR) if report.parsed else 0.0
 
 
+def all_pass_reward(completion, answer="", info=None, **kwargs) -> float:
+    """Binary reward: 1.0 when all nine requirements are met (gates passed),
+    else 0.0. Same build and same checks as spec_reward, no partial credit.
+
+    For training (0.4.2): with plain group-mean advantages, the typical L4
+    failure (change order not propagated to the hole pitch: R5 and R7 fail,
+    7/9 = 0.78) sits only 0.22 below a correct answer; here the gap is 1.0,
+    and the training reward equals the metric the claim is judged on.
+    """
+    spec = _spec_for(answer, info)
+    if spec is None:
+        return 0.0
+    report = _report(_completion_text(completion), spec.id, kwargs.get("state"))
+    return 1.0 if report.parsed and report.reward == 1.0 else 0.0
+
+
+REWARDS = ("continuous", "binary")
+
+
 def _check_metric(check_name: str) -> Callable[..., float]:
     """Zero-weight diagnostic: 1.0 if the named check passed on this rollout."""
 
@@ -182,6 +201,7 @@ def load_environment(
     eval_tier: str | Sequence[str] | None = None,
     metrics: bool = True,
     hints: bool = False,
+    reward: str = "continuous",
     **kwargs,
 ) -> vf.Environment:
     """Build the environment.
@@ -197,13 +217,23 @@ def load_environment(
                the system prompt, for training AND evaluation alike. It is the
                hint arm of the registered experiment, byte for byte: API facts
                only, no spec numbers, so the reward still measures the design.
+    reward     "continuous" (default, every published result): partial credit
+               k/9 with the build floor, spec_reward. "binary": all_pass_reward,
+               1.0 only when all nine requirements are met. The scorer is the
+               same either way; with metrics on, the other one is logged at
+               zero weight, so both stay visible.
     """
+    if reward not in REWARDS:
+        raise ValueError(f"reward must be one of {REWARDS}, got {reward!r}")
     train_tiers = _tiers(tier)
     eval_tiers = _tiers(eval_tier) if eval_tier is not None else train_tiers
-    funcs: list[Callable[..., float]] = [spec_reward]
+    main, other = (spec_reward, all_pass_reward) if reward == "continuous" else (all_pass_reward, spec_reward)
+    funcs: list[Callable[..., float]] = [main]
     weights = [1.0]
     if metrics:
         extra = [built, gates_passed] + [_check_metric(n) for n in CHECK_NAMES]
+        if reward == "binary":
+            extra = [other, *extra]  # continuous stays visible as a diagnostic
         funcs += extra
         weights += [0.0] * len(extra)
     rubric = vf.Rubric(funcs=funcs, weights=weights)

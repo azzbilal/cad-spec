@@ -34,6 +34,8 @@ env = load_environment()                                  # L0 template task, as
 env = load_environment(tier=["L2", "L4"], hints=True)     # cheat-sheet in the system prompt
 env = load_environment(tier=["L1", "L2", "L3"],           # train on harder tiers,
                        eval_tier=["L0", "L1", "L2", "L3", "L4"])  # evaluate on all
+env = load_environment(tier=["L2", "L4"], hints=True,     # binary training reward:
+                       reward="binary")                   # 1.0 only if all nine pass
 ```
 
 | Argument | Default | Meaning |

@@ -12,7 +12,8 @@ For each run file, per tier:
   samples of one prompt. A group whose samples all get the same reward has a
   zero advantage for every sample and teaches nothing. The report splits
   those groups into all solved, all zero, and all the same partial score, and
-  gives the mean within-group standard deviation and mean |advantage|;
+  gives the mean within-group standard deviation and mean |advantage|,
+  also under the binary training reward (1.0 only when all nine pass);
 - truncation: answers cut off at --max-tokens, split into CUT OFF (the budget
   was too small for a real answer: a configuration problem) and DEGENERATE
   (a repetition loop: a model failure), with the mean reward of each and the
@@ -99,6 +100,15 @@ def tier_stats(rows: list[dict[str, Any]]) -> dict[str, Any]:
     }
     multi = [g for g in groups.values() if len(g) > 1]
     if multi:
+        # The same groups under the binary training reward (0.4.2,
+        # load_environment(reward="binary")): 1.0 only when all nine pass.
+        bins = [[1.0 if x == 1.0 else 0.0 for x in g] for g in multi]
+        useful = [g for g in bins if max(g) > min(g)]
+        out["binary_signal"] = len(useful) / len(bins)
+        out["binary_mean_abs_advantage"] = statistics.fmean(
+            abs(x - statistics.fmean(g)) for g in bins for x in g)
+        out["binary_abs_advantage_per_useful_group"] = statistics.fmean(
+            abs(x - statistics.fmean(g)) for g in useful for x in g) if useful else None
         flat = [g for g in multi if max(g) == min(g)]
         out["groups"] = len(multi)
         out["signal"] = 1 - len(flat) / len(multi)
@@ -172,6 +182,19 @@ def markdown(report: dict[str, Any]) -> str:
         lines.append(f"| {t} | {s['groups']} | {_f(s['signal'])} | {_f(s['flat_all_solved'])} | "
                      f"{_f(s['flat_all_zero'])} | {_f(s['flat_partial'])} | "
                      f"{_f(s['mean_group_std'], False)} | {_f(s['mean_abs_advantage'], False)} |")
+    lines += [
+        "",
+        "### Learning signal under the binary training reward (1.0 only when all nine pass)",
+        "",
+        "| Tier | With signal | Mean abs advantage | Mean abs advantage per useful group |",
+        "|---|---|---|---|",
+    ]
+    for t, s in rows:
+        if "groups" not in s:
+            lines.append(f"| {t} | n/a | n/a | n/a |")
+            continue
+        lines.append(f"| {t} | {_f(s['binary_signal'])} | {_f(s['binary_mean_abs_advantage'], False)} | "
+                     f"{_f(s['binary_abs_advantage_per_useful_group'], False)} |")
     lines += [
         "",
         "### Truncation",

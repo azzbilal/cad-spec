@@ -52,6 +52,18 @@ the evidence that meets it.
       its training id; the 35B only under a lowercase routed id. No useful
       learning signal in either: revise the task or reward before paying for
       RL.
+      **Done for Qwen3.5-9B (0.4.2).** Greedy: 68% all-pass (L4 43%, L2 63%).
+      At temperature 1.0 and 1,024 tokens, L1 to L3 fell to about 40% and
+      10% of answers were cut off; at **temperature 0.7 and 2,048 tokens**
+      (settable in Hosted Training) truncation fell to 1% and L1 to L3 gave
+      signal in 97 to 100% of groups. L4 fails one way (change order not
+      propagated to the pitch: R5 and R7 together) and gave signal in 33% of
+      groups, 7x weaker than the other tiers under partial credit. Decisions:
+      **binary training reward** (`load_environment(reward="binary")`, L4
+      signal 2.1x stronger, training reward = the claimed metric) and a mix
+      weighted toward L4 and L2. The 35B-A3B was not screened: it is served
+      only under a routed third-party id, against the same-serving-stack
+      rule, and the 9B already sits inside the useful range.
    4. **Register the claim** (`docs/experiments/`): base + cheat-sheet versus
       adapter + the same cheat-sheet, same decoding, scorer and serving
       stack; target tier, minimum worthwhile all-pass gain, paired analysis,
