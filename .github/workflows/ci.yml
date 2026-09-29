@@ -65,6 +65,9 @@ jobs:
       - name: Experiment arms self-test (runner feedback, hint, verdict rules)
         working-directory: .
         run: python scripts/test_arms.py
+      - name: Screening analysis self-test (learning signal, truncation split)
+        working-directory: .
+        run: python scripts/test_screening.py
       - name: Release check (every linked evidence file exists)
         working-directory: .
         run: python scripts/check_release.py

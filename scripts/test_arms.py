@@ -133,6 +133,17 @@ def runner_training_prep() -> bool:
     ok &= check(not any(refused), "refused: --hints with a file, --hints outside the hint arm, "
                 "the test split without --unlock-test, one price without the other")
 
+    def priced_stub(args, prompt, seed):
+        return "", {"usage": {}, "finish_reason": "stop", "cost_usd": 0.001, "cost_source": "computed"}
+
+    rb.model_answer = priced_stub
+    with tempfile.TemporaryDirectory() as tmp:
+        out = Path(tmp) / "c.jsonl"
+        _run(["--limit", "1", "--out", str(out)])
+        row = next(json.loads(x) for x in out.read_text(encoding="utf-8").splitlines() if '"tier"' in x)
+    ok &= check(row.get("cost_source") == "computed", "each row records where its cost came from (cost_source)")
+    rb.model_answer = stub
+
     args = argparse.Namespace(price_in=0.2, price_out=0.6)
     ok &= check(rb._priced(args, 0.5, 1_000_000, 500_000) == (0.2 + 0.3, "computed")
                 and rb._priced(args, None, 1_000_000, 500_000) == (0.2 + 0.3, "computed")
