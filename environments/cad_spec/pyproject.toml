@@ -2,16 +2,24 @@
 name = "cad-spec"
 description = "RL reward environment: write CadQuery from a dimensioned plate spec, scored by measuring the built B-rep in a trusted process. 9 requirements (dimensions, holes, pattern and Z datums, material volume, edge margin) behind 5 anti-reward-hacking gates; sandboxed per-rollout execution; five prompt tiers; mutation-validated scorer (0 false full credit over 1,230 mutants). 200 train / 30 held-out specs per tier."
 tags = ["cad", "engineering", "code-generation", "cadquery", "geometry", "train", "eval"]
-version = "0.4.2"
+version = "0.4.3"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 # verifiers/datasets stay in the core set because `prime env push` installs the
 # package's own dependencies. The scorer itself needs only cadquery, and
 # `import cad_spec` no longer imports verifiers (see cad_spec/__init__.py).
+#
+# verifiers is deliberately UNPINNED (0.4.3), like Prime's own legacy example
+# environments. cad-spec uses only the v0 core API (Rubric, SingleTurnEnv),
+# which the platform provides. A version range made pip replace Hosted
+# Training's own verifiers, dragging in a prime-sandboxes release that clashes
+# with the training image (smoke run of 29 Sep 2026 crashed at startup), and a
+# floor >= 0.2.0 made `prime env push` label this v0 package as v1.
+# Reproducible local installs: pip install -c constraints.txt (verifiers==0.3.1).
 dependencies = [
-    "verifiers>=0.3.0,<0.4",
+    "verifiers",
     "cadquery>=2.8,<2.9",
-    "datasets>=2,<6",
+    "datasets>=2",
 ]
 
 [project.optional-dependencies]

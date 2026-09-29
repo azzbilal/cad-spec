@@ -17,19 +17,19 @@ enable_thinking = false
 # of groups under the binary reward, L1 to L3 in 97 to 100%).
 [[env]]
 name = "cad-spec-L4"
-id = "bazzouzi/cad-spec@0.4.2"
+id = "bazzouzi/cad-spec@0.4.3"
 args = { tier = ["L4"], hints = true, reward = "binary" }
 ratio = 0.5
 
 [[env]]
 name = "cad-spec-L2"
-id = "bazzouzi/cad-spec@0.4.2"
+id = "bazzouzi/cad-spec@0.4.3"
 args = { tier = ["L2"], hints = true, reward = "binary" }
 ratio = 0.25
 
 [[env]]
 name = "cad-spec-L1-L3"
-id = "bazzouzi/cad-spec@0.4.2"
+id = "bazzouzi/cad-spec@0.4.3"
 args = { tier = ["L1", "L3"], hints = true, reward = "binary" }
 ratio = 0.25
 

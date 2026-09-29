@@ -40,7 +40,7 @@ Qwen3.5-9B on the 30 development specs, cheat-sheet on, thinking off. Runs in
 | Item | Registered value |
 |---|---|
 | Base model | `Qwen/Qwen3.5-9B` (Hosted Training, LoRA) |
-| Environment | `bazzouzi/cad-spec@0.4.2`, wheel SHA-256 `482d399c5cc374f7a564eacfded927cc09aacd879fa9756fb34881efe455c6cb`, verify_hub 200/200 IDENTICAL |
+| Environment | `bazzouzi/cad-spec@0.4.2`, wheel SHA-256 `482d399c5cc374f7a564eacfded927cc09aacd879fa9756fb34881efe455c6cb`, verify_hub 200/200 IDENTICAL. **Amendment 1: 0.4.3**, same code, packaging fix |
 | Scorer | 0.4.0 (unchanged since the leaderboard) |
 | Training reward | binary: 1.0 only when all nine requirements pass (`reward = "binary"`) |
 | Prompt | system prompt plus the packaged cheat-sheet (`hints = true`), training and evaluation alike |
@@ -123,4 +123,29 @@ with the filter, about $15 for 100 steps; evaluation about $0.15.
 
 ## Amendments
 
-None yet.
+### Amendment 1 (29 September 2026): environment 0.4.2 → 0.4.3, packaging only
+
+Made after the first smoke test failed and before any rollout, adapter or
+test-split answer existed.
+
+- **What happened.** Smoke run `b32pcagfy8t4bqf2lnc6dep7` (5 steps) failed
+  at environment startup, on all three environment servers, before the first
+  rollout. Installing `cad-spec==0.4.2` on the training image replaced the
+  platform's own verifiers (our range `verifiers>=0.3.0,<0.4`), which pulled
+  `prime-sandboxes` 0.4.0; that release refuses to start next to the image's
+  `connect-python` 0.9.0 (`RuntimeError`, then "env server did not become
+  healthy in 120s", `BackoffLimitExceeded`). The same floor (0.3.0 >= 0.2.0)
+  made `prime env push` publish this v0 package as v1.
+- **Change.** cad-spec 0.4.3 declares `verifiers` without a version, as
+  Prime's own legacy example environments do, and `datasets>=2`. Code,
+  scorer (0.4.0), prompts, cheat-sheet, splits and rewards are identical to
+  0.4.2. The configs now pin `bazzouzi/cad-spec@0.4.3`; nothing else in them
+  changes. The 0.4.3 wheel SHA-256 and its verify_hub result are recorded in
+  the CHANGELOG when pushed.
+- **Observed platform filters** (from the failed run's log, answering the
+  risk in section 7): the registered zero-advantage filter is enforced; the
+  service adds post-batch filters of its own: gibberish and repetition in
+  monitoring mode only (`enforce = false`), and zero-advantage again
+  (enforced). Neither changes the design.
+- The budget rule is unchanged: the failed smoke run's cost, whatever the
+  usage record shows, counts toward the $15 ceiling.
