@@ -20,6 +20,24 @@ Scores are only comparable within one scorer version
   that departs from its registration. Self-test
   `scripts/test_compare_training.py` in CI.
 
+## 0.4.3: packaging for Hosted Training
+
+Code, scorer (0.4.0), prompts, splits and rewards identical to 0.4.2.
+
+- `verifiers` is declared without a version (was `>=0.3.0,<0.4`), like
+  Prime's own legacy example environments; `datasets>=2` (was `<6` too).
+  The first smoke test of training run 1 crashed at environment startup:
+  the range made pip replace Hosted Training's own verifiers, which pulled
+  `prime-sandboxes` 0.4.0, and that release refuses to run next to the
+  image's `connect-python`. The same floor made `prime env push` label this
+  v0 package as v1 (Prime CLI `classify_runtime_from_metadata`: v1 for a
+  floor >= 0.2.0); it is now classified legacy v0, which it is.
+- Reproducible local installs keep `pip install -c constraints.txt`
+  (`verifiers==0.3.1`); CI is unchanged.
+- `tests/test_packaging.py` pins these rules.
+- Training configs pin `bazzouzi/cad-spec@0.4.3` (pre-registration,
+  Amendment 1).
+
 ## 0.4.2: binary training reward
 
 Scorer unchanged (`SCORER_VERSION` 0.4.0): every published score keeps its
