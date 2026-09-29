@@ -1,0 +1,43 @@
+# Training run 1 (pre-registered: docs/experiments/training-run-1.md).
+# Do not edit after registration without a dated amendment in that document.
+name = "cad-spec-9b-run1"
+model = "Qwen/Qwen3.5-9B"
+# max_steps is set by the registered budget rule after the smoke test:
+# floor((15.00 - smoke cost - 0.50 margin) / measured cost per step), at most 150.
+max_steps = 100
+batch_size = 128
+rollouts_per_example = 8
+
+[sampling]
+max_tokens = 2048
+temperature = 0.7
+enable_thinking = false
+
+# Mix weighted toward the reasoning tiers (screening: L4 gives signal in 30%
+# of groups under the binary reward, L1 to L3 in 97 to 100%).
+[[env]]
+name = "cad-spec-L4"
+id = "bazzouzi/cad-spec@0.4.2"
+args = { tier = ["L4"], hints = true, reward = "binary" }
+ratio = 0.5
+
+[[env]]
+name = "cad-spec-L2"
+id = "bazzouzi/cad-spec@0.4.2"
+args = { tier = ["L2"], hints = true, reward = "binary" }
+ratio = 0.25
+
+[[env]]
+name = "cad-spec-L1-L3"
+id = "bazzouzi/cad-spec@0.4.2"
+args = { tier = ["L1", "L3"], hints = true, reward = "binary" }
+ratio = 0.25
+
+# Groups whose 8 samples all score the same teach nothing: keep them out of
+# the training batch (they are still generated and paid for as inference).
+[[pre_batch_filters]]
+type = "zero_advantage"
+enforce = true
+
+[adapters]
+interval = 0      # upload the adapter at the end of the run only

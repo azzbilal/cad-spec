@@ -69,6 +69,14 @@ the evidence that meets it.
       stack; target tier, minimum worthwhile all-pass gain, paired analysis,
       test-split size checked against that gain, cost ceiling, regression
       checks on every other tier.
+      **Registered (29 Sep 2026):**
+      [docs/experiments/training-run-1.md](docs/experiments/training-run-1.md).
+      Claim: greedy all-pass on L2 + L4, paired, confirmed if the 95%
+      interval is above 0, worthwhile at +10 points (84% power on 60 test
+      specs). Configs in `configs/rl/` validated against the Prime CLI 0.8.0
+      schema; analysis `scripts/compare_training.py` frozen and tested
+      before any data. Ceiling $15; run length from the smoke test's
+      measured cost per step.
    5. **Smoke test, then one capped run.** A few steps to verify loading,
       sandboxed scoring, reward diversity, monitoring and adapter evaluation;
       the longer run's length follows from those observations and the cost

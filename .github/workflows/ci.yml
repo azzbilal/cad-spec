@@ -68,6 +68,9 @@ jobs:
       - name: Screening analysis self-test (learning signal, truncation split)
         working-directory: .
         run: python scripts/test_screening.py
+      - name: Training analysis self-test (registered verdict rules, refusals)
+        working-directory: .
+        run: python scripts/test_compare_training.py
       - name: Release check (every linked evidence file exists)
         working-directory: .
         run: python scripts/check_release.py

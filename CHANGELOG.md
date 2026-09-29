@@ -3,6 +3,23 @@
 Scores are only comparable within one scorer version
 (`cad_spec.rubric.SCORER_VERSION`).
 
+## Unreleased
+
+### Training run 1 registered (step 4)
+- `docs/experiments/training-run-1.md`: the claim (greedy all-pass on L2 +
+  L4, adapter vs base, both with the cheat-sheet, locked test split), the
+  +10-point worthwhile gain and its simulated power (84%), regression checks
+  on L1 and L3, the $15 ceiling and the rule that sets the run length from
+  the smoke test.
+- `configs/rl/cad-spec-9b.toml` and `cad-spec-9b-smoke.toml`: Qwen3.5-9B,
+  `bazzouzi/cad-spec@0.4.2`, binary reward, cheat-sheet, temperature 0.7,
+  2,048 tokens, thinking off, L4/L2-weighted mix, zero-advantage filter.
+  Validated against the Prime CLI 0.8.0 config schema; every `args` block
+  loads in cad-spec.
+- `scripts/compare_training.py`: the registered analysis, refusing any run
+  that departs from its registration. Self-test
+  `scripts/test_compare_training.py` in CI.
+
 ## 0.4.2: binary training reward
 
 Scorer unchanged (`SCORER_VERSION` 0.4.0): every published score keeps its
