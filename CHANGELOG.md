@@ -20,6 +20,32 @@ Scores are only comparable within one scorer version
   that departs from its registration. Self-test
   `scripts/test_compare_training.py` in CI.
 
+## 0.4.5: CadQuery on the Hosted Training image
+
+Checks, gates, rewards, prompts and splits identical to 0.4.4; scorer 0.4.0.
+
+- The third smoke test scored every rollout 0: the training image has no
+  `libGL.so.1`, which OpenCascade's OCP links at load time (with
+  `libX11.so.6`; also true of the headless novtk build), so CadQuery could
+  not import. cad-spec raised `ScorerUnavailableError`, and the hosted
+  verifiers turned it into a 0.0 reward.
+- Vendored fallback: `cad_spec/_vendor/linux_x86_64/` ships the Ubuntu 20.04
+  builds of libGL, libGLX, libGLdispatch (glvnd 1.3.2), libX11 (1.6.9),
+  libxcb, libXau, libXdmcp and libbsd (2.9 MB, glibc 2.26 at most), with
+  `SOURCES.md` (package versions, archive URLs, SHA-256 of each .deb and
+  file) and each package's copyright file. `measure._ensure_gl_libraries`
+  loads them before CadQuery only when the system has none; the result
+  (`system`, `vendored`, `missing`, `not-linux`) appears in the scorer's
+  error message.
+- Fail fast: `load_environment` calls `require_cadquery()`, so an
+  environment whose scorer cannot run fails at load instead of scoring 0.
+- `tests/test_gl_fallback.py`: manifest hashes, loading the vendored set in a
+  fresh process, the glibc bound, fallback-only behaviour, fail-fast at load.
+  The GL-less condition itself (system libraries hidden, root required) was
+  run by hand: the exact hosted error without the fallback, reward 1.0 with
+  the installed wheel.
+- Training configs pin `bazzouzi/cad-spec@0.4.5` (Amendment 3).
+
 ## 0.4.4: rollout input for Hosted Training
 
 Prompts, answers, splits, scorer (0.4.0) and rewards identical to 0.4.3.
@@ -34,6 +60,9 @@ Prompts, answers, splits, scorer (0.4.0) and rewards identical to 0.4.3.
   scores 1.0 in both reward modes; the L4 failure (new plate, old pitch)
   scores 0 binary and 7/9 continuous. All seven tests fail on 0.4.3.
 - Training configs pin `bazzouzi/cad-spec@0.4.4` (Amendment 2).
+- Published as legacy v0: wheel SHA-256
+  `49737212123f9e341ae69bba81a1f8aeec7d4cdffe0bc07f49fc7aa92520144f`, served
+  wheel identical, verify_hub 200/200 IDENTICAL.
 
 ## 0.4.3: packaging for Hosted Training
 

@@ -125,15 +125,69 @@ class ScorerUnavailableError(RuntimeError):
     """
 
 
+# OpenCascade's OCP binding links libGL.so.1 and libX11.so.6 at load time
+# (TKOpenGl, TKService), even for the headless "novtk" build, although
+# cad-spec never renders. Minimal Linux images, such as the Hosted Training
+# environment image of September 2026, lack them, and `import cadquery` fails
+# there. Fallback only: when the system copy loads, nothing changes. Otherwise
+# the Ubuntu 20.04 builds vendored in _vendor/linux_x86_64 (SOURCES.md; glvnd 1.3.2,
+# libX11 1.6.9 and their dependencies; glibc >= 2.26) are loaded first, so the
+# dynamic loader resolves OCP's dependencies by name to these copies. Runs in
+# every process that imports CadQuery, the spawned scorer worker included.
+_VENDORED_GL = ("libbsd.so.0", "libXdmcp.so.6", "libXau.so.6", "libxcb.so.1",
+                "libX11.so.6", "libGLdispatch.so.0", "libGLX.so.0", "libGL.so.1")
+
+
+_GL_SOURCE: str | None = None
+
+
+def _ensure_gl_libraries() -> str:
+    """'system', 'vendored', 'missing' or 'not-linux', decided once per process
+    (after a vendored load, libGL.so.1 resolves by name, so a second probe would
+    wrongly say 'system'). Never raises: a failure surfaces as the ordinary
+    CadQuery import error, with this label in its message."""
+    global _GL_SOURCE
+    if _GL_SOURCE is None:
+        _GL_SOURCE = _load_gl_libraries()
+    return _GL_SOURCE
+
+
+def _load_gl_libraries() -> str:
+    import ctypes
+    import platform
+    import sys
+
+    if not sys.platform.startswith("linux") or platform.machine() not in ("x86_64", "AMD64"):
+        return "not-linux"
+    try:
+        ctypes.CDLL("libGL.so.1", mode=ctypes.RTLD_GLOBAL)
+        ctypes.CDLL("libX11.so.6", mode=ctypes.RTLD_GLOBAL)
+        return "system"
+    except OSError:
+        pass
+    here = os.path.join(os.path.dirname(os.path.abspath(__file__)), "_vendor", "linux_x86_64")
+    for name in _VENDORED_GL:
+        try:
+            ctypes.CDLL(name, mode=ctypes.RTLD_GLOBAL)  # a system copy wins if present
+        except OSError:
+            try:
+                ctypes.CDLL(os.path.join(here, name), mode=ctypes.RTLD_GLOBAL)
+            except OSError:
+                return "missing"
+    return "vendored"
+
+
 def require_cadquery() -> str:
     """Return the CadQuery version, or raise ScorerUnavailableError with the fix."""
     import sys
 
+    gl = _ensure_gl_libraries()
     try:
         import cadquery
     except ImportError as exc:
         raise ScorerUnavailableError(
-            f"CadQuery is not importable from {sys.executable} ({exc}). Activate the environment "
+            f"CadQuery is not importable from {sys.executable} ({exc}; GL libraries: {gl}). "
+            "Activate the environment "
             "that has it installed (e.g. `source environments/cad_spec/.venv/Scripts/activate` on "
             "Windows Git Bash, `source .venv/bin/activate` elsewhere) and rerun."
         ) from exc

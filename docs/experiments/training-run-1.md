@@ -40,7 +40,7 @@ Qwen3.5-9B on the 30 development specs, cheat-sheet on, thinking off. Runs in
 | Item | Registered value |
 |---|---|
 | Base model | `Qwen/Qwen3.5-9B` (Hosted Training, LoRA) |
-| Environment | `bazzouzi/cad-spec@0.4.2`, wheel SHA-256 `482d399c5cc374f7a564eacfded927cc09aacd879fa9756fb34881efe455c6cb`, verify_hub 200/200 IDENTICAL. **Amendment 1: 0.4.3**, packaging fix; **Amendment 2: 0.4.4**, rollout-input fix, same scoring |
+| Environment | `bazzouzi/cad-spec@0.4.2`, wheel SHA-256 `482d399c5cc374f7a564eacfded927cc09aacd879fa9756fb34881efe455c6cb`, verify_hub 200/200 IDENTICAL. **Amendment 1: 0.4.3**, packaging fix; **Amendment 2: 0.4.4**, rollout-input fix; **Amendment 3: 0.4.5**, CadQuery loads on the training image; same scoring |
 | Scorer | 0.4.0 (unchanged since the leaderboard) |
 | Training reward | binary: 1.0 only when all nine requirements pass (`reward = "binary"`) |
 | Prompt | system prompt plus the packaged cheat-sheet (`hints = true`), training and evaluation alike |
@@ -172,5 +172,45 @@ adapter or test-split answer existed.
   through verifiers itself (`init_state`, then the rubric): the reference
   scores 1.0 in both reward modes and the L4 failure scores 0 binary, 7/9
   continuous. All seven fail on 0.4.3. Configs pin `@0.4.4`.
-- Cost of the stopped run: from its usage record, counted toward the $15
-  ceiling like every smoke run.
+- Cost of the stopped run: $0.00 (no tokens; rollouts failed before the
+  model was called). 0.4.4 was pushed as legacy v0, wheel SHA-256
+  `49737212123f9e341ae69bba81a1f8aeec7d4cdffe0bc07f49fc7aa92520144f`,
+  served wheel identical, verify_hub 200/200 IDENTICAL.
+
+### Amendment 3 (30 September 2026): environment 0.4.4 → 0.4.5, CadQuery on the training image
+
+Made after the third smoke test was stopped and before any trained step,
+adapter or test-split answer existed.
+
+- **What happened.** Smoke run `jkqd5k12g1g5kvqyhmfg012k` started cleanly
+  (environments ready with 200, 200 and 400 train tasks) but no training step
+  completed in about 9 minutes: `Train batch 0/128` throughout, groups
+  finalized and all dropped by the zero-advantage filter, L4 rollouts
+  accumulating to 128 in flight. An audit of the environment-server logs
+  (indexed selectors `cad-spec-l4/0`, `cad-spec-l2/1`, `cad-spec-l1-l3/2`)
+  found in all three: `CadQuery is not importable ... libGL.so.1: cannot open
+  shared object file`. cad-spec raised `ScorerUnavailableError` as designed;
+  the hosted verifiers catches reward-function exceptions and substitutes
+  0.0, so every group was flat. Usage: 0 training tokens, 85.68K input and
+  32.03K output inference tokens, $0.03, counted toward the $15 ceiling.
+- **Root cause, checked.** OpenCascade's OCP binding links `libGL.so.1` and
+  `libX11.so.6` at load time (`TKOpenGl`, `TKService`), including the
+  headless "novtk" build of the same version, so no Python-level variant
+  avoids them; Hosted Training offers no custom environment image.
+- **Change.** cad-spec 0.4.5 vendors the Ubuntu 20.04 builds of these
+  libraries and their dependencies (8 files, 2.9 MB, glibc 2.26 at most;
+  sources, hashes and licences in `cad_spec/_vendor/linux_x86_64/`) and loads
+  them before CadQuery **only when the system has none**. Where the system
+  has them (CI, local machines), nothing changes. And `load_environment` now
+  refuses to load when the scorer cannot run, so this failure mode ends a run
+  at startup instead of scoring 0. Checks, gates, rewards, prompts and splits
+  are identical; scorer 0.4.0.
+- **Evidence before any spend.** With the system GL and X11 libraries hidden
+  (the training image's condition): without the fallback, the exact error of
+  the logs; with the installed 0.4.5 wheel, a complete rollout through
+  verifiers scores the reference 1.0 with the libraries loaded from the
+  vendored copies. Concurrency on Linux, one CPU: 64 saved screening answers
+  scored at once in 7.2 s (median 0.06 s after a 3 s worker start), all 64
+  binary rewards identical to the screening file. Configs pin `@0.4.5`.
+- Registered settings (temperature, tokens, mix, filter, binary reward) are
+  unchanged.
