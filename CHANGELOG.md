@@ -34,7 +34,8 @@ Checks, gates, rewards, prompts and splits identical to 0.4.4; scorer 0.4.0.
   libxcb, libXau, libXdmcp and libbsd (2.9 MB, glibc 2.26 at most), with
   `SOURCES.md` (package versions, archive URLs, SHA-256 of each .deb and
   file) and each package's copyright file. `measure._ensure_gl_libraries`
-  loads them before CadQuery only when the system has none; the result
+  loads them before CadQuery only when the system has none, as a complete
+  set by path, never mixed with system copies; the result
   (`system`, `vendored`, `missing`, `not-linux`) appears in the scorer's
   error message.
 - Fail fast: `load_environment` calls `require_cadquery()`, so an
@@ -44,6 +45,13 @@ Checks, gates, rewards, prompts and splits identical to 0.4.4; scorer 0.4.0.
   The GL-less condition itself (system libraries hidden, root required) was
   run by hand: the exact hosted error without the fallback, reward 1.0 with
   the installed wheel.
+- `scripts/gl_fallback_check.py`: the gate before a smoke test (GL source,
+  fail-fast cost, reference / known L4 failure / full rollout through
+  verifiers, 1 to 64 concurrent screening answers matching their recorded
+  rewards). Results in `results/training/gl-fallback/`; CI runs it with the
+  system libraries and with them hidden.
+- Provenance of the vendored files verified from Ubuntu's signed `Release`
+  files (`SOURCES.md`).
 - Training configs pin `bazzouzi/cad-spec@0.4.5` (Amendment 3).
 
 ## 0.4.4: rollout input for Hosted Training

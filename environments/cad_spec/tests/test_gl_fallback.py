@@ -96,3 +96,24 @@ def test_loader_changes_nothing_when_the_system_has_gl(monkeypatch):
     monkeypatch.setattr(ctypes, "CDLL", spy)
     assert measure._load_gl_libraries() == "system"
     assert not any(os.sep in n for n in opened)
+
+
+def test_fallback_never_mixes_system_and_vendored_copies(monkeypatch):
+    """Once the system libGL is missing, every load is a vendored file by full
+    path, in dependency order; no library is looked up by bare name."""
+    calls = []
+
+    def fake_cdll(name, *a, **k):
+        calls.append(str(name))
+        if str(name) == "libGL.so.1":
+            raise OSError("libGL.so.1: cannot open shared object file")
+        return object()
+
+    monkeypatch.setattr(sys, "platform", "linux")
+    monkeypatch.setattr(ctypes, "CDLL", fake_cdll)
+    import platform
+
+    monkeypatch.setattr(platform, "machine", lambda: "x86_64")
+    assert measure._load_gl_libraries() == "vendored"
+    assert calls[0] == "libGL.so.1"
+    assert calls[1:] == [str(VENDOR / n) for n in measure._VENDORED_GL]

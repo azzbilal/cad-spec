@@ -1,0 +1,76 @@
+{
+  "label": "system GL present, installed wheel",
+  "when": "2026-09-30 01:53:42 UTC",
+  "command": [
+    "gl_fallback_check.py",
+    "--expect",
+    "system",
+    "--label",
+    "system GL present, installed wheel",
+    "--system-gl-note",
+    "present (Ubuntu 24.04 packages)",
+    "--out",
+    "results/training/gl-fallback/system-gl"
+  ],
+  "system_gl_note": "present (Ubuntu 24.04 packages)",
+  "environment": {
+    "platform": "Linux-6.18.44-fc-v50-x86_64-with-glibc2.39",
+    "machine": "x86_64",
+    "glibc": "glibc-2.39",
+    "python": "3.12.3",
+    "cpus": 1,
+    "cad_spec": "0.4.5",
+    "cad_spec_path": "/tmp/v045/lib/python3.12/site-packages/cad_spec",
+    "installed_wheel": true,
+    "sandbox_mode": "fork"
+  },
+  "startup": {
+    "ok": true,
+    "cadquery": "2.8.0",
+    "gl_source": "system",
+    "seconds": 1.37,
+    "peak_rss_mb": 445
+  },
+  "scoring": {
+    "reference_binary": 1.0,
+    "l4_failure_binary": 0.0,
+    "l4_failure_continuous": 0.7778,
+    "full_rollout_reward": 1.0,
+    "full_rollout_error": null
+  },
+  "concurrency": [
+    {
+      "n": 1,
+      "wall_s": 0.06,
+      "median_call_s": 0.059,
+      "max_call_s": 0.06,
+      "matches": 1,
+      "all_pass": 1
+    },
+    {
+      "n": 8,
+      "wall_s": 0.49,
+      "median_call_s": 0.059,
+      "max_call_s": 0.11,
+      "matches": 8,
+      "all_pass": 6
+    },
+    {
+      "n": 32,
+      "wall_s": 1.8,
+      "median_call_s": 0.057,
+      "max_call_s": 0.1,
+      "matches": 32,
+      "all_pass": 24
+    },
+    {
+      "n": 64,
+      "wall_s": 3.5,
+      "median_call_s": 0.057,
+      "max_call_s": 0.1,
+      "matches": 64,
+      "all_pass": 40
+    }
+  ],
+  "gate_failures": []
+}

@@ -26,3 +26,15 @@ need glibc >= 2.26 at most. Licences: `licenses/` (from each package).
 | libGLdispatch.so.0 | `80f42924c9ee8e5c08e469ce53e50463b47e50177a828c8aa4a672b8662ed7c9` |
 | libGLX.so.0 | `74c0d009f5b67172ea84f308be4754b90b6f6302c56b7cc747e95eb17937b7eb` |
 | libGL.so.1 | `887514c6156db32ca306debe372c295094a6a8c7bfd082f7bfc7fb01411ee06c` |
+
+## Provenance check (30 September 2026)
+
+Chain verified from Ubuntu's signing key to each file: `gpgv` with
+`/usr/share/keyrings/ubuntu-archive-keyring.gpg` reports a good signature
+("Ubuntu Archive Automatic Signing Key (2012)") on the `Release` files of
+`focal` and `focal-updates`; the SHA-256 of each
+`main/binary-amd64/Packages.gz` matches its `Release` entry; the SHA-256 of
+each `.deb` above matches its `SHA256:` field in that index; the files were
+extracted with `dpkg-deb -x` and their hashes recorded above.
+`tests/test_gl_fallback.py` fails if a shipped file no longer matches.
+

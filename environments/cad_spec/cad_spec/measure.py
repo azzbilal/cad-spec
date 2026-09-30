@@ -159,21 +159,23 @@ def _load_gl_libraries() -> str:
 
     if not sys.platform.startswith("linux") or platform.machine() not in ("x86_64", "AMD64"):
         return "not-linux"
+    # All or nothing, never a mix. Probe the system libGL first: if it loads,
+    # its whole chain (GLX, GLdispatch, X11, xcb...) came from the system. If it
+    # does not, glibc has undone the failed load, and the complete vendored
+    # set is loaded BY PATH in dependency order; later lookups of these names
+    # (OCP's) resolve to the copies already in the process.
     try:
         ctypes.CDLL("libGL.so.1", mode=ctypes.RTLD_GLOBAL)
-        ctypes.CDLL("libX11.so.6", mode=ctypes.RTLD_GLOBAL)
+        ctypes.CDLL("libX11.so.6", mode=ctypes.RTLD_GLOBAL)  # already loaded via GLX
         return "system"
     except OSError:
         pass
     here = os.path.join(os.path.dirname(os.path.abspath(__file__)), "_vendor", "linux_x86_64")
-    for name in _VENDORED_GL:
-        try:
-            ctypes.CDLL(name, mode=ctypes.RTLD_GLOBAL)  # a system copy wins if present
-        except OSError:
-            try:
-                ctypes.CDLL(os.path.join(here, name), mode=ctypes.RTLD_GLOBAL)
-            except OSError:
-                return "missing"
+    try:
+        for name in _VENDORED_GL:
+            ctypes.CDLL(os.path.join(here, name), mode=ctypes.RTLD_GLOBAL)
+    except OSError:
+        return "missing"
     return "vendored"
 
 
