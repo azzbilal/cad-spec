@@ -256,3 +256,41 @@ or test-split answer exists.
   rise in cost per step uses it. The run's own recorded spend must stay
   under $14.31; per section 6.3 the run is stopped only for a technical
   failure or if recorded spend (smoke tests included) reaches $15.
+
+### Amendment 5 (30 September 2026): run stopped at step 38 on cost; its end-of-run adapter is the one evaluated
+
+Made after the training run stopped and before any evaluation; no test-split
+answer exists.
+
+- **What happened.** Training run `mk9qcuq2dsckzrf68gycyqls` (config and
+  archived request as registered) ran from 15:44 to 17:02 (Prime CLI times)
+  and completed **38 of 104 steps** (per-step distributions exist for steps
+  1 to 38 only). Its cost per step rose from about $0.13 in the smoke test to
+  about $0.36 over steps 17 to 28 and about $0.68 over steps 33 to 38, while
+  steps slowed down. Recorded charges: training $3.7668, inference $10.1053,
+  total **$13.8721**. Inference output reached 15.15M tokens, about 400K per
+  step against about 80K in the smoke test: only a small share of generated
+  answers entered each trained batch, the rest being dropped by the
+  zero-advantage filter. At that rate the remaining 66 steps would have cost
+  roughly $45, beyond the ceiling and the wallet.
+- **Stop.** The run was stopped at 17:02 under section 6.3 (technical
+  failure: the run could no longer fill its batches at a cost the
+  registration or the wallet could bear). A ceiling increase to $20 had been
+  drafted during the run, on the projection then available, and was never
+  adopted: the stop came first, and total spend stayed within the original
+  ceiling: **$14.5575** ($13.8721 + $0.6854 smoke tests) of $15.
+- **Adapter.** The service produced adapter `xfisiyo5vlhn0ys65sf4uad7`
+  (`cad-spec-9b-run1`, created 17:02:45, READY, deployable): the model's
+  state at the stop, after the last completed step, 38. It is the run's
+  end-of-run adapter in the sense of section 3, and the only one evaluated;
+  the checkpoints saved every 5 steps (15 to 35) are not used.
+- **Evaluation unchanged.** Section 4 applies as registered to this adapter:
+  same test split, base model, conditions, analysis and thresholds. The
+  result is reported as that of a 38-step run (37% of the registered 104
+  steps), with the cost behaviour above.
+- **Context.** Prime announced that shared Hosted Training for LoRA runs
+  stops accepting new runs on 5 October 2026 (existing LoRA adapters stay
+  deployable), so no rerun of this setup is planned.
+- Evidence: `results/training/run1/snapshots/mk9qcuq2dsckzrf68gycyqls/`
+  (run record, usage, per-step metrics and distributions, logs, with a
+  hashed manifest).
