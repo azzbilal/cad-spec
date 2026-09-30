@@ -7,8 +7,14 @@ Scores are only comparable within one scorer version
 
 ### Training run 1: smoke test passed (step 5)
 - Smoke run `k3rwpbbk5sio4936onuai7ok` on cad-spec 0.4.5: 5 steps, no
-  scoring errors, rewards 0 and 1 at every step, $0.132 per step. Evidence
-  in `results/training/run1/smoke-acceptance.md`.
+  scoring errors, rewards 0 and 1 at every step, $0.13208 per step (recorded
+  charges). Evidence in `results/training/run1/smoke-acceptance.md`, with
+  hashed snapshots in `results/training/run1/snapshots/`.
+- `scripts/capture_run.py` (dated, hashed snapshots of a run's records) and
+  `scripts/archive_run_payload.py` (the exact create request the Prime CLI
+  builds, recorded with every network write blocked; self-test
+  `scripts/test_archive_payload.py`). Archived requests for the smoke and
+  training configs.
 - Run length by the registered rule: `max_steps = 104` in
   `configs/rl/cad-spec-9b.toml` (pre-registration, Amendment 4).
 - 0.4.5 published as legacy v0: wheel SHA-256

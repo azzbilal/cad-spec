@@ -3,7 +3,7 @@
 name = "cad-spec-9b-run1"
 model = "Qwen/Qwen3.5-9B"
 # max_steps set by the registered budget rule after the smoke test
-# (Amendment 4): floor((15.00 - 0.69 smoke cost - 0.50 margin) / 0.132 per step).
+# (Amendment 4): floor((15.00 - 0.6854 smoke spend - 0.50 margin) / 0.13208 per step).
 max_steps = 104
 batch_size = 128
 rollouts_per_example = 8
