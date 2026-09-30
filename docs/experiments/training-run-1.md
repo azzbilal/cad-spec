@@ -226,4 +226,28 @@ adapter or test-split answer existed.
   the server reports ready. CI now runs this gate on every push, with the
   system libraries and with them hidden. Configs pin `@0.4.5`.
 - Registered settings (temperature, tokens, mix, filter, binary reward) are
-  unchanged.
+  unchanged. 0.4.5 was pushed as legacy v0, wheel SHA-256
+  `9ceb772c19a985718cea3a6247ebae85dc3d4792601fda7b005229c5aced3569`
+  (1,185,342 bytes), served wheel identical, verify_hub 200/200 IDENTICAL.
+
+### Amendment 4 (30 September 2026): smoke test passed; run length set
+
+Made after the smoke test and before launching the training run; no adapter
+or test-split answer exists.
+
+- Smoke run `k3rwpbbk5sio4936onuai7ok` (0.4.5) completed 5 steps in about
+  6 minutes. All five acceptance checks of section 6.1 pass; the evidence,
+  command by command, is in
+  [results/training/run1/smoke-acceptance.md](../../results/training/run1/smoke-acceptance.md).
+  Check 2 (temperature 0.7) is verified as sent in the run payload by the
+  Prime CLI source and displayed before launch; the service does not echo it
+  back in the run record, logs or rollouts. The training run uses the same
+  config through the same code path.
+- Cost per step: $0.66 / 5 = $0.132. Smoke tests so far: $0.69 ($0.00,
+  $0.00, $0.03, $0.66).
+- **Run length, by the registered rule:** `max_steps = floor((15.00 - 0.69 -
+  0.50) / 0.132) = 104`. `configs/rl/cad-spec-9b.toml` now says 104;
+  nothing else in it changes. Expected cost $13.73, total $14.42.
+- Spend is watched during the run with `prime train usage`; per section 6.3,
+  the run is stopped only for a technical failure or if recorded spend
+  (smoke tests included) reaches $15.
