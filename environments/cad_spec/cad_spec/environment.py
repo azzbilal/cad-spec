@@ -81,8 +81,10 @@ def _rows(specs: Sequence[Spec], tiers: Sequence[str], split: str) -> list[dict]
         {
             "question": prompt_for(spec, t, split),
             "answer": spec.id,
+            # No top-level "task": verifiers (0.3.x legacy path, used by Hosted
+            # Training) decodes a string task as a JSON task payload and rejects
+            # every rollout (smoke run of 29 Sep 2026). The tier lives in info.
             "info": {"spec_id": spec.id, "tier": t},
-            "task": f"cad-spec-{t}",
         }
         for t in tiers
         for spec in specs

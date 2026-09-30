@@ -20,6 +20,21 @@ Scores are only comparable within one scorer version
   that departs from its registration. Self-test
   `scripts/test_compare_training.py` in CI.
 
+## 0.4.4: rollout input for Hosted Training
+
+Prompts, answers, splits, scorer (0.4.0) and rewards identical to 0.4.3.
+
+- Dataset rows no longer carry a top-level `"task": "cad-spec-<tier>"`
+  string. The second smoke test of training run 1 rejected every rollout:
+  verifiers' legacy path decodes a string `task` as a JSON task payload
+  ("Plain string task routes are no longer supported"). The tier stays in
+  `info`.
+- `tests/test_rollout_path.py`: rollouts through verifiers itself
+  (`env.init_state`, then the rubric) with a stand-in client. The reference
+  scores 1.0 in both reward modes; the L4 failure (new plate, old pitch)
+  scores 0 binary and 7/9 continuous. All seven tests fail on 0.4.3.
+- Training configs pin `bazzouzi/cad-spec@0.4.4` (Amendment 2).
+
 ## 0.4.3: packaging for Hosted Training
 
 Code, scorer (0.4.0), prompts, splits and rewards identical to 0.4.2.
@@ -37,6 +52,9 @@ Code, scorer (0.4.0), prompts, splits and rewards identical to 0.4.2.
 - `tests/test_packaging.py` pins these rules.
 - Training configs pin `bazzouzi/cad-spec@0.4.3` (pre-registration,
   Amendment 1).
+- Published as legacy v0: wheel SHA-256
+  `b65ae73ec948ffb0e92ba590f44977d86f115b61c67607fdbe4356b1e205107c`, served
+  wheel identical, verify_hub 200/200 IDENTICAL.
 
 ## 0.4.2: binary training reward
 

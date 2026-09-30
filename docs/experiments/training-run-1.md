@@ -40,7 +40,7 @@ Qwen3.5-9B on the 30 development specs, cheat-sheet on, thinking off. Runs in
 | Item | Registered value |
 |---|---|
 | Base model | `Qwen/Qwen3.5-9B` (Hosted Training, LoRA) |
-| Environment | `bazzouzi/cad-spec@0.4.2`, wheel SHA-256 `482d399c5cc374f7a564eacfded927cc09aacd879fa9756fb34881efe455c6cb`, verify_hub 200/200 IDENTICAL. **Amendment 1: 0.4.3**, same code, packaging fix |
+| Environment | `bazzouzi/cad-spec@0.4.2`, wheel SHA-256 `482d399c5cc374f7a564eacfded927cc09aacd879fa9756fb34881efe455c6cb`, verify_hub 200/200 IDENTICAL. **Amendment 1: 0.4.3**, packaging fix; **Amendment 2: 0.4.4**, rollout-input fix, same scoring |
 | Scorer | 0.4.0 (unchanged since the leaderboard) |
 | Training reward | binary: 1.0 only when all nine requirements pass (`reward = "binary"`) |
 | Prompt | system prompt plus the packaged cheat-sheet (`hints = true`), training and evaluation alike |
@@ -148,4 +148,29 @@ test-split answer existed.
   monitoring mode only (`enforce = false`), and zero-advantage again
   (enforced). Neither changes the design.
 - The budget rule is unchanged: the failed smoke run's cost, whatever the
-  usage record shows, counts toward the $15 ceiling.
+  usage record shows, counts toward the $15 ceiling. Recorded: $0.00 (no
+  tokens). 0.4.3 was pushed as legacy v0, wheel SHA-256
+  `b65ae73ec948ffb0e92ba590f44977d86f115b61c67607fdbe4356b1e205107c`, served
+  wheel identical, verify_hub 200/200 IDENTICAL.
+
+### Amendment 2 (30 September 2026): environment 0.4.3 → 0.4.4, rollout input
+
+Made after the second smoke test was stopped and before any trained step,
+adapter or test-split answer existed.
+
+- **What happened.** Smoke run `jvryf7tsn20jw66cfxesbp08` got past startup
+  (Amendment 1's fix held) but every rollout failed before scoring:
+  `ValueError: Serialized task payloads must be JSON objects. Plain string
+  task routes are no longer supported`. The dataset rows carried a
+  top-level `"task": "cad-spec-<tier>"` string, an old v0 convention;
+  verifiers' legacy path now decodes a string `task` as a JSON payload.
+  Reproduced locally with verifiers 0.3.1 through `env.init_state`. No
+  metrics were recorded; the run was stopped.
+- **Change.** cad-spec 0.4.4 drops the `task` field (the tier stays in
+  `info`). Prompts, answers, splits, scorer (0.4.0) and rewards are
+  identical. New tests (`tests/test_rollout_path.py`) run the rollout path
+  through verifiers itself (`init_state`, then the rubric): the reference
+  scores 1.0 in both reward modes and the L4 failure scores 0 binary, 7/9
+  continuous. All seven fail on 0.4.3. Configs pin `@0.4.4`.
+- Cost of the stopped run: from its usage record, counted toward the $15
+  ceiling like every smoke run.
