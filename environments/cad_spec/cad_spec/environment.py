@@ -15,6 +15,7 @@ from typing import Any
 import verifiers as vf
 from datasets import Dataset
 
+from .measure import require_cadquery
 from .prompts import SYSTEM_PROMPT, system_prompt
 from .rubric import Report, score
 from .tasks import TIERS, Spec, make_splits, prompt_for
@@ -227,6 +228,12 @@ def load_environment(
     """
     if reward not in REWARDS:
         raise ValueError(f"reward must be one of {REWARDS}, got {reward!r}")
+    # Fail fast (0.4.5): if the scorer cannot run, the environment must not
+    # load. Hosted Training's verifiers catches reward-function exceptions and
+    # substitutes 0.0, so a missing CadQuery otherwise scores every rollout 0
+    # in silence (smoke run jkqd5k12g1g5kvqyhmfg012k). Raises
+    # ScorerUnavailableError with the cause.
+    require_cadquery()
     train_tiers = _tiers(tier)
     eval_tiers = _tiers(eval_tier) if eval_tier is not None else train_tiers
     main, other = (spec_reward, all_pass_reward) if reward == "continuous" else (all_pass_reward, spec_reward)

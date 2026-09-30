@@ -68,6 +68,22 @@ jobs:
       - name: Screening analysis self-test (learning signal, truncation split)
         working-directory: .
         run: python scripts/test_screening.py
+      - name: Scoring gate with the system GL libraries (reference, L4 failure, full rollout, 64 at once)
+        working-directory: .
+        run: python scripts/gl_fallback_check.py --expect system --system-gl-note present --out /tmp/gl/system-gl
+      - name: Scoring gate WITHOUT system GL/X11 (the Hosted Training image's condition)
+        working-directory: .
+        run: |
+          L=/usr/lib/x86_64-linux-gnu; mkdir -p /tmp/hidden
+          for f in $L/libGL.so.1* $L/libGLX.so.0* $L/libGLdispatch.so.0* $L/libX11.so.6* \
+                   $L/libxcb.so.1* $L/libXau.so.6* $L/libXdmcp.so.6*; do
+            [ -e "$f" ] && sudo mv "$f" /tmp/hidden/
+          done
+          sudo ldconfig
+          status=0
+          python scripts/gl_fallback_check.py --expect vendored --system-gl-note hidden --out /tmp/gl/gl-less || status=$?
+          sudo mv /tmp/hidden/* "$L"/ && sudo ldconfig
+          exit $status
       - name: Training analysis self-test (registered verdict rules, refusals)
         working-directory: .
         run: python scripts/test_compare_training.py

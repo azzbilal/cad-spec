@@ -1,0 +1,76 @@
+{
+  "label": "gl-less (system GL/X11 hidden), installed wheel",
+  "when": "2026-09-30 01:53:28 UTC",
+  "command": [
+    "gl_fallback_check.py",
+    "--expect",
+    "vendored",
+    "--label",
+    "gl-less (system GL/X11 hidden), installed wheel",
+    "--system-gl-note",
+    "hidden: libGL, libGLX, libGLdispatch, libX11, libxcb, libXau, libXdmcp moved out of /usr/lib/x86_64-linux-gnu",
+    "--out",
+    "results/training/gl-fallback/gl-less"
+  ],
+  "system_gl_note": "hidden: libGL, libGLX, libGLdispatch, libX11, libxcb, libXau, libXdmcp moved out of /usr/lib/x86_64-linux-gnu",
+  "environment": {
+    "platform": "Linux-6.18.44-fc-v50-x86_64-with-glibc2.39",
+    "machine": "x86_64",
+    "glibc": "glibc-2.39",
+    "python": "3.12.3",
+    "cpus": 1,
+    "cad_spec": "0.4.5",
+    "cad_spec_path": "/tmp/v045/lib/python3.12/site-packages/cad_spec",
+    "installed_wheel": true,
+    "sandbox_mode": "fork"
+  },
+  "startup": {
+    "ok": true,
+    "cadquery": "2.8.0",
+    "gl_source": "vendored",
+    "seconds": 1.29,
+    "peak_rss_mb": 445
+  },
+  "scoring": {
+    "reference_binary": 1.0,
+    "l4_failure_binary": 0.0,
+    "l4_failure_continuous": 0.7778,
+    "full_rollout_reward": 1.0,
+    "full_rollout_error": null
+  },
+  "concurrency": [
+    {
+      "n": 1,
+      "wall_s": 0.06,
+      "median_call_s": 0.064,
+      "max_call_s": 0.06,
+      "matches": 1,
+      "all_pass": 1
+    },
+    {
+      "n": 8,
+      "wall_s": 0.56,
+      "median_call_s": 0.066,
+      "max_call_s": 0.11,
+      "matches": 8,
+      "all_pass": 6
+    },
+    {
+      "n": 32,
+      "wall_s": 1.76,
+      "median_call_s": 0.056,
+      "max_call_s": 0.11,
+      "matches": 32,
+      "all_pass": 24
+    },
+    {
+      "n": 64,
+      "wall_s": 3.59,
+      "median_call_s": 0.058,
+      "max_call_s": 0.1,
+      "matches": 64,
+      "all_pass": 40
+    }
+  ],
+  "gate_failures": []
+}

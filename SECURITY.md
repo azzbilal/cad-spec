@@ -113,3 +113,14 @@ On Windows those tests are skipped: reuse mode does not make those claims.
 
 Open an issue with a minimal answer file that escapes a limit above. Do not
 include working exploits against third-party systems.
+
+## Vendored native libraries (0.4.5)
+
+The package ships eight Linux x86_64 shared libraries (GL and X11 runtime,
+Ubuntu 20.04 builds) in `environments/cad_spec/cad_spec/_vendor/linux_x86_64/`,
+because OpenCascade links them at load time and some training images lack
+them. They are loaded only when the system has no `libGL.so.1`; cad-spec never
+renders, so no GL code path runs. `SOURCES.md` there records each package's
+version, archive URL and SHA-256, and each file's SHA-256;
+`tests/test_gl_fallback.py` fails if a shipped file differs from the manifest.
+

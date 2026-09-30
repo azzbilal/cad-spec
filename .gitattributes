@@ -1,0 +1,2 @@
+# Vendored native libraries: never convert line endings (hashes in SOURCES.md)
+*.so.* binary
