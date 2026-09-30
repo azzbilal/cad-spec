@@ -1,0 +1,26 @@
+{
+  "run_id": "k3rwpbbk5sio4936onuai7ok",
+  "run_name": "cad-spec-9b-smoke",
+  "base_model": "Qwen/Qwen3.5-9B",
+  "status": "COMPLETED",
+  "training": {
+    "tokens": 589781,
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "cost_usd": 0.3539
+  },
+  "inference": {
+    "tokens": 1295087,
+    "input_tokens": 892292,
+    "output_tokens": 402795,
+    "cost_usd": 0.3065
+  },
+  "total_tokens": 1884868,
+  "total_cost_usd": 0.6604,
+  "pricing": {
+    "training_per_mtok": 0.6,
+    "inference_input_per_mtok": 0.2,
+    "inference_output_per_mtok": 0.6
+  },
+  "record_count": 16
+}

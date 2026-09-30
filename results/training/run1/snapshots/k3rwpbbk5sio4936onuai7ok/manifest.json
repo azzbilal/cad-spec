@@ -1,0 +1,78 @@
+{
+  "run_id": "k3rwpbbk5sio4936onuai7ok",
+  "prime_cli_version": "0.8.0",
+  "files": [
+    {
+      "file": "get.json",
+      "command": "prime train get k3rwpbbk5sio4936onuai7ok -o json",
+      "captured_at_utc": "2026-09-30T15:34:47Z",
+      "exit_code": 0,
+      "bytes": 2415,
+      "sha256": "08751a0008116d395fa3a21de7bc59fee60d0fd2b1f6ec329c45764f98390e80"
+    },
+    {
+      "file": "usage.json",
+      "command": "prime train usage k3rwpbbk5sio4936onuai7ok -o json",
+      "captured_at_utc": "2026-09-30T15:34:49Z",
+      "exit_code": 0,
+      "bytes": 603,
+      "sha256": "7321367ecd205832d0b77cd7d6524bb07a9bfee919c56e6f62702d1ef1c2a4c7"
+    },
+    {
+      "file": "metrics.json",
+      "command": "prime train metrics k3rwpbbk5sio4936onuai7ok",
+      "captured_at_utc": "2026-09-30T15:34:51Z",
+      "exit_code": 0,
+      "bytes": 400205,
+      "sha256": "8d5caa5b2887e4a187dcaa69c2567a6a1ed69c5b3729a2fa4e9c135d89551b81"
+    },
+    {
+      "file": "distributions-step-1.json",
+      "command": "prime train distributions k3rwpbbk5sio4936onuai7ok --step 1",
+      "captured_at_utc": "2026-09-30T15:34:52Z",
+      "exit_code": 0,
+      "bytes": 2915,
+      "sha256": "dd965dac8e1a1eb0061129998dd472ae199c6527ed040b4111ddb41187bb6b15"
+    },
+    {
+      "file": "distributions-step-2.json",
+      "command": "prime train distributions k3rwpbbk5sio4936onuai7ok --step 2",
+      "captured_at_utc": "2026-09-30T15:34:54Z",
+      "exit_code": 0,
+      "bytes": 2915,
+      "sha256": "3b01394c9db5b5b738c06b4946ec17ac050c1d3fb2b0993af63df474279c42dc"
+    },
+    {
+      "file": "distributions-step-3.json",
+      "command": "prime train distributions k3rwpbbk5sio4936onuai7ok --step 3",
+      "captured_at_utc": "2026-09-30T15:34:55Z",
+      "exit_code": 0,
+      "bytes": 2917,
+      "sha256": "6b267ac1e067ef3b52272138645001b10e88232aa0447094794604fc55bc9e77"
+    },
+    {
+      "file": "distributions-step-4.json",
+      "command": "prime train distributions k3rwpbbk5sio4936onuai7ok --step 4",
+      "captured_at_utc": "2026-09-30T15:34:57Z",
+      "exit_code": 0,
+      "bytes": 2915,
+      "sha256": "654a29d43bbee4f80938d1754bb58243a4596f9dc065595829b34b1f55021101"
+    },
+    {
+      "file": "distributions-step-5.json",
+      "command": "prime train distributions k3rwpbbk5sio4936onuai7ok --step 5",
+      "captured_at_utc": "2026-09-30T15:34:58Z",
+      "exit_code": 0,
+      "bytes": 2916,
+      "sha256": "2b78072cbd7fa85fdf9d65b916fb0d08cf55c0ac5989c9f1e430417db06b9ff2"
+    },
+    {
+      "file": "logs.txt",
+      "command": "prime train logs k3rwpbbk5sio4936onuai7ok -n 5000",
+      "captured_at_utc": "2026-09-30T15:35:00Z",
+      "exit_code": 0,
+      "bytes": 13459,
+      "sha256": "39ac97a0735b2c301b9ffd4fb2b1b856f3a1843c20acba06115cb146804d6939"
+    }
+  ]
+}
