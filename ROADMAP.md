@@ -81,6 +81,9 @@ the evidence that meets it.
       sandboxed scoring, reward diversity, monitoring and adapter evaluation;
       the longer run's length follows from those observations and the cost
       ceiling. Intermediate validation on development specs only.
+      **Smoke test passed (30 Sep 2026)** on cad-spec 0.4.5 after three
+      platform fixes (Amendments 1 to 3: dependency pin, task field, GL
+      libraries); run length 104 steps by the registered rule (Amendment 4).
    6. **Evaluate once on the locked test split.** Paired per-tier all-pass
       changes with intervals, mean reward, build and gate rates, reasoning
       failure rates, total spend. A gain supports a claim about this plate

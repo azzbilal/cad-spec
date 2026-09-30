@@ -226,4 +226,33 @@ adapter or test-split answer existed.
   the server reports ready. CI now runs this gate on every push, with the
   system libraries and with them hidden. Configs pin `@0.4.5`.
 - Registered settings (temperature, tokens, mix, filter, binary reward) are
-  unchanged.
+  unchanged. 0.4.5 was pushed as legacy v0, wheel SHA-256
+  `9ceb772c19a985718cea3a6247ebae85dc3d4792601fda7b005229c5aced3569`
+  (1,185,342 bytes), served wheel identical, verify_hub 200/200 IDENTICAL.
+
+### Amendment 4 (30 September 2026): smoke test passed; run length set
+
+Made after the smoke test and before launching the training run; no adapter
+or test-split answer exists.
+
+- Smoke run `k3rwpbbk5sio4936onuai7ok` (0.4.5) completed 5 steps in about
+  6 minutes. All five acceptance checks of section 6.1 pass; the evidence,
+  command by command, is in
+  [results/training/run1/smoke-acceptance.md](../../results/training/run1/smoke-acceptance.md).
+  Check 2 (temperature 0.7) is established as **sent**, not as applied: the
+  Prime CLI source and the archived create request (recorded without sending,
+  `results/training/run1/payload-*.json`) carry `temperature: 0.7` and
+  `enable_thinking: false`; the service echoes neither in the run record,
+  logs or rollouts. Snapshots of every figure, with hashes, are in
+  `results/training/run1/snapshots/`.
+- Cost per step, from recorded charges: $0.6604 / 5 = $0.13208 (training
+  $0.3539, inference $0.3065; the table view's rounded per-bucket amounts do
+  not add up and are not used). Smoke tests so far: $0.6854 ($0.0000,
+  $0.0000, $0.0250, $0.6604).
+- **Run length, by the registered rule:** `max_steps = floor((15.00 - 0.6854
+  - 0.50) / 0.13208) = 104`. `configs/rl/cad-spec-9b.toml` now says 104;
+  nothing else in it changes. Projected $13.74, total $14.42.
+- **Sensitivity:** $0.58 of headroom is 4.2% of the projected cost; a 4.2%
+  rise in cost per step uses it. The run's own recorded spend must stay
+  under $14.31; per section 6.3 the run is stopped only for a technical
+  failure or if recorded spend (smoke tests included) reaches $15.

@@ -1,0 +1,207 @@
+   Building prime-rl-configs @ file:///app/packages/prime-rl-configs
+   Building prime-rl @ file:///app
+   Building renderers @ file:///app/deps/renderers
+   Building verifiers @ file:///app/deps/verifiers
+   Building prime-pydantic-config @ file:///app/deps/pydantic-config
+Downloading widgetsnbextension (2.1MiB)
+Downloading jedi (4.7MiB)
+Downloading debugpy (4.1MiB)
+ Downloaded widgetsnbextension
+ Downloaded debugpy
+      Built prime-rl-configs @ file:///app/packages/prime-rl-configs
+      Built prime-rl @ file:///app
+      Built prime-pydantic-config @ file:///app/deps/pydantic-config
+      Built verifiers @ file:///app/deps/verifiers
+      Built renderers @ file:///app/deps/renderers
+ Downloaded jedi
+Uninstalled 5 packages in 300ms
+Installed 29 packages in 161ms
+/app/packages/prime-rl-configs/src/prime_rl/configs/legacy.py:164: 
+FutureWarning: 'client' is deprecated, use 'model.client' instead. 
+Auto-translating for now, but this will be removed in a future release.
+  _deprecated("client", "model.client")
+W0930 14:50:32.052000 98 torch/utils/cpp_extension.py:140] No CUDA runtime is 
+found, using CUDA_HOME='/usr/local/cuda'
+/app/.venv/lib/python3.12/site-packages/fla/utils/_device.py💯 UserWarning: 
+Triton is not supported on current platform, roll back to CPU.
+  _cpu_device_warning()
+14:50:33 [INFO] Starting orchestrator (algorithm: grpo)
+14:50:33 [INFO] Setting default executor to ThreadPoolExecutor(max_workers=64)
+14:50:33 [INFO] Initializing tokenizer (name='Qwen/Qwen3.5-9B' 
+trust_remote_code=False chat_template=None)
+14:50:37 [INFO] Initializing policy inference pool 
+(base_url=http://localhost:8000/v1, model=Qwen/Qwen3.5-9B)
+14:50:37 [INFO] Initialized Qwen35Renderer for Qwen/Qwen3.5-9B
+14:50:37 [INFO] Using direct renderer rollout client
+14:50:37 [INFO] Initializing monitor (wandb=None, 
+prime_monitor=base_url='https://api.primeintellect.ai/api/internal/rft' 
+api_key_var='PRIME_API_KEY' log_extras=LogExtrasConfig(samples=True, 
+distributions=True, interval=1, sample_ratio=0.5) run_name=None team_id=None 
+frontend_url=None)
+14:50:37 [INFO] Configured 1 pre-batch rollout filter(s):
+14:50:37 [INFO]   Enforcing zero_advantage filter (type=zero_advantage, 
+enforce=True)
+14:50:37 [INFO] Configured 3 post-batch rollout filter(s):
+14:50:37 [INFO]   Monitoring gibberish filter (type=gibberish, enforce=False, 
+token_id_threshold=100000, logprob_offset=2.0)
+14:50:37 [INFO]   Monitoring repetition filter (type=repetition, enforce=False,
+window=3000, prob_threshold=0.99)
+14:50:37 [INFO]   Enforcing zero_advantage filter (type=zero_advantage, 
+enforce=True)
+14:50:37 [INFO] Loading training environments
+14:50:57 [INFO] Env cad-spec-L4 ready: num_tasks=200 group_scoring=False
+14:50:57 [INFO] Env cad-spec-L2 ready: num_tasks=200 group_scoring=False
+14:50:57 [INFO] Env cad-spec-L1-L3 ready: num_tasks=400 group_scoring=False
+14:50:57 [SUCCESS] Train environment(s) ready
+14:50:57 [WARNING] No checkpoints found in 
+/data/outputs/run_k3rwpbbk5sio4936onuai7ok/checkpoints. Starting from scratch.
+14:50:57 [INFO] Waiting for policy inference pool to be ready
+14:50:57 [SUCCESS] Policy inference pool ready
+14:50:57 [INFO] Initializing weight broadcast (type='filesystem')
+14:50:57 [INFO] Initializing training batch sender (type='filesystem')
+14:50:57 [INFO] Training from scratch
+14:50:57 [INFO] Starting orchestrator loop (max_steps=5)
+14:51:07 [INFO] Train batch 0/128 (0.0%) (cad-spec-L4=0, cad-spec-L2=0, 
+cad-spec-L1-L3=0); 128 inflight rollouts (train=128, eval=0 | cad-spec-L4=88, 
+cad-spec-L2=32, cad-spec-L1-L3=8)
+14:51:17 [INFO] Train batch 32/128 (25.0%) (cad-spec-L4=0, cad-spec-L2=32, 
+cad-spec-L1-L3=0) (+75 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=86, cad-spec-L2=32, cad-spec-L1-L3=10)
+14:51:27 [INFO] Train batch 72/128 (56.2%) (cad-spec-L4=24, cad-spec-L2=40, 
+cad-spec-L1-L3=8) (+46 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=86, cad-spec-L2=33, cad-spec-L1-L3=9)
+14:51:37 [INFO] Logging 64 samples to Prime Intellect API at step 1
+14:51:37 [INFO] Logging distributions to Prime Intellect API at step 1
+14:51:37 [SUCCESS] Step 1 |   38.8s | Reward 0.5391 | Trainable 128/200 (64.0%)
+| Turns 1.0 | Branches 1.0 | Max Off-Policy 0 | Error 0.0% | Truncation 0.0%
+                 ╰─ cad-spec-L1-L3 | Ratio 8.0% | Reward 0.6250 | Turns 1.0 | 
+Branches 1.0 | Max Off-Policy 0 | Error 0.0% | Truncation 0.0%
+                 ╰─ cad-spec-L2    | Ratio 44.0% | Reward 0.5909 | Turns 1.0 | 
+Branches 1.0 | Max Off-Policy 0 | Error 0.0% | Truncation 0.0%
+                 ╰─ cad-spec-L4    | Ratio 48.0% | Reward 0.2917 | Turns 1.0 | 
+Branches 1.0 | Max Off-Policy 0 | Error 0.0% | Truncation 0.0%
+14:51:37 [INFO] Train batch 0/128 (0.0%) (cad-spec-L4=0, cad-spec-L2=0, 
+cad-spec-L1-L3=0) (+56 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=104, cad-spec-L2=6, cad-spec-L1-L3=18)
+14:51:47 [INFO] Train batch 56/128 (43.8%) (cad-spec-L4=0, cad-spec-L2=32, 
+cad-spec-L1-L3=24) (+36 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=127, cad-spec-L2=0, cad-spec-L1-L3=1)
+14:51:57 [INFO] Train batch 72/128 (56.2%) (cad-spec-L4=8, cad-spec-L2=32, 
+cad-spec-L1-L3=32) (+20 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=124, cad-spec-L2=0, cad-spec-L1-L3=4)
+14:52:07 [INFO] Train batch 80/128 (62.5%) (cad-spec-L4=8, cad-spec-L2=40, 
+cad-spec-L1-L3=32) (+43 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=119, cad-spec-L2=0, cad-spec-L1-L3=9)
+14:52:17 [INFO] Train batch 96/128 (75.0%) (cad-spec-L4=8, cad-spec-L2=40, 
+cad-spec-L1-L3=48) (+64 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=96, cad-spec-L2=16, cad-spec-L1-L3=16)
+14:52:26 [INFO] Pausing dispatcher to prevent orchestrator from racing from 
+trainer. Waiting for new policy...
+14:52:26 [INFO] Logging 64 samples to Prime Intellect API at step 2
+14:52:26 [INFO] Logging distributions to Prime Intellect API at step 2
+14:52:26 [SUCCESS] Step 2 |   49.3s | Reward 0.4531 | Trainable 128/240 (53.3%)
+| Turns 1.0 | Branches 1.0 | Max Off-Policy 0 | Error 0.0% | Truncation 0.0%
+                 ╰─ cad-spec-L1-L3 | Ratio 20.0% | Reward 0.6042 | Turns 1.0 | 
+Branches 1.0 | Max Off-Policy 0 | Error 0.0% | Truncation 0.0%
+                 ╰─ cad-spec-L2    | Ratio 16.7% | Reward 0.5250 | Turns 1.0 | 
+Branches 1.0 | Max Off-Policy 0 | Error 0.0% | Truncation 0.0%
+                 ╰─ cad-spec-L4    | Ratio 63.3% | Reward 0.2000 | Turns 1.0 | 
+Branches 1.0 | Max Off-Policy 0 | Error 0.0% | Truncation 0.0%
+14:52:27 [INFO] Train batch 0/128 (0.0%) (cad-spec-L4=0, cad-spec-L2=0, 
+cad-spec-L1-L3=0) (+117 buffered); 110 inflight rollouts (train=110, eval=0 | 
+cad-spec-L4=45, cad-spec-L2=33, cad-spec-L1-L3=32)
+14:52:37 [INFO] Train batch 64/128 (50.0%) (cad-spec-L4=0, cad-spec-L2=40, 
+cad-spec-L1-L3=24) (+93 buffered); 38 inflight rollouts (train=38, eval=0 | 
+cad-spec-L4=31, cad-spec-L2=1, cad-spec-L1-L3=6)
+14:52:47 [INFO] Train batch 88/128 (68.8%) (cad-spec-L4=0, cad-spec-L2=48, 
+cad-spec-L1-L3=40) (+77 buffered); 30 inflight rollouts (train=30, eval=0 | 
+cad-spec-L4=29, cad-spec-L2=0, cad-spec-L1-L3=1)
+14:52:51 [INFO] Logging 64 samples to Prime Intellect API at step 3
+14:52:51 [INFO] Logging distributions to Prime Intellect API at step 3
+14:52:51 [SUCCESS] Step 3 |   25.2s | Reward 0.5625 | Trainable 128/200 (64.0%)
+| Turns 1.0 | Branches 1.0 | Max Off-Policy 1 | Error 0.0% | Truncation 0.0%
+                 ╰─ cad-spec-L1-L3 | Ratio 20.0% | Reward 0.7250 | Turns 1.0 | 
+Branches 1.0 | Max Off-Policy 0 | Error 0.0% | Truncation 0.0%
+                 ╰─ cad-spec-L2    | Ratio 24.0% | Reward 0.6667 | Turns 1.0 | 
+Branches 1.0 | Max Off-Policy 0 | Error 0.0% | Truncation 0.0%
+                 ╰─ cad-spec-L4    | Ratio 56.0% | Reward 0.2750 | Turns 1.0 | 
+Branches 1.0 | Max Off-Policy 1 | Error 0.0% | Truncation 0.0%
+14:52:57 [INFO] Train batch 16/128 (12.5%) (cad-spec-L4=8, cad-spec-L2=0, 
+cad-spec-L1-L3=8) (+3 buffered); 0 inflight rollouts (train=0, eval=0 | 
+cad-spec-L4=0, cad-spec-L2=0, cad-spec-L1-L3=0)
+14:53:07 [INFO] Train batch 16/128 (12.5%) (cad-spec-L4=8, cad-spec-L2=0, 
+cad-spec-L1-L3=8) (+3 buffered); 0 inflight rollouts (train=0, eval=0 | 
+cad-spec-L4=0, cad-spec-L2=0, cad-spec-L1-L3=0)
+14:53:17 [INFO] Train batch 16/128 (12.5%) (cad-spec-L4=8, cad-spec-L2=0, 
+cad-spec-L1-L3=8) (+3 buffered); 0 inflight rollouts (train=0, eval=0 | 
+cad-spec-L4=0, cad-spec-L2=0, cad-spec-L1-L3=0)
+14:53:27 [INFO] Train batch 16/128 (12.5%) (cad-spec-L4=8, cad-spec-L2=0, 
+cad-spec-L1-L3=8) (+3 buffered); 0 inflight rollouts (train=0, eval=0 | 
+cad-spec-L4=0, cad-spec-L2=0, cad-spec-L1-L3=0)
+14:53:29 [INFO] Resuming dispatcher
+14:53:37 [INFO] Train batch 16/128 (12.5%) (cad-spec-L4=8, cad-spec-L2=0, 
+cad-spec-L1-L3=8) (+9 buffered); 127 inflight rollouts (train=127, eval=0 | 
+cad-spec-L4=79, cad-spec-L2=32, cad-spec-L1-L3=16)
+14:53:47 [INFO] Train batch 16/128 (12.5%) (cad-spec-L4=8, cad-spec-L2=0, 
+cad-spec-L1-L3=8) (+9 buffered); 127 inflight rollouts (train=127, eval=0 | 
+cad-spec-L4=79, cad-spec-L2=32, cad-spec-L1-L3=16)
+14:53:57 [INFO] Train batch 72/128 (56.2%) (cad-spec-L4=16, cad-spec-L2=32, 
+cad-spec-L1-L3=24) (+41 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=96, cad-spec-L2=8, cad-spec-L1-L3=24)
+14:54:07 [INFO] Train batch 112/128 (87.5%) (cad-spec-L4=56, cad-spec-L2=32, 
+cad-spec-L1-L3=24) (+30 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=94, cad-spec-L2=4, cad-spec-L1-L3=30)
+14:54:12 [INFO] Logging 64 samples to Prime Intellect API at step 4
+14:54:12 [INFO] Logging distributions to Prime Intellect API at step 4
+14:54:12 [SUCCESS] Step 4 |  1m 21s | Reward 0.5781 | Trainable 128/200 (64.0%)
+| Turns 1.0 | Branches 1.0 | Max Off-Policy 1 | Error 0.0% | Truncation 0.8%
+                 ╰─ cad-spec-L1-L3 | Ratio 20.0% | Reward 0.7500 | Turns 1.0 | 
+Branches 1.0 | Max Off-Policy 1 | Error 0.0% | Truncation 2.5%
+                 ╰─ cad-spec-L2    | Ratio 24.0% | Reward 0.7812 | Turns 1.0 | 
+Branches 1.0 | Max Off-Policy 1 | Error 0.0% | Truncation 0.0%
+                 ╰─ cad-spec-L4    | Ratio 56.0% | Reward 0.3393 | Turns 1.0 | 
+Branches 1.0 | Max Off-Policy 1 | Error 0.0% | Truncation 0.0%
+14:54:17 [INFO] Train batch 8/128 (6.2%) (cad-spec-L4=0, cad-spec-L2=0, 
+cad-spec-L1-L3=8) (+51 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=102, cad-spec-L2=15, cad-spec-L1-L3=11)
+14:54:27 [INFO] Train batch 48/128 (37.5%) (cad-spec-L4=0, cad-spec-L2=16, 
+cad-spec-L1-L3=32) (+88 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=82, cad-spec-L2=21, cad-spec-L1-L3=25)
+14:54:37 [INFO] Train batch 72/128 (56.2%) (cad-spec-L4=0, cad-spec-L2=32, 
+cad-spec-L1-L3=40) (+81 buffered); 127 inflight rollouts (train=127, eval=0 | 
+cad-spec-L4=80, cad-spec-L2=19, cad-spec-L1-L3=28)
+14:54:47 [INFO] Train batch 72/128 (56.2%) (cad-spec-L4=0, cad-spec-L2=32, 
+cad-spec-L1-L3=40) (+81 buffered); 127 inflight rollouts (train=127, eval=0 | 
+cad-spec-L4=80, cad-spec-L2=19, cad-spec-L1-L3=28)
+14:54:58 [INFO] Logging 64 samples to Prime Intellect API at step 5
+14:54:58 [INFO] Logging distributions to Prime Intellect API at step 5
+14:54:58 [SUCCESS] Step 5 |   45.1s | Reward 0.6016 | Trainable 128/168 (76.2%)
+| Turns 1.0 | Branches 1.0 | Max Off-Policy 1 | Error 0.0% | Truncation 0.0%
+                 ╰─ cad-spec-L1-L3 | Ratio 28.6% | Reward 0.6458 | Turns 1.0 | 
+Branches 1.0 | Max Off-Policy 1 | Error 0.0% | Truncation 0.0%
+                 ╰─ cad-spec-L2    | Ratio 23.8% | Reward 0.7000 | Turns 1.0 | 
+Branches 1.0 | Max Off-Policy 1 | Error 0.0% | Truncation 0.0%
+                 ╰─ cad-spec-L4    | Ratio 47.6% | Reward 0.4500 | Turns 1.0 | 
+Branches 1.0 | Max Off-Policy 1 | Error 0.0% | Truncation 0.0%
+14:54:58 [INFO] Train batch 0/128 (0.0%) (cad-spec-L4=0, cad-spec-L2=0, 
+cad-spec-L1-L3=0) (+90 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=88, cad-spec-L2=16, cad-spec-L1-L3=24)
+14:55:08 [INFO] Train batch 56/128 (43.8%) (cad-spec-L4=32, cad-spec-L2=8, 
+cad-spec-L1-L3=16) (+81 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=64, cad-spec-L2=9, cad-spec-L1-L3=55)
+14:55:18 [INFO] Train batch 96/128 (75.0%) (cad-spec-L4=56, cad-spec-L2=8, 
+cad-spec-L1-L3=32) (+89 buffered); 127 inflight rollouts (train=127, eval=0 | 
+cad-spec-L4=74, cad-spec-L2=18, cad-spec-L1-L3=35)
+14:55:28 [INFO] Train batch 96/128 (75.0%) (cad-spec-L4=56, cad-spec-L2=8, 
+cad-spec-L1-L3=32) (+89 buffered); 127 inflight rollouts (train=127, eval=0 | 
+cad-spec-L4=74, cad-spec-L2=18, cad-spec-L1-L3=35)
+14:55:38 [INFO] Train batch 96/128 (75.0%) (cad-spec-L4=56, cad-spec-L2=8, 
+cad-spec-L1-L3=32) (+89 buffered); 127 inflight rollouts (train=127, eval=0 | 
+cad-spec-L4=74, cad-spec-L2=18, cad-spec-L1-L3=35)
+14:55:41 [INFO] Draining pipeline (cancelled 128 in-flight train rollout(s); 
+any in-flight evals will complete)
+14:55:42 [INFO] Pipeline drained, exiting main loop
+14:55:42 [SUCCESS] Orchestrator step loop done in 4m 44s
+14:55:42 [INFO] Saving final summary to Prime Intellect API
+14:55:43 [INFO] Writing final checkpoint
+14:55:43 [SUCCESS] Orchestrator finished.

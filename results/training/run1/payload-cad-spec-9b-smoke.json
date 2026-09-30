@@ -1,0 +1,75 @@
+{
+  "archived_at_utc": "2026-09-30T15:37:00Z",
+  "config": "configs/rl/cad-spec-9b-smoke.toml",
+  "config_sha256": "caba2ae0d7ce67a6708cbe21f44fc9afca9fbb18292cbcee3cf3939782c1b6f4",
+  "note": "Recorded by blocking the write; nothing was sent.",
+  "prime_cli_version": "0.8.0",
+  "request": {
+    "endpoint": "/rft/runs",
+    "json": {
+      "adapters": {
+        "interval": 0
+      },
+      "batch_size": 128,
+      "enable_thinking": false,
+      "environments": [
+        {
+          "args": {
+            "hints": true,
+            "reward": "binary",
+            "tier": [
+              "L4"
+            ]
+          },
+          "id": "bazzouzi/cad-spec",
+          "name": "cad-spec-L4",
+          "ratio": 0.5,
+          "version": "0.4.5"
+        },
+        {
+          "args": {
+            "hints": true,
+            "reward": "binary",
+            "tier": [
+              "L2"
+            ]
+          },
+          "id": "bazzouzi/cad-spec",
+          "name": "cad-spec-L2",
+          "ratio": 0.25,
+          "version": "0.4.5"
+        },
+        {
+          "args": {
+            "hints": true,
+            "reward": "binary",
+            "tier": [
+              "L1",
+              "L3"
+            ]
+          },
+          "id": "bazzouzi/cad-spec",
+          "name": "cad-spec-L1-L3",
+          "ratio": 0.25,
+          "version": "0.4.5"
+        }
+      ],
+      "max_steps": 5,
+      "max_tokens": 2048,
+      "model": {
+        "name": "Qwen/Qwen3.5-9B"
+      },
+      "name": "cad-spec-9b-smoke",
+      "pre_batch_filters": [
+        {
+          "enforce": true,
+          "type": "zero_advantage"
+        }
+      ],
+      "rollouts_per_example": 8,
+      "secrets": [],
+      "temperature": 0.7
+    },
+    "method": "POST"
+  }
+}
