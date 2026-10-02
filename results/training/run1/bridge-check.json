@@ -1,0 +1,132 @@
+{
+  "runs": [
+    {
+      "run_id": "mk9qcuq2dsckzrf68gycyqls",
+      "role": "primary",
+      "environments": {
+        "cad-spec-L4": {
+          "prompts": 11,
+          "answers": 88,
+          "observed": 0.2840909090909091,
+          "observed_passes": 25,
+          "count_consistent": true,
+          "reference": 0.42916666666666664,
+          "reference_groups": 30,
+          "interval95": [
+            0.18181818181818182,
+            0.6931818181818182
+          ],
+          "difference_points": -14.507575757575752,
+          "position": "BRIDGED"
+        },
+        "cad-spec-L2": {
+          "prompts": 11,
+          "answers": 88,
+          "observed": 0.5909090909090909,
+          "observed_passes": 52,
+          "count_consistent": true,
+          "reference": 0.6875,
+          "reference_groups": 30,
+          "interval95": [
+            0.6022727272727273,
+            0.7613636363636364
+          ],
+          "difference_points": -9.659090909090907,
+          "position": "STACKS_DIFFER_NOT_INFLATING"
+        },
+        "cad-spec-L1-L3": {
+          "prompts": 2,
+          "answers": 16,
+          "observed": 0.75,
+          "observed_passes": 12,
+          "count_consistent": true,
+          "reference": 0.63125,
+          "reference_groups": 60,
+          "interval95": [
+            0.4375,
+            0.8125
+          ],
+          "difference_points": 11.875000000000002,
+          "position": "BRIDGED"
+        }
+      }
+    },
+    {
+      "run_id": "k3rwpbbk5sio4936onuai7ok",
+      "role": "second sample",
+      "environments": {
+        "cad-spec-L4": {
+          "prompts": 12,
+          "answers": 96,
+          "observed": 0.3229166666666667,
+          "observed_passes": 31,
+          "count_consistent": true,
+          "reference": 0.42916666666666664,
+          "reference_groups": 30,
+          "interval95": [
+            0.1875,
+            0.6770833333333334
+          ],
+          "difference_points": -10.624999999999996,
+          "position": "BRIDGED"
+        },
+        "cad-spec-L2": {
+          "prompts": 11,
+          "answers": 88,
+          "observed": 0.5909090909090909,
+          "observed_passes": 52,
+          "count_consistent": true,
+          "reference": 0.6875,
+          "reference_groups": 30,
+          "interval95": [
+            0.6022727272727273,
+            0.7613636363636364
+          ],
+          "difference_points": -9.659090909090907,
+          "position": "STACKS_DIFFER_NOT_INFLATING"
+        },
+        "cad-spec-L1-L3": {
+          "prompts": 2,
+          "answers": 16,
+          "observed": 0.625,
+          "observed_passes": 10,
+          "count_consistent": true,
+          "reference": 0.63125,
+          "reference_groups": 60,
+          "interval95": [
+            0.4375,
+            0.8125
+          ],
+          "difference_points": -0.6249999999999978,
+          "position": "BRIDGED"
+        }
+      }
+    }
+  ],
+  "seed": 20261002,
+  "draws": 10000,
+  "step": 1,
+  "pooled_l4": {
+    "prompts": 23,
+    "answers": 184,
+    "observed": 0.30434782608695654,
+    "observed_passes": 56,
+    "count_consistent": true,
+    "reference": 0.42916666666666664,
+    "reference_groups": 30,
+    "interval95": [
+      0.2554347826086957,
+      0.6141304347826086
+    ],
+    "difference_points": -12.48188405797101,
+    "position": "BRIDGED"
+  },
+  "verdict": "BRIDGED",
+  "share_of_registered_l4_gain": null,
+  "corroboration_agrees": true,
+  "screening": {
+    "file": "qwen3.5-9b-t0.7-x8-2k.jsonl",
+    "run_id": "20260929T122907826101Z-1ac14d",
+    "base_url": "https://api.pinference.ai/api/v1"
+  }
+}

@@ -292,6 +292,11 @@ model without training, both with the cheat-sheet:
   ([audit](audit/README.md), report `audit/run1-result-integrity.md`).
 - **Limits:** one run, one model, one plate family, a ceiling at 100%
   (lower bound about 94%), base and adapter on different serving routes.
+  A free bridge check narrows the last one: with untrained weights the
+  training stack scores no higher than the base route on L4 (28.4% against
+  42.9%, inside the registered interval), so a stack that serves the same
+  weights better is not supported as the explanation. The adapter route
+  itself is still not attested (`results/training/run1/bridge-check.md`).
 - **Cost:** the run cost $13.87, of which about $7 paid for answers the
   filter discarded once most prompts were solved
   ([cost audit](audit/README.md), report `audit/run1-cost-report.md`).

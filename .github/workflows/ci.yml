@@ -93,6 +93,13 @@ jobs:
       - name: Training analysis self-test (registered verdict rules, refusals)
         working-directory: .
         run: python scripts/test_compare_training.py
+      - name: Bridge check self-test and reproduction of the committed result
+        working-directory: .
+        run: |
+          python scripts/test_bridge_check.py
+          python scripts/bridge_check.py --out /tmp/bridge/bridge-check > /dev/null
+          diff /tmp/bridge/bridge-check.json results/training/run1/bridge-check.json
+          diff /tmp/bridge/bridge-check.md results/training/run1/bridge-check.md
       - name: Release check (every linked evidence file exists)
         working-directory: .
         run: python scripts/check_release.py
