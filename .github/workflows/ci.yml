@@ -84,6 +84,12 @@ jobs:
           python scripts/gl_fallback_check.py --expect vendored --system-gl-note hidden --out /tmp/gl/gl-less || status=$?
           sudo mv /tmp/hidden/* "$L"/ && sudo ldconfig
           exit $status
+      - name: Evidence manifests verify (any OS line endings)
+        working-directory: .
+        run: python scripts/verify_manifest.py results/training/run1/snapshots/*/manifest.json results/training/run1/snapshots/*/retry-*/manifest.json
+      - name: Replay the run 1 test-split evaluations on Linux (fork sandbox, 0 mismatches)
+        working-directory: .
+        run: python scripts/replay_eval.py results/training/run1/eval/base-test.jsonl results/training/run1/eval/adapter-test.jsonl
       - name: Training analysis self-test (registered verdict rules, refusals)
         working-directory: .
         run: python scripts/test_compare_training.py

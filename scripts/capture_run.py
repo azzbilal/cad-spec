@@ -88,7 +88,7 @@ def main(argv: list[str] | None = None) -> int:
             except ValueError:
                 code = code or 99  # not JSON: keep the text, flag it
         path = folder / name
-        path.write_text(text, encoding="utf-8")
+        path.write_text(text, encoding="utf-8", newline="\n")  # LF on every OS
         data = path.read_bytes()
         manifest["files"].append({
             "file": name, "command": "prime " + " ".join(cli_args),
@@ -103,7 +103,7 @@ def main(argv: list[str] | None = None) -> int:
         for step in args.retry_steps:
             save(f"distributions-step-{step}.json",
                  ["train", "distributions", args.run_id, "--step", str(step)], True)
-        (folder / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+        (folder / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8", newline="\n")
         failed = [f["file"] for f in manifest["files"] if f["exit_code"] != 0]
         outcome = "all captured" if not failed else f"FAILED: {failed}"
         print(f"\n{len(manifest['files'])} retried in {folder}; {outcome}")
@@ -120,7 +120,7 @@ def main(argv: list[str] | None = None) -> int:
         save(f"distributions-step-{step}.json",
              ["train", "distributions", args.run_id, "--step", str(step)], True)
     save("logs.txt", ["train", "logs", args.run_id, "-n", str(LOG_LINES)], False)
-    (folder / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    (folder / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8", newline="\n")
     failed = [f["file"] for f in manifest["files"] if f["exit_code"] != 0]
     print(f"\n{len(manifest['files'])} files in {folder}; CLI {version}; "
           + ("all captured" if not failed else f"FAILED: {failed}"))

@@ -1,0 +1,26 @@
+{
+ "platform": "Linux-6.18.44-fc-v64-x86_64-with-glibc2.39",
+ "python": "3.12.3",
+ "sandbox_mode": "fork",
+ "cad_spec": "0.4.5",
+ "scorer": "0.4.0",
+ "files": [
+  {
+   "file": "results/training/run1/eval/base-test.jsonl",
+   "rows": 240,
+   "all_pass": 169,
+   "mismatches": [],
+   "sha256_lf": "f68479465920688379c90f4a8d15c682d47ddbf60bcd6e56e5c6180a843b761f",
+   "sha256_crlf": "6aee64245417a56614f9d0654bf944469de193ea5e09bdbdad71c6195639ffb3"
+  },
+  {
+   "file": "results/training/run1/eval/adapter-test.jsonl",
+   "rows": 240,
+   "all_pass": 239,
+   "mismatches": [],
+   "sha256_lf": "2493f78ebc33610752658519370cccfafea993c1f96b6b410c19c47d8dcc6216",
+   "sha256_crlf": "d937884ce262766a375042cb327a5f360978338a5db5daaf47579da34f3117e4"
+  }
+ ],
+ "seconds": 27.0
+}
