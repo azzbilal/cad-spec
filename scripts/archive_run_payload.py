@@ -112,7 +112,7 @@ def main(argv: list[str] | None = None) -> int:
         "note": "Recorded by blocking the write; nothing was sent.",
     }
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    args.out.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    args.out.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
     body = record["request"]["json"]
     print(f"archived {record['request']['method']} {record['request']['endpoint']} -> {args.out}")
     print(f"  model: {(body.get('model') or {}).get('name')}")

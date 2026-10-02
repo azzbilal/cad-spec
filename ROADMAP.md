@@ -90,10 +90,10 @@ the evidence that meets it.
       family, not about CAD in general.
       **Done (2 October 2026):** H1 confirmed, L2 + L4 60% to 100%, +40
       points [+32.5, +47.5], no regression; integrity audit passed with
-      caveats (serving routes not attested, one run, ceiling). Next: Linux
-      fork replay of the saved answers, a pre-registered replication on a
-      new disjoint test split with the frozen adapter, then other part
-      families.
+      caveats (serving routes not attested, one run, ceiling). Linux fork
+      replay of the saved answers: 0 mismatches. Next: a pre-registered
+      replication on a new disjoint test split with the frozen adapter,
+      then other part families.
 4. **Tag v0.4.x** once step 3 is in `results/`; push the tagged version to
    the Hub. Then move the package to the verifiers v1 taskset/harness API
    (the v0 API is being retired on the Hub; training accepts the current

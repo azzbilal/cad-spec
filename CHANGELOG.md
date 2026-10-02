@@ -5,6 +5,19 @@ Scores are only comparable within one scorer version
 
 ## Unreleased
 
+### Training run 1: Linux replay and portable hashes
+- `scripts/replay_eval.py`: re-scores saved evaluation files and compares
+  every reward and check. Run 1 on Linux, `fork` sandbox: 0 mismatches over
+  480 answers (`results/training/run1/linux-replay.json`). CI replays both
+  files on every push.
+- `scripts/verify_manifest.py`: verifies snapshot manifests on any OS. The
+  existing manifests hashed CRLF working copies on Windows while Git stores
+  LF; all 54 entries verify in their CRLF form. CI runs it.
+- `capture_run.py` and `archive_run_payload.py` now write LF on every OS, so
+  new hashes match the repository bytes.
+- Pre-registration: dated addendum with both hash forms of the evaluation
+  files.
+
 ### Training run 1: result (step 6)
 - Registered evaluation, run once: base Qwen3.5-9B vs the 38-step adapter on
   the locked 60-spec test split, greedy, cheat-sheet in both. **H1

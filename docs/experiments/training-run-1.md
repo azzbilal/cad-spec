@@ -378,3 +378,26 @@ nothing yet about other part families.
 ### Claim
 
 > In one Qwen3.5-9B LoRA RL run stopped on cost after 38 of 104 planned steps, saved greedy Prime Inference outputs with the same CadQuery cheat-sheet improved the all-requirements pass rate on the locked 60-spec mounting-plate test split from 60% to 100% across L2 and L4, a paired gain of 40 points (registered spec-cluster bootstrap 95% interval: 32.5 to 47.5). Offline rescoring and independent BREP geometry checks reproduced the result; generalization beyond this generator and equivalence of the base and adapter serving backends remain unverified.
+
+### Addendum (2 October 2026): Linux replay and file hashes
+
+- **Linux replay done.** All 480 saved answers were re-scored on Linux in
+  the `fork` sandbox (the isolation used on training machines) by
+  `scripts/replay_eval.py`: **0 mismatches** in reward or any check; base
+  169/240, adapter 239/240, as recorded on Windows. The "Windows `reuse`
+  sandbox" limit above is closed. Result:
+  `results/training/run1/linux-replay.json`; CI replays both files on every
+  push.
+- **Hashes and line endings.** The SHA-256 values quoted above were computed
+  on the Windows working copies, which Git checks out with CRLF line
+  endings. The repository stores the same files with LF. Both forms:
+
+  | File | SHA-256, LF (repository) | SHA-256, CRLF (Windows copy, quoted above) |
+  |---|---|---|
+  | `eval/base-test.jsonl` | `f68479465920688379c90f4a8d15c682d47ddbf60bcd6e56e5c6180a843b761f` | `6aee64245417a56614f9d0654bf944469de193ea5e09bdbdad71c6195639ffb3` |
+  | `eval/adapter-test.jsonl` | `2493f78ebc33610752658519370cccfafea993c1f96b6b410c19c47d8dcc6216` | `d937884ce262766a375042cb327a5f360978338a5db5daaf47579da34f3117e4` |
+
+  The snapshot manifests have the same property (all 54 entries hash the
+  CRLF form). `scripts/verify_manifest.py` checks them on any OS and reports
+  which form matched; CI runs it. From now on `capture_run.py` and
+  `archive_run_payload.py` write LF on every OS.
