@@ -1,0 +1,26 @@
+{
+  "run_id": "mk9qcuq2dsckzrf68gycyqls",
+  "run_name": "cad-spec-9b-run1",
+  "base_model": "Qwen/Qwen3.5-9B",
+  "status": "STOPPED",
+  "training": {
+    "tokens": 6277964,
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "cost_usd": 3.7668
+  },
+  "inference": {
+    "tokens": 28845877,
+    "input_tokens": 13698416,
+    "output_tokens": 15147461,
+    "cost_usd": 10.1053
+  },
+  "total_tokens": 35123841,
+  "total_cost_usd": 13.8721,
+  "pricing": {
+    "training_per_mtok": 0.6,
+    "inference_input_per_mtok": 0.2,
+    "inference_output_per_mtok": 0.6
+  },
+  "record_count": 191
+}
