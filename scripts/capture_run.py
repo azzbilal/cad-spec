@@ -9,6 +9,10 @@ metrics list no steps), `logs.txt` (orchestrator log tail),
 and `manifest.json` listing, for each file, the exact command, the UTC time,
 the Prime CLI version, the exit code, the byte size and the SHA-256. Reads
 only; it never changes the run. Needs a logged-in Prime CLI on PATH.
+
+`--retry-steps 34 35 36` re-fetches only those distributions into a new
+folder OUT/RUN_ID/retry-<UTC timestamp>/ with its own manifest, leaving the
+original capture (failed files included) exactly as recorded.
 """
 
 from __future__ import annotations
@@ -18,6 +22,7 @@ import hashlib
 import json
 import os
 import subprocess
+import sys
 import time
 from pathlib import Path
 from typing import Any
@@ -59,8 +64,17 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("run_id")
     ap.add_argument("--out", type=Path, required=True)
+    ap.add_argument("--retry-steps", type=int, nargs="+", default=None,
+                    help="re-fetch only these steps' distributions into a NEW dated folder "
+                         "OUT/RUN_ID/retry-<UTC>/ with its own manifest; existing files are never touched")
     args = ap.parse_args(argv)
     folder = args.out / args.run_id
+    if args.retry_steps:
+        stamp = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
+        folder = folder / f"retry-{stamp}"
+        if folder.exists():
+            print(f"refusing to overwrite {folder}", file=sys.stderr)
+            return 2
     folder.mkdir(parents=True, exist_ok=True)
     version = cli_version()
     manifest: dict[str, Any] = {"run_id": args.run_id, "prime_cli_version": version, "files": []}
@@ -83,6 +97,17 @@ def main(argv: list[str] | None = None) -> int:
         })
         print(f"{'ok ' if code == 0 else 'ERR'} {name} ({len(data)} bytes)")
         return parsed
+
+    if args.retry_steps:
+        manifest["retry_of"] = "distributions"
+        for step in args.retry_steps:
+            save(f"distributions-step-{step}.json",
+                 ["train", "distributions", args.run_id, "--step", str(step)], True)
+        (folder / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+        failed = [f["file"] for f in manifest["files"] if f["exit_code"] != 0]
+        outcome = "all captured" if not failed else f"FAILED: {failed}"
+        print(f"\n{len(manifest['files'])} retried in {folder}; {outcome}")
+        return 0 if not failed else 1
 
     run = save("get.json", ["train", "get", args.run_id, "-o", "json"], True)
     save("usage.json", ["train", "usage", args.run_id, "-o", "json"], True)

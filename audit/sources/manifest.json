@@ -1,0 +1,106 @@
+[
+  {
+    "file": "advanced-configs.md",
+    "url": "https://docs.primeintellect.ai/hosted-training/advanced-configs.md",
+    "sha256": "f8f4be5404cfc442cbc4050a64e1d2924002152411e0a2e70226e0cf25177a80",
+    "captured_at_utc": "2026-10-02T14:35:13.144318+00:00"
+  },
+  {
+    "file": "models-and-pricing.md",
+    "url": "https://docs.primeintellect.ai/hosted-training/models-and-pricing.md",
+    "sha256": "911808c9a584deefd482d647d37a365c0d06faeab0d75d5e41b8650537c81ca8",
+    "captured_at_utc": "2026-10-02T14:35:13.401894+00:00"
+  },
+  {
+    "file": "full-finetuning.md",
+    "url": "https://docs.primeintellect.ai/hosted-training/full-finetuning.md",
+    "sha256": "bb320ee84f71c342a55d5f0d613d0c878dc558612f7225b9979f2b8113f7537d",
+    "captured_at_utc": "2026-10-02T14:35:13.721426+00:00"
+  },
+  {
+    "file": "update-user-limits.md",
+    "url": "https://docs.primeintellect.ai/api-reference/admin-users/update-user-limits.md",
+    "sha256": "0c7a6cd738d4b9369fbc0f61e5e6f3b3ab292a4346215e1013c7bb6a1b571a1d",
+    "captured_at_utc": "2026-10-02T14:35:13.972116+00:00"
+  },
+  {
+    "file": "update-user-wallet-settings.md",
+    "url": "https://docs.primeintellect.ai/api-reference/admin-users/update-user-wallet-settings.md",
+    "sha256": "64b94a2fda67bb31a5b29d88139f84c574ef7946b84d8dda63df61ab9f55239c",
+    "captured_at_utc": "2026-10-02T14:35:14.211878+00:00"
+  },
+  {
+    "file": "prime-rl-commit.json",
+    "url": "https://api.github.com/repos/PrimeIntellect-ai/prime-rl/commits/main",
+    "sha256": "2f0f5ce9aec1ebd92a2432784916fefd21580df4baa00cbf16eca490138b063d",
+    "captured_at_utc": "2026-10-02T14:35:14.634204+00:00"
+  },
+  {
+    "file": "upstream-orchestrator-config.py",
+    "url": "https://raw.githubusercontent.com/PrimeIntellect-ai/prime-rl/ada6bd26db2a3ea805371b5d7c138d0aa9c52c75/packages/prime-rl-configs/src/prime_rl/configs/orchestrator.py",
+    "sha256": "eb02c559b4d7fb4925a50f6269ea8cabefa47fe50d421ed28fca6c49ab7714ca",
+    "captured_at_utc": "2026-10-02T14:35:14.759038+00:00"
+  },
+  {
+    "file": "upstream-orchestrator.py",
+    "url": "https://raw.githubusercontent.com/PrimeIntellect-ai/prime-rl/ada6bd26db2a3ea805371b5d7c138d0aa9c52c75/src/prime_rl/orchestrator/orchestrator.py",
+    "sha256": "dbda41cb3f9f7af48a89c73e047a83dc8bfccf085cd51fc95b3ee432120ed533",
+    "captured_at_utc": "2026-10-02T14:35:14.930122+00:00"
+  },
+  {
+    "file": "upstream-train-sink.py",
+    "url": "https://raw.githubusercontent.com/PrimeIntellect-ai/prime-rl/ada6bd26db2a3ea805371b5d7c138d0aa9c52c75/src/prime_rl/orchestrator/train_sink.py",
+    "sha256": "8735d7a355a4e6ecca986d628235b7184eab4fee438d09c022b2f090527f4b99",
+    "captured_at_utc": "2026-10-02T14:35:15.072271+00:00"
+  },
+  {
+    "file": "upstream-concurrency.py",
+    "url": "https://raw.githubusercontent.com/PrimeIntellect-ai/prime-rl/ada6bd26db2a3ea805371b5d7c138d0aa9c52c75/src/prime_rl/orchestrator/concurrency.py",
+    "sha256": "da1ad43a3ed855418288e29cafc1528f0cfe1f1a8c2452f906cd7f048e55b8aa",
+    "captured_at_utc": "2026-10-02T14:35:15.216972+00:00"
+  },
+  {
+    "file": "registered-orchestrator-config.py",
+    "url": "https://raw.githubusercontent.com/PrimeIntellect-ai/prime-rl/9eacd47/packages/prime-rl-configs/src/prime_rl/configs/orchestrator.py",
+    "sha256": "15a5dae676d381e136027fdb77a279e883fb9e51c19af3fff108326b04a27b16",
+    "captured_at_utc": "2026-10-02T14:35:15.449309+00:00"
+  },
+  {
+    "file": "registered-train-sink.py",
+    "url": "https://raw.githubusercontent.com/PrimeIntellect-ai/prime-rl/9eacd47/src/prime_rl/orchestrator/train_sink.py",
+    "sha256": "8735d7a355a4e6ecca986d628235b7184eab4fee438d09c022b2f090527f4b99",
+    "captured_at_utc": "2026-10-02T14:35:15.597789+00:00"
+  },
+  {
+    "file": "registered-orchestrator.py",
+    "url": "https://raw.githubusercontent.com/PrimeIntellect-ai/prime-rl/9eacd47/src/prime_rl/orchestrator/orchestrator.py",
+    "sha256": "1c0bf91a9c0ff0bb8aadbe819528e4abbe9910e3d0c1ce2f3ccd168d1d62cb87",
+    "captured_at_utc": "2026-10-02T14:35:15.793361+00:00"
+  },
+  {
+    "file": "registered-grpo.py",
+    "url": "https://raw.githubusercontent.com/PrimeIntellect-ai/prime-rl/9eacd47/src/prime_rl/orchestrator/algo/grpo.py",
+    "sha256": "509ac9a2a4720f84b06eb05b8455ddd8e9ab54fab140c427d0528e5ed17fa8f5",
+    "captured_at_utc": "2026-10-02T14:35:16.466234+00:00"
+  },
+  {
+    "file": "installed-cli-rl.py",
+    "local_source": "C:\\Users\\bgare\\AppData\\Roaming\\uv\\tools\\prime\\Lib\\site-packages\\prime_cli\\commands\\rl.py",
+    "sha256": "243105dee65d8876ae583036590175c8ad84be362bf440382d78f5a3a1bfaab1"
+  },
+  {
+    "file": "installed-api-rl.py",
+    "local_source": "C:\\Users\\bgare\\AppData\\Roaming\\uv\\tools\\prime\\Lib\\site-packages\\prime_cli\\api\\rl.py",
+    "sha256": "8b0c871f6638e08fc0005330342fe1e1caa05b83126b5660a5dd415e44720e73"
+  },
+  {
+    "file": "installed-cli-usage.py",
+    "local_source": "C:\\Users\\bgare\\AppData\\Roaming\\uv\\tools\\prime\\Lib\\site-packages\\prime_cli\\commands\\usage.py",
+    "sha256": "bb0630ce2d1270f27d697531a72870a9433a309895488437b941f920db9ff59e"
+  },
+  {
+    "file": "installed-api-billing.py",
+    "local_source": "C:\\Users\\bgare\\AppData\\Roaming\\uv\\tools\\prime\\Lib\\site-packages\\prime_cli\\api\\billing.py",
+    "sha256": "c440d490b9a28aace424b69d573707c69b757895430978a06ded3e6ff0c82779"
+  }
+]

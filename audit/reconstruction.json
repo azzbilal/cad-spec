@@ -1,0 +1,388 @@
+{
+  "summaries": {
+    "smoke": {
+      "alpha": 0.7295267192433676,
+      "usage": {
+        "run_id": "k3rwpbbk5sio4936onuai7ok",
+        "run_name": "cad-spec-9b-smoke",
+        "base_model": "Qwen/Qwen3.5-9B",
+        "status": "COMPLETED",
+        "training": {
+          "tokens": 589781,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "cost_usd": 0.3539
+        },
+        "inference": {
+          "tokens": 1295087,
+          "input_tokens": 892292,
+          "output_tokens": 402795,
+          "cost_usd": 0.3065
+        },
+        "total_tokens": 1884868,
+        "total_cost_usd": 0.6604,
+        "pricing": {
+          "training_per_mtok": 0.6,
+          "inference_input_per_mtok": 0.2,
+          "inference_output_per_mtok": 0.6
+        },
+        "record_count": 16
+      },
+      "sums": {
+        "generated": 1008,
+        "trained": 640,
+        "gen_input": 591888,
+        "gen_output": 262160,
+        "trained_tokens": 589781,
+        "list_inference": 0.27567359999999996,
+        "list_training": 0.3538686,
+        "allocated_cost": 0.5549798569900084,
+        "duration_s": 239.5225631070789
+      },
+      "unassigned_input": 300404,
+      "unassigned_output": 140635,
+      "unassigned_cost": 0.10542014300999158
+    },
+    "run": {
+      "alpha": 0.8543425326397771,
+      "usage": {
+        "run_id": "mk9qcuq2dsckzrf68gycyqls",
+        "run_name": "cad-spec-9b-run1",
+        "base_model": "Qwen/Qwen3.5-9B",
+        "status": "STOPPED",
+        "training": {
+          "tokens": 6277964,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "cost_usd": 3.7668
+        },
+        "inference": {
+          "tokens": 28845877,
+          "input_tokens": 13698416,
+          "output_tokens": 15147461,
+          "cost_usd": 10.1053
+        },
+        "total_tokens": 35123841,
+        "total_cost_usd": 13.8721,
+        "pricing": {
+          "training_per_mtok": 0.6,
+          "inference_input_per_mtok": 0.2,
+          "inference_output_per_mtok": 0.6
+        },
+        "record_count": 191
+      },
+      "sums": {
+        "generated": 21536,
+        "trained": 4864,
+        "gen_input": 12558616,
+        "gen_output": 13855729,
+        "trained_tokens": 6277964,
+        "list_inference": 10.8251606,
+        "list_training": 3.7667783999999997,
+        "allocated_cost": 13.01517352323633,
+        "duration_s": 4277.417698763078
+      },
+      "unassigned_input": 1139800,
+      "unassigned_output": 1291732,
+      "unassigned_cost": 0.85692647676367
+    }
+  },
+  "phases": {
+    "smoke 1-5": {
+      "steps": 5,
+      "generated_per_step": 201.6,
+      "share": 0.6349206349206349,
+      "output_mean": 260.07936507936506,
+      "input_mean": 587.1904761904761,
+      "trained_tokens_per_answer": 921.5328125,
+      "seconds": 47.904512621415776,
+      "cost": 0.11099597139800169,
+      "list_cost": 0.12590843999999998,
+      "env": {
+        "L4": {
+          "generated": 552,
+          "trained": 200,
+          "solved": 20,
+          "failed": 24,
+          "output_mean": 128.33152173913044
+        },
+        "L2": {
+          "generated": 264,
+          "trained": 248,
+          "solved": 2,
+          "failed": 0,
+          "output_mean": 369.3030303030303
+        },
+        "L1-L3": {
+          "generated": 192,
+          "trained": 192,
+          "solved": 0,
+          "failed": 0,
+          "output_mean": 488.671875
+        }
+      }
+    },
+    "run 1-5": {
+      "steps": 5,
+      "generated_per_step": 225.6,
+      "share": 0.5673758865248227,
+      "output_mean": 285.0159574468085,
+      "input_mean": 585.3829787234042,
+      "trained_tokens_per_answer": 948.5625,
+      "seconds": 49.14529169681482,
+      "cost": 0.12837523492353223,
+      "list_cost": 0.13784184,
+      "env": {
+        "L4": {
+          "generated": 616,
+          "trained": 216,
+          "solved": 22,
+          "failed": 28,
+          "output_mean": 155.89935064935065
+        },
+        "L2": {
+          "generated": 280,
+          "trained": 232,
+          "solved": 6,
+          "failed": 0,
+          "output_mean": 398.85
+        },
+        "L1-L3": {
+          "generated": 232,
+          "trained": 192,
+          "solved": 5,
+          "failed": 0,
+          "output_mean": 490.4568965517241
+        }
+      }
+    },
+    "run 6-14": {
+      "steps": 9,
+      "generated_per_step": 276.44444444444446,
+      "share": 0.4630225080385852,
+      "output_mean": 408.85450160771705,
+      "input_mean": 584.427652733119,
+      "trained_tokens_per_answer": 1057.829861111111,
+      "seconds": 47.54279394766005,
+      "cost": 0.16678467664603433,
+      "list_cost": 0.1813690222222222,
+      "env": {
+        "L4": {
+          "generated": 1328,
+          "trained": 808,
+          "solved": 57,
+          "failed": 8,
+          "output_mean": 327.47364457831327
+        },
+        "L2": {
+          "generated": 520,
+          "trained": 72,
+          "solved": 56,
+          "failed": 0,
+          "output_mean": 438.3269230769231
+        },
+        "L1-L3": {
+          "generated": 640,
+          "trained": 272,
+          "solved": 44,
+          "failed": 2,
+          "output_mean": 553.7734375
+        }
+      }
+    },
+    "run 15-24": {
+      "steps": 10,
+      "generated_per_step": 407.2,
+      "share": 0.3143418467583497,
+      "output_mean": 652.8015717092338,
+      "input_mean": 584.9214145383104,
+      "trained_tokens_per_answer": 1395.68203125,
+      "seconds": 82.91704974470194,
+      "cost": 0.2841470501850274,
+      "list_cost": 0.31431686,
+      "env": {
+        "L4": {
+          "generated": 2120,
+          "trained": 912,
+          "solved": 151,
+          "failed": 0,
+          "output_mean": 678.4915094339623
+        },
+        "L2": {
+          "generated": 984,
+          "trained": 144,
+          "solved": 105,
+          "failed": 0,
+          "output_mean": 538.2469512195122
+        },
+        "L1-L3": {
+          "generated": 968,
+          "trained": 224,
+          "solved": 93,
+          "failed": 0,
+          "output_mean": 712.9865702479339
+        }
+      }
+    },
+    "run 17-28": {
+      "steps": 12,
+      "generated_per_step": 482.6666666666667,
+      "share": 0.26519337016574585,
+      "output_mean": 727.802658839779,
+      "input_mean": 583.9171270718232,
+      "trained_tokens_per_answer": 1464.88671875,
+      "seconds": 103.6633477905804,
+      "cost": 0.3407316095001529,
+      "list_cost": 0.37964241666666665,
+      "env": {
+        "L4": {
+          "generated": 2952,
+          "trained": 1048,
+          "solved": 238,
+          "failed": 0,
+          "output_mean": 771.7493224932249
+        },
+        "L2": {
+          "generated": 1488,
+          "trained": 168,
+          "solved": 165,
+          "failed": 0,
+          "output_mean": 599.2345430107526
+        },
+        "L1-L3": {
+          "generated": 1352,
+          "trained": 320,
+          "solved": 128,
+          "failed": 1,
+          "output_mean": 773.3491124260355
+        }
+      }
+    },
+    "run 25-32": {
+      "steps": 8,
+      "generated_per_step": 676.0,
+      "share": 0.1893491124260355,
+      "output_mean": 777.688424556213,
+      "input_mean": 583.8890532544378,
+      "trained_tokens_per_answer": 1552.03515625,
+      "seconds": 147.68134720886883,
+      "cost": 0.456125265509284,
+      "list_cost": 0.5135685249999999,
+      "env": {
+        "L4": {
+          "generated": 2680,
+          "trained": 656,
+          "solved": 253,
+          "failed": 0,
+          "output_mean": 815.8865671641792
+        },
+        "L2": {
+          "generated": 1424,
+          "trained": 112,
+          "solved": 164,
+          "failed": 0,
+          "output_mean": 651.2205056179776
+        },
+        "L1-L3": {
+          "generated": 1304,
+          "trained": 256,
+          "solved": 130,
+          "failed": 1,
+          "output_mean": 837.2891104294479
+        }
+      }
+    },
+    "run 33-38": {
+      "steps": 6,
+      "generated_per_step": 1406.6666666666667,
+      "share": 0.0909952606635071,
+      "output_mean": 669.7931279620854,
+      "input_mean": 581.1345971563981,
+      "trained_tokens_per_answer": 1401.7018229166667,
+      "seconds": 265.5308032720156,
+      "cost": 0.7302937721466354,
+      "list_cost": 0.8364486333333333,
+      "env": {
+        "L4": {
+          "generated": 3912,
+          "trained": 432,
+          "solved": 435,
+          "failed": 0,
+          "output_mean": 717.6633435582822
+        },
+        "L2": {
+          "generated": 2408,
+          "trained": 72,
+          "solved": 292,
+          "failed": 0,
+          "output_mean": 558.5726744186046
+        },
+        "L1-L3": {
+          "generated": 2120,
+          "trained": 264,
+          "solved": 232,
+          "failed": 0,
+          "output_mean": 707.788679245283
+        }
+      }
+    },
+    "run 1-38": {
+      "steps": 38,
+      "generated_per_step": 566.7368421052631,
+      "share": 0.22585438335809807,
+      "output_mean": 643.3752321693908,
+      "input_mean": 583.1452451708767,
+      "trained_tokens_per_answer": 1290.6998355263158,
+      "seconds": 112.56362365165995,
+      "cost": 0.342504566400956,
+      "list_cost": 0.3839983947368421,
+      "env": {
+        "L4": {
+          "generated": 10656,
+          "trained": 3024,
+          "solved": 918,
+          "failed": 36,
+          "output_mean": 653.4718468468468
+        },
+        "L2": {
+          "generated": 5616,
+          "trained": 632,
+          "solved": 623,
+          "failed": 0,
+          "output_mean": 559.4059829059829
+        },
+        "L1-L3": {
+          "generated": 5264,
+          "trained": 1208,
+          "solved": 504,
+          "failed": 3,
+          "output_mean": 712.5207066869301
+        }
+      }
+    }
+  },
+  "decomposition": {
+    "volume": 0.4769584638564659,
+    "output_length": 0.19767869631565485,
+    "input_length": -0.0009739468387873322,
+    "training_length": 0.036876980000000004,
+    "early_list": 0.12590843999999998,
+    "late_list": 0.8364486333333333
+  },
+  "pooled_token_overhead_factor": 1.1053443450077898,
+  "list_model_errors": {
+    "smoke": {
+      "predicted": 0.6585828548279394,
+      "actual": 0.6604,
+      "error": -0.0018171451720605525,
+      "percent": -0.2751582634858529
+    },
+    "run": {
+      "predicted": 15.732308453011132,
+      "actual": 13.8721,
+      "error": 1.8602084530111327,
+      "percent": 13.409710519756434
+    }
+  },
+  "fixed_smoke_lengths_run_prediction": 9.199645598069942
+}
