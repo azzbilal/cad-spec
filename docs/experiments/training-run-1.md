@@ -294,3 +294,87 @@ answer exists.
 - Evidence: `results/training/run1/snapshots/mk9qcuq2dsckzrf68gycyqls/`
   (run record, usage, per-step metrics and distributions, logs, with a
   hashed manifest).
+
+## Result (2 October 2026)
+
+Recorded after the single registered evaluation. Nothing above this section
+was changed after the evaluation files existed.
+
+### Execution
+
+- **Base model**, `Qwen/Qwen3.5-9B` on Prime Inference (listed $0.18 /
+  $0.54 per 1M tokens): 240 answers (60 test specs x L1 to L4), status
+  complete, no API error, 1 truncated (0.4%, L1). Computed cost $0.0734.
+- **Adapter** `xfisiyo5vlhn0ys65sf4uad7` (end-of-run adapter, step 38),
+  deployed at 16:11 (Prime CLI time) and served as
+  `Qwen/Qwen3.5-9B:xfisiyo5vlhn0ys65sf4uad7` (listed $0.10 / $0.20 per 1M
+  tokens). A one-answer probe outside the test split confirmed the name,
+  then 240 answers, complete, no API error, none truncated. Computed cost
+  $0.0464. Unloaded right after (`prime deployments delete`; status
+  NOT_DEPLOYED). The planned 10-minute idle balance check was **not
+  recorded**, so the absence of a time-based deployment fee is unverified.
+- Both runs: locked test split with the registered fingerprint, greedy,
+  2,048 tokens, thinking off, the packaged cheat-sheet (identical system
+  prompt), scorer 0.4.0, cad-spec 0.4.5. Costs above are computed by the
+  runner from the listed prices; the rounded `usage.cost` fields sum to
+  $0.0764 and $0.0473.
+- Files: `results/training/run1/eval/base-test.jsonl` (SHA-256
+  `6aee6424...639ffb3`), `results/training/run1/eval/adapter-test.jsonl`
+  (`d937884c...3117e4`); verdict `results/training/run1/verdict.md`
+  (`5bfcc2e9...b627b5`) and `verdict.json` (`30a037bf...8925ed`), written
+  once by the frozen `scripts/compare_training.py`.
+
+### Verdict (registered analysis, run once)
+
+| Tier | Base all-pass | Adapter all-pass | Difference | 95% interval |
+|---|---|---|---|---|
+| L1 | 86.7% | 100.0% | +13.3 | [+5.0, +21.7] |
+| L2 | 83.3% | 100.0% | +16.7 | [+8.3, +26.7] |
+| L3 | 75.0% | 98.3% | +23.3 | [+13.3, +35.0] |
+| L4 | 36.7% | 100.0% | +63.3 | [+51.7, +75.0] |
+
+- **H1 (L2 + L4, primary): CONFIRMED.** 60.0% to 100.0%, **+40.0 points,
+  95% interval [+32.5, +47.5]**, 120 pairs over 60 specs. Worthwhile
+  (registered minimum +10 points).
+- H2 (L4 alone, secondary): gain, +63.3 points [+51.7, +75.0].
+- Regression checks: none on L1 (+13.3) or L3 (+23.3).
+- Overall: base 169/240, adapter 239/240. 70 pairs improved, none worsened;
+  the one adapter failure (L3, test-0054) also fails in the base model.
+
+### Integrity audit
+
+An independent read-only audit (`audit/run1-result-integrity.md`) tried to
+break the result before publication. It survives, with caveats:
+
+- the verdict reproduces byte for byte; all 480 answers re-score
+  identically with the repository scorer and with the published 0.4.5
+  wheel, in both orders;
+- **no reward hacking found**: only CadQuery imports, no file access,
+  introspection or monkeypatching; 240 distinct programs, each using its own
+  spec's numbers; all 239 passing parts match the requested geometry
+  exactly under a check independent of `cad_spec.measure` (same OpenCascade
+  kernel); 72 of 72 out-of-tolerance perturbations of passing answers fail
+  the expected check;
+- **no leakage**: no test spec in the train or development splits by id or
+  dimensions, disjoint L3 wordings, and the training dataset rebuilt
+  locally contains no test id;
+- what changed: on L4 the base model resized the plate but kept the old
+  pitch in all 38 of its failures (R5 and R7); the adapter recomputes the
+  pitch. Its answers are longer (L4 mean output 133 to 682 tokens).
+
+### Limits
+
+One training run and seed, stopped on cost after 38 of 104 registered steps;
+one model; one plate generator; the same cheat-sheet in both arms; 60 test
+specs (120 correlated primary pairs); two held-out L3 wordings. The adapter
+is at the ceiling on the primary slice: 60/60 specs bounds the success rate
+below at about 94% (exact two-sided 95%, independent specs assumed), not at
+100%, and the bootstrap cannot see unobserved failures. Base and adapter
+were served by different Prime routes; their numerical equivalence (weights,
+precision, templates, applied decoding) is not attested. Scoring ran in the
+Windows `reuse` sandbox; a Linux `fork` replay is pending. Results say
+nothing yet about other part families.
+
+### Claim
+
+> In one Qwen3.5-9B LoRA RL run stopped on cost after 38 of 104 planned steps, saved greedy Prime Inference outputs with the same CadQuery cheat-sheet improved the all-requirements pass rate on the locked 60-spec mounting-plate test split from 60% to 100% across L2 and L4, a paired gain of 40 points (registered spec-cluster bootstrap 95% interval: 32.5 to 47.5). Offline rescoring and independent BREP geometry checks reproduced the result; generalization beyond this generator and equivalence of the base and adapter serving backends remain unverified.

@@ -1,0 +1,19 @@
+{
+  "protected_hashes_unchanged": {
+    "results/training/run1/eval/base-test.jsonl": true,
+    "results/training/run1/eval/adapter-test.jsonl": true,
+    "results/training/run1/verdict.md": true,
+    "results/training/run1/verdict.json": true,
+    "scripts/compare_training.py": true,
+    "environments/cad_spec/cad_spec/environment.py": true,
+    "environments/cad_spec/cad_spec/prompts.py": true,
+    "docs/experiments/training-run-1.md": true
+  },
+  "missing_report_links": [],
+  "em_dash_in_report": false,
+  "em_dash_in_audit_scripts": [],
+  "discordant_rows_in_report": 70,
+  "expected_discordant_rows": 70,
+  "repository_mismatches": [],
+  "wheel_mismatches": []
+}

@@ -1,0 +1,3626 @@
+[
+  {
+    "tier": "L1",
+    "spec_id": "test-0001",
+    "kind": "diameter",
+    "delta": 0.5,
+    "edits": [
+      {
+        "before": "HOLE_D",
+        "after": "HOLE_D + 0.5",
+        "line": 50
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L1-test-0001-diameter-0.5.py",
+    "reward": 0.8889,
+    "caught": true,
+    "expected_check": "R4b:hole_diameter",
+    "expected_failed": true,
+    "failed": [
+      "R4b:hole_diameter"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [6.0], depths [8.0] vs 8.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "123931.2 vs 123931.2 mm3 predicted from measurement",
+      "R1:length": "101.0 vs 101.0 mm",
+      "R2:width": "154.5 vs 154.5 mm",
+      "R3:thickness": "8.0 vs 8.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[6.0] vs 5.5 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "123931.2 vs 124075.7 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.00 mm from 7.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L1",
+    "spec_id": "test-0001",
+    "kind": "length",
+    "delta": 1.0,
+    "edits": [
+      {
+        "before": "L_X",
+        "after": "L_X + 1.0",
+        "line": 35
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L1-test-0001-length-1.py",
+    "reward": 0.8889,
+    "caught": true,
+    "expected_check": "R1:length",
+    "expected_failed": true,
+    "failed": [
+      "R1:length"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [5.5], depths [8.0] vs 8.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "125311.7 vs 125311.7 mm3 predicted from measurement",
+      "R1:length": "102.0 vs 101.0 mm",
+      "R2:width": "154.5 vs 154.5 mm",
+      "R3:thickness": "8.0 vs 8.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[5.5] vs 5.5 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "125311.7 vs 125311.7 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.50 mm from 7.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L1",
+    "spec_id": "test-0001",
+    "kind": "pitch",
+    "delta": 1.0,
+    "edits": [
+      {
+        "before": "hole_centers",
+        "after": "[(x + (1.0 / 2 if x >= 0 else -1.0 / 2), y) for x, y in hole_centers]",
+        "line": 50
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L1-test-0001-pitch-1.py",
+    "reward": 1.0,
+    "caught": false,
+    "expected_check": "R5:hole_pattern",
+    "expected_failed": false,
+    "failed": [],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [5.5], depths [8.0] vs 8.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "124075.7 vs 124075.7 mm3 predicted from measurement",
+      "R1:length": "101.0 vs 101.0 mm",
+      "R2:width": "154.5 vs 154.5 mm",
+      "R3:thickness": "8.0 vs 8.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[5.5] vs 5.5 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "124075.7 vs 124075.7 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.50 mm from 7.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L1",
+    "spec_id": "test-0001",
+    "kind": "pitch",
+    "delta": 1.2,
+    "edits": [
+      {
+        "before": "hole_centers",
+        "after": "[(x + (1.2 / 2 if x >= 0 else -1.2 / 2), y) for x, y in hole_centers]",
+        "line": 50
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L1-test-0001-pitch-1.2.py",
+    "reward": 0.7778,
+    "caught": true,
+    "expected_check": "R5:hole_pattern",
+    "expected_failed": true,
+    "failed": [
+      "R5:hole_pattern",
+      "R7:edge_margin"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [5.5], depths [8.0] vs 8.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "124075.7 vs 124075.7 mm3 predicted from measurement",
+      "R1:length": "101.0 vs 101.0 mm",
+      "R2:width": "154.5 vs 154.5 mm",
+      "R3:thickness": "8.0 vs 8.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[5.5] vs 5.5 mm",
+      "R5:hole_pattern": "0/4 positions matched",
+      "R6:material": "124075.7 vs 124075.7 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.60 mm from 7.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L1",
+    "spec_id": "test-0002",
+    "kind": "diameter",
+    "delta": 0.5,
+    "edits": [
+      {
+        "before": "H_D",
+        "after": "H_D + 0.5",
+        "line": 49
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L1-test-0002-diameter-0.5.py",
+    "reward": 0.8889,
+    "caught": true,
+    "expected_check": "R4b:hole_diameter",
+    "expected_failed": true,
+    "failed": [
+      "R4b:hole_diameter"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [10.0], depths [9.0] vs 9.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "80978.3 vs 80978.3 mm3 predicted from measurement",
+      "R1:length": "59.5 vs 59.5 mm",
+      "R2:width": "156.5 vs 156.5 mm",
+      "R3:thickness": "9.0 vs 9.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[10.0] vs 9.5 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "80978.3 vs 81254.0 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.00 mm from 10.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L1",
+    "spec_id": "test-0002",
+    "kind": "length",
+    "delta": 1.0,
+    "edits": [
+      {
+        "before": "L_X",
+        "after": "L_X + 1.0",
+        "line": 35
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L1-test-0002-length-1.py",
+    "reward": 0.8889,
+    "caught": true,
+    "expected_check": "R1:length",
+    "expected_failed": true,
+    "failed": [
+      "R1:length"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [9.5], depths [9.0] vs 9.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "82662.5 vs 82662.5 mm3 predicted from measurement",
+      "R1:length": "60.5 vs 59.5 mm",
+      "R2:width": "156.5 vs 156.5 mm",
+      "R3:thickness": "9.0 vs 9.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[9.5] vs 9.5 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "82662.5 vs 82662.5 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.50 mm from 10.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L1",
+    "spec_id": "test-0002",
+    "kind": "pitch",
+    "delta": 1.0,
+    "edits": [
+      {
+        "before": "holes",
+        "after": "[(x + (1.0 / 2 if x >= 0 else -1.0 / 2), y) for x, y in holes]",
+        "line": 49
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L1-test-0002-pitch-1.py",
+    "reward": 1.0,
+    "caught": false,
+    "expected_check": "R5:hole_pattern",
+    "expected_failed": false,
+    "failed": [],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [9.5], depths [9.0] vs 9.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "81254.0 vs 81254.0 mm3 predicted from measurement",
+      "R1:length": "59.5 vs 59.5 mm",
+      "R2:width": "156.5 vs 156.5 mm",
+      "R3:thickness": "9.0 vs 9.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[9.5] vs 9.5 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "81254.0 vs 81254.0 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.50 mm from 10.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L1",
+    "spec_id": "test-0002",
+    "kind": "pitch",
+    "delta": 1.2,
+    "edits": [
+      {
+        "before": "holes",
+        "after": "[(x + (1.2 / 2 if x >= 0 else -1.2 / 2), y) for x, y in holes]",
+        "line": 49
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L1-test-0002-pitch-1.2.py",
+    "reward": 0.7778,
+    "caught": true,
+    "expected_check": "R5:hole_pattern",
+    "expected_failed": true,
+    "failed": [
+      "R5:hole_pattern",
+      "R7:edge_margin"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [9.5], depths [9.0] vs 9.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "81254.0 vs 81254.0 mm3 predicted from measurement",
+      "R1:length": "59.5 vs 59.5 mm",
+      "R2:width": "156.5 vs 156.5 mm",
+      "R3:thickness": "9.0 vs 9.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[9.5] vs 9.5 mm",
+      "R5:hole_pattern": "0/4 positions matched",
+      "R6:material": "81254.0 vs 81254.0 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.60 mm from 10.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L1",
+    "spec_id": "test-0003",
+    "kind": "diameter",
+    "delta": 0.5,
+    "edits": [
+      {
+        "before": "HOLE_D",
+        "after": "HOLE_D + 0.5",
+        "line": 54
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L1-test-0003-diameter-0.5.py",
+    "reward": 0.8889,
+    "caught": true,
+    "expected_check": "R4b:hole_diameter",
+    "expected_failed": true,
+    "failed": [
+      "R4b:hole_diameter"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [11.5], depths [5.5] vs 5.5 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "29262.9 vs 29262.9 mm3 predicted from measurement",
+      "R1:length": "119.5 vs 119.5 mm",
+      "R2:width": "48.0 vs 48.0 mm",
+      "R3:thickness": "5.5 vs 5.5 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[11.5] vs 11.0 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "29262.9 vs 29457.3 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.00 mm from 12.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L1",
+    "spec_id": "test-0003",
+    "kind": "length",
+    "delta": 1.0,
+    "edits": [
+      {
+        "before": "L_X",
+        "after": "L_X + 1.0",
+        "line": 49
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L1-test-0003-length-1.py",
+    "reward": 0.8889,
+    "caught": true,
+    "expected_check": "R1:length",
+    "expected_failed": true,
+    "failed": [
+      "R1:length"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [11.0], depths [5.5] vs 5.5 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "29721.3 vs 29721.3 mm3 predicted from measurement",
+      "R1:length": "120.5 vs 119.5 mm",
+      "R2:width": "48.0 vs 48.0 mm",
+      "R3:thickness": "5.5 vs 5.5 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[11.0] vs 11.0 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "29721.3 vs 29721.3 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.50 mm from 12.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L1",
+    "spec_id": "test-0003",
+    "kind": "pitch",
+    "delta": 1.0,
+    "edits": [
+      {
+        "before": "hole_centers",
+        "after": "[(x + (1.0 / 2 if x >= 0 else -1.0 / 2), y) for x, y in hole_centers]",
+        "line": 54
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L1-test-0003-pitch-1.py",
+    "reward": 1.0,
+    "caught": false,
+    "expected_check": "R5:hole_pattern",
+    "expected_failed": false,
+    "failed": [],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [11.0], depths [5.5] vs 5.5 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "29457.3 vs 29457.3 mm3 predicted from measurement",
+      "R1:length": "119.5 vs 119.5 mm",
+      "R2:width": "48.0 vs 48.0 mm",
+      "R3:thickness": "5.5 vs 5.5 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[11.0] vs 11.0 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "29457.3 vs 29457.3 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.50 mm from 12.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L1",
+    "spec_id": "test-0003",
+    "kind": "pitch",
+    "delta": 1.2,
+    "edits": [
+      {
+        "before": "hole_centers",
+        "after": "[(x + (1.2 / 2 if x >= 0 else -1.2 / 2), y) for x, y in hole_centers]",
+        "line": 54
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L1-test-0003-pitch-1.2.py",
+    "reward": 0.7778,
+    "caught": true,
+    "expected_check": "R5:hole_pattern",
+    "expected_failed": true,
+    "failed": [
+      "R5:hole_pattern",
+      "R7:edge_margin"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [11.0], depths [5.5] vs 5.5 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "29457.3 vs 29457.3 mm3 predicted from measurement",
+      "R1:length": "119.5 vs 119.5 mm",
+      "R2:width": "48.0 vs 48.0 mm",
+      "R3:thickness": "5.5 vs 5.5 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[11.0] vs 11.0 mm",
+      "R5:hole_pattern": "0/4 positions matched",
+      "R6:material": "29457.3 vs 29457.3 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.60 mm from 12.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L1",
+    "spec_id": "test-0004",
+    "kind": "diameter",
+    "delta": 0.5,
+    "edits": [
+      {
+        "before": "HOLE_D",
+        "after": "HOLE_D + 0.5",
+        "line": 50
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L1-test-0004-diameter-0.5.py",
+    "reward": 0.8889,
+    "caught": true,
+    "expected_check": "R4b:hole_diameter",
+    "expected_failed": true,
+    "failed": [
+      "R4b:hole_diameter"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [7.0], depths [5.0] vs 5.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "15767.8 vs 15767.8 mm3 predicted from measurement",
+      "R1:length": "105.0 vs 105.0 mm",
+      "R2:width": "31.5 vs 31.5 mm",
+      "R3:thickness": "5.0 vs 5.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[7.0] vs 6.5 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "15767.8 vs 15873.8 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.00 mm from 9.5 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L1",
+    "spec_id": "test-0004",
+    "kind": "length",
+    "delta": 1.0,
+    "edits": [
+      {
+        "before": "L_X",
+        "after": "L_X + 1.0",
+        "line": 39
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L1-test-0004-length-1.py",
+    "reward": 0.8889,
+    "caught": true,
+    "expected_check": "R1:length",
+    "expected_failed": true,
+    "failed": [
+      "R1:length"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [6.5], depths [5.0] vs 5.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "16031.3 vs 16031.3 mm3 predicted from measurement",
+      "R1:length": "106.0 vs 105.0 mm",
+      "R2:width": "31.5 vs 31.5 mm",
+      "R3:thickness": "5.0 vs 5.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[6.5] vs 6.5 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "16031.3 vs 16031.3 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.50 mm from 9.5 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L1",
+    "spec_id": "test-0004",
+    "kind": "pitch",
+    "delta": 1.0,
+    "edits": [
+      {
+        "before": "points",
+        "after": "[(x + (1.0 / 2 if x >= 0 else -1.0 / 2), y) for x, y in points]",
+        "line": 50
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L1-test-0004-pitch-1.py",
+    "reward": 1.0,
+    "caught": false,
+    "expected_check": "R5:hole_pattern",
+    "expected_failed": false,
+    "failed": [],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [6.5], depths [5.0] vs 5.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "15873.8 vs 15873.8 mm3 predicted from measurement",
+      "R1:length": "105.0 vs 105.0 mm",
+      "R2:width": "31.5 vs 31.5 mm",
+      "R3:thickness": "5.0 vs 5.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[6.5] vs 6.5 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "15873.8 vs 15873.8 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.50 mm from 9.5 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L1",
+    "spec_id": "test-0004",
+    "kind": "pitch",
+    "delta": 1.2,
+    "edits": [
+      {
+        "before": "points",
+        "after": "[(x + (1.2 / 2 if x >= 0 else -1.2 / 2), y) for x, y in points]",
+        "line": 50
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L1-test-0004-pitch-1.2.py",
+    "reward": 0.7778,
+    "caught": true,
+    "expected_check": "R5:hole_pattern",
+    "expected_failed": true,
+    "failed": [
+      "R5:hole_pattern",
+      "R7:edge_margin"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [6.5], depths [5.0] vs 5.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "15873.8 vs 15873.8 mm3 predicted from measurement",
+      "R1:length": "105.0 vs 105.0 mm",
+      "R2:width": "31.5 vs 31.5 mm",
+      "R3:thickness": "5.0 vs 5.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[6.5] vs 6.5 mm",
+      "R5:hole_pattern": "0/4 positions matched",
+      "R6:material": "15873.8 vs 15873.8 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.60 mm from 9.5 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L2",
+    "spec_id": "test-0001",
+    "kind": "diameter",
+    "delta": 0.5,
+    "edits": [
+      {
+        "before": "HOLE_D",
+        "after": "HOLE_D + 0.5",
+        "line": 65
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L2-test-0001-diameter-0.5.py",
+    "reward": 0.8889,
+    "caught": true,
+    "expected_check": "R4b:hole_diameter",
+    "expected_failed": true,
+    "failed": [
+      "R4b:hole_diameter"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [6.0], depths [8.0] vs 8.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "123931.2 vs 123931.2 mm3 predicted from measurement",
+      "R1:length": "101.0 vs 101.0 mm",
+      "R2:width": "154.5 vs 154.5 mm",
+      "R3:thickness": "8.0 vs 8.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[6.0] vs 5.5 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "123931.2 vs 124075.7 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.00 mm from 7.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L2",
+    "spec_id": "test-0001",
+    "kind": "length",
+    "delta": 1.0,
+    "edits": [
+      {
+        "before": "L_X",
+        "after": "L_X + 1.0",
+        "line": 37
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L2-test-0001-length-1.py",
+    "reward": 0.8889,
+    "caught": true,
+    "expected_check": "R1:length",
+    "expected_failed": true,
+    "failed": [
+      "R1:length"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [5.5], depths [8.0] vs 8.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "125311.7 vs 125311.7 mm3 predicted from measurement",
+      "R1:length": "102.0 vs 101.0 mm",
+      "R2:width": "154.5 vs 154.5 mm",
+      "R3:thickness": "8.0 vs 8.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[5.5] vs 5.5 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "125311.7 vs 125311.7 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.50 mm from 7.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L2",
+    "spec_id": "test-0001",
+    "kind": "pitch",
+    "delta": 1.0,
+    "edits": [
+      {
+        "before": "hole_points",
+        "after": "[(x + (1.0 / 2 if x >= 0 else -1.0 / 2), y) for x, y in hole_points]",
+        "line": 65
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L2-test-0001-pitch-1.py",
+    "reward": 1.0,
+    "caught": false,
+    "expected_check": "R5:hole_pattern",
+    "expected_failed": false,
+    "failed": [],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [5.5], depths [8.0] vs 8.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "124075.7 vs 124075.7 mm3 predicted from measurement",
+      "R1:length": "101.0 vs 101.0 mm",
+      "R2:width": "154.5 vs 154.5 mm",
+      "R3:thickness": "8.0 vs 8.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[5.5] vs 5.5 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "124075.7 vs 124075.7 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.50 mm from 7.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L2",
+    "spec_id": "test-0001",
+    "kind": "pitch",
+    "delta": 1.2,
+    "edits": [
+      {
+        "before": "hole_points",
+        "after": "[(x + (1.2 / 2 if x >= 0 else -1.2 / 2), y) for x, y in hole_points]",
+        "line": 65
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L2-test-0001-pitch-1.2.py",
+    "reward": 0.7778,
+    "caught": true,
+    "expected_check": "R5:hole_pattern",
+    "expected_failed": true,
+    "failed": [
+      "R5:hole_pattern",
+      "R7:edge_margin"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [5.5], depths [8.0] vs 8.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "124075.7 vs 124075.7 mm3 predicted from measurement",
+      "R1:length": "101.0 vs 101.0 mm",
+      "R2:width": "154.5 vs 154.5 mm",
+      "R3:thickness": "8.0 vs 8.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[5.5] vs 5.5 mm",
+      "R5:hole_pattern": "0/4 positions matched",
+      "R6:material": "124075.7 vs 124075.7 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.60 mm from 7.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L2",
+    "spec_id": "test-0002",
+    "kind": "diameter",
+    "delta": 0.5,
+    "edits": [
+      {
+        "before": "D_HOLE",
+        "after": "D_HOLE + 0.5",
+        "line": 41
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L2-test-0002-diameter-0.5.py",
+    "reward": 0.8889,
+    "caught": true,
+    "expected_check": "R4b:hole_diameter",
+    "expected_failed": true,
+    "failed": [
+      "R4b:hole_diameter"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [10.0], depths [9.0] vs 9.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "80978.3 vs 80978.3 mm3 predicted from measurement",
+      "R1:length": "59.5 vs 59.5 mm",
+      "R2:width": "156.5 vs 156.5 mm",
+      "R3:thickness": "9.0 vs 9.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[10.0] vs 9.5 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "80978.3 vs 81254.0 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.00 mm from 10.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L2",
+    "spec_id": "test-0002",
+    "kind": "length",
+    "delta": 1.0,
+    "edits": [
+      {
+        "before": "L_X",
+        "after": "L_X + 1.0",
+        "line": 35
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L2-test-0002-length-1.py",
+    "reward": 0.8889,
+    "caught": true,
+    "expected_check": "R1:length",
+    "expected_failed": true,
+    "failed": [
+      "R1:length"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [9.5], depths [9.0] vs 9.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "82662.5 vs 82662.5 mm3 predicted from measurement",
+      "R1:length": "60.5 vs 59.5 mm",
+      "R2:width": "156.5 vs 156.5 mm",
+      "R3:thickness": "9.0 vs 9.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[9.5] vs 9.5 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "82662.5 vs 82662.5 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.50 mm from 10.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L2",
+    "spec_id": "test-0002",
+    "kind": "pitch",
+    "delta": 1.0,
+    "edits": [
+      {
+        "before": "hole_coords",
+        "after": "[(x + (1.0 / 2 if x >= 0 else -1.0 / 2), y) for x, y in hole_coords]",
+        "line": 41
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L2-test-0002-pitch-1.py",
+    "reward": 1.0,
+    "caught": false,
+    "expected_check": "R5:hole_pattern",
+    "expected_failed": false,
+    "failed": [],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [9.5], depths [9.0] vs 9.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "81254.0 vs 81254.0 mm3 predicted from measurement",
+      "R1:length": "59.5 vs 59.5 mm",
+      "R2:width": "156.5 vs 156.5 mm",
+      "R3:thickness": "9.0 vs 9.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[9.5] vs 9.5 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "81254.0 vs 81254.0 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.50 mm from 10.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L2",
+    "spec_id": "test-0002",
+    "kind": "pitch",
+    "delta": 1.2,
+    "edits": [
+      {
+        "before": "hole_coords",
+        "after": "[(x + (1.2 / 2 if x >= 0 else -1.2 / 2), y) for x, y in hole_coords]",
+        "line": 41
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L2-test-0002-pitch-1.2.py",
+    "reward": 0.7778,
+    "caught": true,
+    "expected_check": "R5:hole_pattern",
+    "expected_failed": true,
+    "failed": [
+      "R5:hole_pattern",
+      "R7:edge_margin"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [9.5], depths [9.0] vs 9.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "81254.0 vs 81254.0 mm3 predicted from measurement",
+      "R1:length": "59.5 vs 59.5 mm",
+      "R2:width": "156.5 vs 156.5 mm",
+      "R3:thickness": "9.0 vs 9.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[9.5] vs 9.5 mm",
+      "R5:hole_pattern": "0/4 positions matched",
+      "R6:material": "81254.0 vs 81254.0 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.60 mm from 10.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L2",
+    "spec_id": "test-0003",
+    "kind": "diameter",
+    "delta": 0.5,
+    "edits": [
+      {
+        "before": "D",
+        "after": "D + 0.5",
+        "line": 41
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L2-test-0003-diameter-0.5.py",
+    "reward": 0.8889,
+    "caught": true,
+    "expected_check": "R4b:hole_diameter",
+    "expected_failed": true,
+    "failed": [
+      "R4b:hole_diameter"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [11.5], depths [5.5] vs 5.5 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "29262.9 vs 29262.9 mm3 predicted from measurement",
+      "R1:length": "119.5 vs 119.5 mm",
+      "R2:width": "48.0 vs 48.0 mm",
+      "R3:thickness": "5.5 vs 5.5 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[11.5] vs 11.0 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "29262.9 vs 29457.3 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.00 mm from 12.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L2",
+    "spec_id": "test-0003",
+    "kind": "length",
+    "delta": 1.0,
+    "edits": [
+      {
+        "before": "L",
+        "after": "L + 1.0",
+        "line": 37
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L2-test-0003-length-1.py",
+    "reward": 0.8889,
+    "caught": true,
+    "expected_check": "R1:length",
+    "expected_failed": true,
+    "failed": [
+      "R1:length"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [11.0], depths [5.5] vs 5.5 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "29721.3 vs 29721.3 mm3 predicted from measurement",
+      "R1:length": "120.5 vs 119.5 mm",
+      "R2:width": "48.0 vs 48.0 mm",
+      "R3:thickness": "5.5 vs 5.5 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[11.0] vs 11.0 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "29721.3 vs 29721.3 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.50 mm from 12.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L2",
+    "spec_id": "test-0003",
+    "kind": "pitch",
+    "delta": 1.0,
+    "edits": [
+      {
+        "before": "holes",
+        "after": "[(x + (1.0 / 2 if x >= 0 else -1.0 / 2), y) for x, y in holes]",
+        "line": 41
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L2-test-0003-pitch-1.py",
+    "reward": 1.0,
+    "caught": false,
+    "expected_check": "R5:hole_pattern",
+    "expected_failed": false,
+    "failed": [],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [11.0], depths [5.5] vs 5.5 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "29457.3 vs 29457.3 mm3 predicted from measurement",
+      "R1:length": "119.5 vs 119.5 mm",
+      "R2:width": "48.0 vs 48.0 mm",
+      "R3:thickness": "5.5 vs 5.5 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[11.0] vs 11.0 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "29457.3 vs 29457.3 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.50 mm from 12.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L2",
+    "spec_id": "test-0003",
+    "kind": "pitch",
+    "delta": 1.2,
+    "edits": [
+      {
+        "before": "holes",
+        "after": "[(x + (1.2 / 2 if x >= 0 else -1.2 / 2), y) for x, y in holes]",
+        "line": 41
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L2-test-0003-pitch-1.2.py",
+    "reward": 0.7778,
+    "caught": true,
+    "expected_check": "R5:hole_pattern",
+    "expected_failed": true,
+    "failed": [
+      "R5:hole_pattern",
+      "R7:edge_margin"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [11.0], depths [5.5] vs 5.5 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "29457.3 vs 29457.3 mm3 predicted from measurement",
+      "R1:length": "119.5 vs 119.5 mm",
+      "R2:width": "48.0 vs 48.0 mm",
+      "R3:thickness": "5.5 vs 5.5 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[11.0] vs 11.0 mm",
+      "R5:hole_pattern": "0/4 positions matched",
+      "R6:material": "29457.3 vs 29457.3 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.60 mm from 12.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L2",
+    "spec_id": "test-0004",
+    "kind": "diameter",
+    "delta": 0.5,
+    "edits": [
+      {
+        "before": "D",
+        "after": "D + 0.5",
+        "line": 40
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L2-test-0004-diameter-0.5.py",
+    "reward": 0.8889,
+    "caught": true,
+    "expected_check": "R4b:hole_diameter",
+    "expected_failed": true,
+    "failed": [
+      "R4b:hole_diameter"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [7.0], depths [5.0] vs 5.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "15767.8 vs 15767.8 mm3 predicted from measurement",
+      "R1:length": "105.0 vs 105.0 mm",
+      "R2:width": "31.5 vs 31.5 mm",
+      "R3:thickness": "5.0 vs 5.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[7.0] vs 6.5 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "15767.8 vs 15873.8 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.00 mm from 9.5 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L2",
+    "spec_id": "test-0004",
+    "kind": "length",
+    "delta": 1.0,
+    "edits": [
+      {
+        "before": "L",
+        "after": "L + 1.0",
+        "line": 33
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L2-test-0004-length-1.py",
+    "reward": 0.8889,
+    "caught": true,
+    "expected_check": "R1:length",
+    "expected_failed": true,
+    "failed": [
+      "R1:length"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [6.5], depths [5.0] vs 5.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "16031.3 vs 16031.3 mm3 predicted from measurement",
+      "R1:length": "106.0 vs 105.0 mm",
+      "R2:width": "31.5 vs 31.5 mm",
+      "R3:thickness": "5.0 vs 5.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[6.5] vs 6.5 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "16031.3 vs 16031.3 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.50 mm from 9.5 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L2",
+    "spec_id": "test-0004",
+    "kind": "pitch",
+    "delta": 1.0,
+    "edits": [
+      {
+        "before": "holes_coords",
+        "after": "[(x + (1.0 / 2 if x >= 0 else -1.0 / 2), y) for x, y in holes_coords]",
+        "line": 40
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L2-test-0004-pitch-1.py",
+    "reward": 1.0,
+    "caught": false,
+    "expected_check": "R5:hole_pattern",
+    "expected_failed": false,
+    "failed": [],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [6.5], depths [5.0] vs 5.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "15873.8 vs 15873.8 mm3 predicted from measurement",
+      "R1:length": "105.0 vs 105.0 mm",
+      "R2:width": "31.5 vs 31.5 mm",
+      "R3:thickness": "5.0 vs 5.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[6.5] vs 6.5 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "15873.8 vs 15873.8 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.50 mm from 9.5 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L2",
+    "spec_id": "test-0004",
+    "kind": "pitch",
+    "delta": 1.2,
+    "edits": [
+      {
+        "before": "holes_coords",
+        "after": "[(x + (1.2 / 2 if x >= 0 else -1.2 / 2), y) for x, y in holes_coords]",
+        "line": 40
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L2-test-0004-pitch-1.2.py",
+    "reward": 0.7778,
+    "caught": true,
+    "expected_check": "R5:hole_pattern",
+    "expected_failed": true,
+    "failed": [
+      "R5:hole_pattern",
+      "R7:edge_margin"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [6.5], depths [5.0] vs 5.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "15873.8 vs 15873.8 mm3 predicted from measurement",
+      "R1:length": "105.0 vs 105.0 mm",
+      "R2:width": "31.5 vs 31.5 mm",
+      "R3:thickness": "5.0 vs 5.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[6.5] vs 6.5 mm",
+      "R5:hole_pattern": "0/4 positions matched",
+      "R6:material": "15873.8 vs 15873.8 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.60 mm from 9.5 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L3",
+    "spec_id": "test-0001",
+    "kind": "diameter",
+    "delta": 0.5,
+    "edits": [
+      {
+        "before": "hole_diameter",
+        "after": "hole_diameter + 0.5",
+        "line": 42
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L3-test-0001-diameter-0.5.py",
+    "reward": 0.8889,
+    "caught": true,
+    "expected_check": "R4b:hole_diameter",
+    "expected_failed": true,
+    "failed": [
+      "R4b:hole_diameter"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [6.0], depths [8.0] vs 8.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "123931.2 vs 123931.2 mm3 predicted from measurement",
+      "R1:length": "101.0 vs 101.0 mm",
+      "R2:width": "154.5 vs 154.5 mm",
+      "R3:thickness": "8.0 vs 8.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[6.0] vs 5.5 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "123931.2 vs 124075.7 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.00 mm from 7.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L3",
+    "spec_id": "test-0001",
+    "kind": "length",
+    "delta": 1.0,
+    "edits": [
+      {
+        "before": "plate_length",
+        "after": "plate_length + 1.0",
+        "line": 15
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L3-test-0001-length-1.py",
+    "reward": 0.8889,
+    "caught": true,
+    "expected_check": "R1:length",
+    "expected_failed": true,
+    "failed": [
+      "R1:length"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [5.5], depths [8.0] vs 8.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "125311.7 vs 125311.7 mm3 predicted from measurement",
+      "R1:length": "102.0 vs 101.0 mm",
+      "R2:width": "154.5 vs 154.5 mm",
+      "R3:thickness": "8.0 vs 8.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[5.5] vs 5.5 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "125311.7 vs 125311.7 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.50 mm from 7.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L3",
+    "spec_id": "test-0001",
+    "kind": "pitch",
+    "delta": 1.0,
+    "edits": [
+      {
+        "before": "points",
+        "after": "[(x + (1.0 / 2 if x >= 0 else -1.0 / 2), y) for x, y in points]",
+        "line": 42
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L3-test-0001-pitch-1.py",
+    "reward": 1.0,
+    "caught": false,
+    "expected_check": "R5:hole_pattern",
+    "expected_failed": false,
+    "failed": [],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [5.5], depths [8.0] vs 8.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "124075.7 vs 124075.7 mm3 predicted from measurement",
+      "R1:length": "101.0 vs 101.0 mm",
+      "R2:width": "154.5 vs 154.5 mm",
+      "R3:thickness": "8.0 vs 8.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[5.5] vs 5.5 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "124075.7 vs 124075.7 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.50 mm from 7.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L3",
+    "spec_id": "test-0001",
+    "kind": "pitch",
+    "delta": 1.2,
+    "edits": [
+      {
+        "before": "points",
+        "after": "[(x + (1.2 / 2 if x >= 0 else -1.2 / 2), y) for x, y in points]",
+        "line": 42
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L3-test-0001-pitch-1.2.py",
+    "reward": 0.7778,
+    "caught": true,
+    "expected_check": "R5:hole_pattern",
+    "expected_failed": true,
+    "failed": [
+      "R5:hole_pattern",
+      "R7:edge_margin"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [5.5], depths [8.0] vs 8.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "124075.7 vs 124075.7 mm3 predicted from measurement",
+      "R1:length": "101.0 vs 101.0 mm",
+      "R2:width": "154.5 vs 154.5 mm",
+      "R3:thickness": "8.0 vs 8.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[5.5] vs 5.5 mm",
+      "R5:hole_pattern": "0/4 positions matched",
+      "R6:material": "124075.7 vs 124075.7 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.60 mm from 7.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L3",
+    "spec_id": "test-0002",
+    "kind": "diameter",
+    "delta": 0.5,
+    "edits": [
+      {
+        "before": "hole_diameter",
+        "after": "hole_diameter + 0.5",
+        "line": 34
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L3-test-0002-diameter-0.5.py",
+    "reward": 0.8889,
+    "caught": true,
+    "expected_check": "R4b:hole_diameter",
+    "expected_failed": true,
+    "failed": [
+      "R4b:hole_diameter"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [10.0], depths [9.0] vs 9.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "80978.3 vs 80978.3 mm3 predicted from measurement",
+      "R1:length": "59.5 vs 59.5 mm",
+      "R2:width": "156.5 vs 156.5 mm",
+      "R3:thickness": "9.0 vs 9.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[10.0] vs 9.5 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "80978.3 vs 81254.0 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.00 mm from 10.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L3",
+    "spec_id": "test-0002",
+    "kind": "length",
+    "delta": 1.0,
+    "edits": [
+      {
+        "before": "plate_length",
+        "after": "plate_length + 1.0",
+        "line": 14
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L3-test-0002-length-1.py",
+    "reward": 0.8889,
+    "caught": true,
+    "expected_check": "R1:length",
+    "expected_failed": true,
+    "failed": [
+      "R1:length"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [9.5], depths [9.0] vs 9.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "82662.5 vs 82662.5 mm3 predicted from measurement",
+      "R1:length": "60.5 vs 59.5 mm",
+      "R2:width": "156.5 vs 156.5 mm",
+      "R3:thickness": "9.0 vs 9.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[9.5] vs 9.5 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "82662.5 vs 82662.5 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.50 mm from 10.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L3",
+    "spec_id": "test-0002",
+    "kind": "pitch",
+    "delta": 1.0,
+    "edits": [
+      {
+        "before": "points",
+        "after": "[(x + (1.0 / 2 if x >= 0 else -1.0 / 2), y) for x, y in points]",
+        "line": 34
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L3-test-0002-pitch-1.py",
+    "reward": 1.0,
+    "caught": false,
+    "expected_check": "R5:hole_pattern",
+    "expected_failed": false,
+    "failed": [],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [9.5], depths [9.0] vs 9.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "81254.0 vs 81254.0 mm3 predicted from measurement",
+      "R1:length": "59.5 vs 59.5 mm",
+      "R2:width": "156.5 vs 156.5 mm",
+      "R3:thickness": "9.0 vs 9.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[9.5] vs 9.5 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "81254.0 vs 81254.0 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.50 mm from 10.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L3",
+    "spec_id": "test-0002",
+    "kind": "pitch",
+    "delta": 1.2,
+    "edits": [
+      {
+        "before": "points",
+        "after": "[(x + (1.2 / 2 if x >= 0 else -1.2 / 2), y) for x, y in points]",
+        "line": 34
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L3-test-0002-pitch-1.2.py",
+    "reward": 0.7778,
+    "caught": true,
+    "expected_check": "R5:hole_pattern",
+    "expected_failed": true,
+    "failed": [
+      "R5:hole_pattern",
+      "R7:edge_margin"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [9.5], depths [9.0] vs 9.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "81254.0 vs 81254.0 mm3 predicted from measurement",
+      "R1:length": "59.5 vs 59.5 mm",
+      "R2:width": "156.5 vs 156.5 mm",
+      "R3:thickness": "9.0 vs 9.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[9.5] vs 9.5 mm",
+      "R5:hole_pattern": "0/4 positions matched",
+      "R6:material": "81254.0 vs 81254.0 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.60 mm from 10.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L3",
+    "spec_id": "test-0003",
+    "kind": "diameter",
+    "delta": 0.5,
+    "edits": [
+      {
+        "before": "hole_diameter",
+        "after": "hole_diameter + 0.5",
+        "line": 39
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L3-test-0003-diameter-0.5.py",
+    "reward": 0.8889,
+    "caught": true,
+    "expected_check": "R4b:hole_diameter",
+    "expected_failed": true,
+    "failed": [
+      "R4b:hole_diameter"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [11.5], depths [5.5] vs 5.5 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "29262.9 vs 29262.9 mm3 predicted from measurement",
+      "R1:length": "119.5 vs 119.5 mm",
+      "R2:width": "48.0 vs 48.0 mm",
+      "R3:thickness": "5.5 vs 5.5 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[11.5] vs 11.0 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "29262.9 vs 29457.3 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.00 mm from 12.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L3",
+    "spec_id": "test-0003",
+    "kind": "length",
+    "delta": 1.0,
+    "edits": [
+      {
+        "before": "plate_length",
+        "after": "plate_length + 1.0",
+        "line": 23
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L3-test-0003-length-1.py",
+    "reward": 0.8889,
+    "caught": true,
+    "expected_check": "R1:length",
+    "expected_failed": true,
+    "failed": [
+      "R1:length"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [11.0], depths [5.5] vs 5.5 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "29721.3 vs 29721.3 mm3 predicted from measurement",
+      "R1:length": "120.5 vs 119.5 mm",
+      "R2:width": "48.0 vs 48.0 mm",
+      "R3:thickness": "5.5 vs 5.5 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[11.0] vs 11.0 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "29721.3 vs 29721.3 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.50 mm from 12.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L3",
+    "spec_id": "test-0003",
+    "kind": "pitch",
+    "delta": 1.0,
+    "edits": [
+      {
+        "before": "points",
+        "after": "[(x + (1.0 / 2 if x >= 0 else -1.0 / 2), y) for x, y in points]",
+        "line": 39
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L3-test-0003-pitch-1.py",
+    "reward": 1.0,
+    "caught": false,
+    "expected_check": "R5:hole_pattern",
+    "expected_failed": false,
+    "failed": [],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [11.0], depths [5.5] vs 5.5 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "29457.3 vs 29457.3 mm3 predicted from measurement",
+      "R1:length": "119.5 vs 119.5 mm",
+      "R2:width": "48.0 vs 48.0 mm",
+      "R3:thickness": "5.5 vs 5.5 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[11.0] vs 11.0 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "29457.3 vs 29457.3 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.50 mm from 12.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L3",
+    "spec_id": "test-0003",
+    "kind": "pitch",
+    "delta": 1.2,
+    "edits": [
+      {
+        "before": "points",
+        "after": "[(x + (1.2 / 2 if x >= 0 else -1.2 / 2), y) for x, y in points]",
+        "line": 39
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L3-test-0003-pitch-1.2.py",
+    "reward": 0.7778,
+    "caught": true,
+    "expected_check": "R5:hole_pattern",
+    "expected_failed": true,
+    "failed": [
+      "R5:hole_pattern",
+      "R7:edge_margin"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [11.0], depths [5.5] vs 5.5 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "29457.3 vs 29457.3 mm3 predicted from measurement",
+      "R1:length": "119.5 vs 119.5 mm",
+      "R2:width": "48.0 vs 48.0 mm",
+      "R3:thickness": "5.5 vs 5.5 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[11.0] vs 11.0 mm",
+      "R5:hole_pattern": "0/4 positions matched",
+      "R6:material": "29457.3 vs 29457.3 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.60 mm from 12.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L3",
+    "spec_id": "test-0004",
+    "kind": "diameter",
+    "delta": 0.5,
+    "edits": [
+      {
+        "before": "2 * R",
+        "after": "2 * R + 0.5",
+        "line": 37
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L3-test-0004-diameter-0.5.py",
+    "reward": 0.8889,
+    "caught": true,
+    "expected_check": "R4b:hole_diameter",
+    "expected_failed": true,
+    "failed": [
+      "R4b:hole_diameter"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [7.0], depths [5.0] vs 5.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "15767.8 vs 15767.8 mm3 predicted from measurement",
+      "R1:length": "105.0 vs 105.0 mm",
+      "R2:width": "31.5 vs 31.5 mm",
+      "R3:thickness": "5.0 vs 5.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[7.0] vs 6.5 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "15767.8 vs 15873.8 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.00 mm from 9.5 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L3",
+    "spec_id": "test-0004",
+    "kind": "length",
+    "delta": 1.0,
+    "edits": [
+      {
+        "before": "L",
+        "after": "L + 1.0",
+        "line": 37
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L3-test-0004-length-1.py",
+    "reward": 0.8889,
+    "caught": true,
+    "expected_check": "R1:length",
+    "expected_failed": true,
+    "failed": [
+      "R1:length"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [6.5], depths [5.0] vs 5.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "16031.3 vs 16031.3 mm3 predicted from measurement",
+      "R1:length": "106.0 vs 105.0 mm",
+      "R2:width": "31.5 vs 31.5 mm",
+      "R3:thickness": "5.0 vs 5.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[6.5] vs 6.5 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "16031.3 vs 16031.3 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.50 mm from 9.5 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L3",
+    "spec_id": "test-0004",
+    "kind": "pitch",
+    "delta": 1.0,
+    "edits": [
+      {
+        "before": "points",
+        "after": "[(x + (1.0 / 2 if x >= 0 else -1.0 / 2), y) for x, y in points]",
+        "line": 37
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L3-test-0004-pitch-1.py",
+    "reward": 1.0,
+    "caught": false,
+    "expected_check": "R5:hole_pattern",
+    "expected_failed": false,
+    "failed": [],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [6.5], depths [5.0] vs 5.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "15873.8 vs 15873.8 mm3 predicted from measurement",
+      "R1:length": "105.0 vs 105.0 mm",
+      "R2:width": "31.5 vs 31.5 mm",
+      "R3:thickness": "5.0 vs 5.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[6.5] vs 6.5 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "15873.8 vs 15873.8 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.50 mm from 9.5 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L3",
+    "spec_id": "test-0004",
+    "kind": "pitch",
+    "delta": 1.2,
+    "edits": [
+      {
+        "before": "points",
+        "after": "[(x + (1.2 / 2 if x >= 0 else -1.2 / 2), y) for x, y in points]",
+        "line": 37
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L3-test-0004-pitch-1.2.py",
+    "reward": 0.7778,
+    "caught": true,
+    "expected_check": "R5:hole_pattern",
+    "expected_failed": true,
+    "failed": [
+      "R5:hole_pattern",
+      "R7:edge_margin"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [6.5], depths [5.0] vs 5.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "15873.8 vs 15873.8 mm3 predicted from measurement",
+      "R1:length": "105.0 vs 105.0 mm",
+      "R2:width": "31.5 vs 31.5 mm",
+      "R3:thickness": "5.0 vs 5.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[6.5] vs 6.5 mm",
+      "R5:hole_pattern": "0/4 positions matched",
+      "R6:material": "15873.8 vs 15873.8 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.60 mm from 9.5 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L4",
+    "spec_id": "test-0001",
+    "kind": "diameter",
+    "delta": 0.5,
+    "edits": [
+      {
+        "before": "5.5",
+        "after": "5.5 + 0.5",
+        "line": 23
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L4-test-0001-diameter-0.5.py",
+    "reward": 0.8889,
+    "caught": true,
+    "expected_check": "R4b:hole_diameter",
+    "expected_failed": true,
+    "failed": [
+      "R4b:hole_diameter"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [6.0], depths [8.0] vs 8.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "123931.2 vs 123931.2 mm3 predicted from measurement",
+      "R1:length": "101.0 vs 101.0 mm",
+      "R2:width": "154.5 vs 154.5 mm",
+      "R3:thickness": "8.0 vs 8.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[6.0] vs 5.5 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "123931.2 vs 124075.7 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.00 mm from 7.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L4",
+    "spec_id": "test-0001",
+    "kind": "length",
+    "delta": 1.0,
+    "edits": [
+      {
+        "before": "101.0",
+        "after": "101.0 + 1.0",
+        "line": 23
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L4-test-0001-length-1.py",
+    "reward": 0.8889,
+    "caught": true,
+    "expected_check": "R1:length",
+    "expected_failed": true,
+    "failed": [
+      "R1:length"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [5.5], depths [8.0] vs 8.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "125311.7 vs 125311.7 mm3 predicted from measurement",
+      "R1:length": "102.0 vs 101.0 mm",
+      "R2:width": "154.5 vs 154.5 mm",
+      "R3:thickness": "8.0 vs 8.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[5.5] vs 5.5 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "125311.7 vs 125311.7 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.50 mm from 7.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L4",
+    "spec_id": "test-0001",
+    "kind": "pitch",
+    "delta": 1.0,
+    "edits": [
+      {
+        "before": "87.0",
+        "after": "87.0 + 1.0",
+        "line": 23
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L4-test-0001-pitch-1.py",
+    "reward": 1.0,
+    "caught": false,
+    "expected_check": "R5:hole_pattern",
+    "expected_failed": false,
+    "failed": [],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [5.5], depths [8.0] vs 8.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "124075.7 vs 124075.7 mm3 predicted from measurement",
+      "R1:length": "101.0 vs 101.0 mm",
+      "R2:width": "154.5 vs 154.5 mm",
+      "R3:thickness": "8.0 vs 8.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[5.5] vs 5.5 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "124075.7 vs 124075.7 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.50 mm from 7.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L4",
+    "spec_id": "test-0001",
+    "kind": "pitch",
+    "delta": 1.2,
+    "edits": [
+      {
+        "before": "87.0",
+        "after": "87.0 + 1.2",
+        "line": 23
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L4-test-0001-pitch-1.2.py",
+    "reward": 0.7778,
+    "caught": true,
+    "expected_check": "R5:hole_pattern",
+    "expected_failed": true,
+    "failed": [
+      "R5:hole_pattern",
+      "R7:edge_margin"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [5.5], depths [8.0] vs 8.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "124075.7 vs 124075.7 mm3 predicted from measurement",
+      "R1:length": "101.0 vs 101.0 mm",
+      "R2:width": "154.5 vs 154.5 mm",
+      "R3:thickness": "8.0 vs 8.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[5.5] vs 5.5 mm",
+      "R5:hole_pattern": "0/4 positions matched",
+      "R6:material": "124075.7 vs 124075.7 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.60 mm from 7.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L4",
+    "spec_id": "test-0002",
+    "kind": "diameter",
+    "delta": 0.5,
+    "edits": [
+      {
+        "before": "9.5",
+        "after": "9.5 + 0.5",
+        "line": 36
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L4-test-0002-diameter-0.5.py",
+    "reward": 0.8889,
+    "caught": true,
+    "expected_check": "R4b:hole_diameter",
+    "expected_failed": true,
+    "failed": [
+      "R4b:hole_diameter"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [10.0], depths [9.0] vs 9.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "80978.3 vs 80978.3 mm3 predicted from measurement",
+      "R1:length": "59.5 vs 59.5 mm",
+      "R2:width": "156.5 vs 156.5 mm",
+      "R3:thickness": "9.0 vs 9.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[10.0] vs 9.5 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "80978.3 vs 81254.0 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.00 mm from 10.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L4",
+    "spec_id": "test-0002",
+    "kind": "length",
+    "delta": 1.0,
+    "edits": [
+      {
+        "before": "plate_length",
+        "after": "plate_length + 1.0",
+        "line": 36
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L4-test-0002-length-1.py",
+    "reward": 0.8889,
+    "caught": true,
+    "expected_check": "R1:length",
+    "expected_failed": true,
+    "failed": [
+      "R1:length"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [9.5], depths [9.0] vs 9.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "82662.5 vs 82662.5 mm3 predicted from measurement",
+      "R1:length": "60.5 vs 59.5 mm",
+      "R2:width": "156.5 vs 156.5 mm",
+      "R3:thickness": "9.0 vs 9.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[9.5] vs 9.5 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "82662.5 vs 82662.5 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.50 mm from 10.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L4",
+    "spec_id": "test-0002",
+    "kind": "pitch",
+    "delta": 1.0,
+    "edits": [
+      {
+        "before": "39.5",
+        "after": "39.5 + 1.0",
+        "line": 36
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L4-test-0002-pitch-1.py",
+    "reward": 1.0,
+    "caught": false,
+    "expected_check": "R5:hole_pattern",
+    "expected_failed": false,
+    "failed": [],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [9.5], depths [9.0] vs 9.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "81254.0 vs 81254.0 mm3 predicted from measurement",
+      "R1:length": "59.5 vs 59.5 mm",
+      "R2:width": "156.5 vs 156.5 mm",
+      "R3:thickness": "9.0 vs 9.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[9.5] vs 9.5 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "81254.0 vs 81254.0 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.50 mm from 10.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L4",
+    "spec_id": "test-0002",
+    "kind": "pitch",
+    "delta": 1.2,
+    "edits": [
+      {
+        "before": "39.5",
+        "after": "39.5 + 1.2",
+        "line": 36
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L4-test-0002-pitch-1.2.py",
+    "reward": 0.7778,
+    "caught": true,
+    "expected_check": "R5:hole_pattern",
+    "expected_failed": true,
+    "failed": [
+      "R5:hole_pattern",
+      "R7:edge_margin"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [9.5], depths [9.0] vs 9.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "81254.0 vs 81254.0 mm3 predicted from measurement",
+      "R1:length": "59.5 vs 59.5 mm",
+      "R2:width": "156.5 vs 156.5 mm",
+      "R3:thickness": "9.0 vs 9.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[9.5] vs 9.5 mm",
+      "R5:hole_pattern": "0/4 positions matched",
+      "R6:material": "81254.0 vs 81254.0 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.60 mm from 10.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L4",
+    "spec_id": "test-0003",
+    "kind": "diameter",
+    "delta": 0.5,
+    "edits": [
+      {
+        "before": "11.0",
+        "after": "11.0 + 0.5",
+        "line": 50
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L4-test-0003-diameter-0.5.py",
+    "reward": 0.8889,
+    "caught": true,
+    "expected_check": "R4b:hole_diameter",
+    "expected_failed": true,
+    "failed": [
+      "R4b:hole_diameter"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [11.5], depths [5.5] vs 5.5 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "29262.9 vs 29262.9 mm3 predicted from measurement",
+      "R1:length": "119.5 vs 119.5 mm",
+      "R2:width": "48.0 vs 48.0 mm",
+      "R3:thickness": "5.5 vs 5.5 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[11.5] vs 11.0 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "29262.9 vs 29457.3 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.00 mm from 12.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L4",
+    "spec_id": "test-0003",
+    "kind": "length",
+    "delta": 1.0,
+    "edits": [
+      {
+        "before": "119.5",
+        "after": "119.5 + 1.0",
+        "line": 50
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L4-test-0003-length-1.py",
+    "reward": 0.8889,
+    "caught": true,
+    "expected_check": "R1:length",
+    "expected_failed": true,
+    "failed": [
+      "R1:length"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [11.0], depths [5.5] vs 5.5 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "29721.3 vs 29721.3 mm3 predicted from measurement",
+      "R1:length": "120.5 vs 119.5 mm",
+      "R2:width": "48.0 vs 48.0 mm",
+      "R3:thickness": "5.5 vs 5.5 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[11.0] vs 11.0 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "29721.3 vs 29721.3 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.50 mm from 12.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L4",
+    "spec_id": "test-0003",
+    "kind": "pitch",
+    "delta": 1.0,
+    "edits": [
+      {
+        "before": "95.5",
+        "after": "95.5 + 1.0",
+        "line": 50
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L4-test-0003-pitch-1.py",
+    "reward": 1.0,
+    "caught": false,
+    "expected_check": "R5:hole_pattern",
+    "expected_failed": false,
+    "failed": [],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [11.0], depths [5.5] vs 5.5 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "29457.3 vs 29457.3 mm3 predicted from measurement",
+      "R1:length": "119.5 vs 119.5 mm",
+      "R2:width": "48.0 vs 48.0 mm",
+      "R3:thickness": "5.5 vs 5.5 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[11.0] vs 11.0 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "29457.3 vs 29457.3 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.50 mm from 12.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L4",
+    "spec_id": "test-0003",
+    "kind": "pitch",
+    "delta": 1.2,
+    "edits": [
+      {
+        "before": "95.5",
+        "after": "95.5 + 1.2",
+        "line": 50
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L4-test-0003-pitch-1.2.py",
+    "reward": 0.7778,
+    "caught": true,
+    "expected_check": "R5:hole_pattern",
+    "expected_failed": true,
+    "failed": [
+      "R5:hole_pattern",
+      "R7:edge_margin"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [11.0], depths [5.5] vs 5.5 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "29457.3 vs 29457.3 mm3 predicted from measurement",
+      "R1:length": "119.5 vs 119.5 mm",
+      "R2:width": "48.0 vs 48.0 mm",
+      "R3:thickness": "5.5 vs 5.5 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[11.0] vs 11.0 mm",
+      "R5:hole_pattern": "0/4 positions matched",
+      "R6:material": "29457.3 vs 29457.3 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.60 mm from 12.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L4",
+    "spec_id": "test-0004",
+    "kind": "diameter",
+    "delta": 0.5,
+    "edits": [
+      {
+        "before": "6.5",
+        "after": "6.5 + 0.5",
+        "line": 48
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L4-test-0004-diameter-0.5.py",
+    "reward": 0.8889,
+    "caught": true,
+    "expected_check": "R4b:hole_diameter",
+    "expected_failed": true,
+    "failed": [
+      "R4b:hole_diameter"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [7.0], depths [5.0] vs 5.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "15767.8 vs 15767.8 mm3 predicted from measurement",
+      "R1:length": "105.0 vs 105.0 mm",
+      "R2:width": "31.5 vs 31.5 mm",
+      "R3:thickness": "5.0 vs 5.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[7.0] vs 6.5 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "15767.8 vs 15873.8 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.00 mm from 9.5 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L4",
+    "spec_id": "test-0004",
+    "kind": "length",
+    "delta": 1.0,
+    "edits": [
+      {
+        "before": "105.0",
+        "after": "105.0 + 1.0",
+        "line": 48
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L4-test-0004-length-1.py",
+    "reward": 0.8889,
+    "caught": true,
+    "expected_check": "R1:length",
+    "expected_failed": true,
+    "failed": [
+      "R1:length"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [6.5], depths [5.0] vs 5.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "16031.3 vs 16031.3 mm3 predicted from measurement",
+      "R1:length": "106.0 vs 105.0 mm",
+      "R2:width": "31.5 vs 31.5 mm",
+      "R3:thickness": "5.0 vs 5.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[6.5] vs 6.5 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "16031.3 vs 16031.3 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.50 mm from 9.5 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L4",
+    "spec_id": "test-0004",
+    "kind": "pitch",
+    "delta": 1.0,
+    "edits": [
+      {
+        "before": "86.0",
+        "after": "86.0 + 1.0",
+        "line": 48
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L4-test-0004-pitch-1.py",
+    "reward": 1.0,
+    "caught": false,
+    "expected_check": "R5:hole_pattern",
+    "expected_failed": false,
+    "failed": [],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [6.5], depths [5.0] vs 5.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "15873.8 vs 15873.8 mm3 predicted from measurement",
+      "R1:length": "105.0 vs 105.0 mm",
+      "R2:width": "31.5 vs 31.5 mm",
+      "R3:thickness": "5.0 vs 5.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[6.5] vs 6.5 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "15873.8 vs 15873.8 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.50 mm from 9.5 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L4",
+    "spec_id": "test-0004",
+    "kind": "pitch",
+    "delta": 1.2,
+    "edits": [
+      {
+        "before": "86.0",
+        "after": "86.0 + 1.2",
+        "line": 48
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L4-test-0004-pitch-1.2.py",
+    "reward": 0.7778,
+    "caught": true,
+    "expected_check": "R5:hole_pattern",
+    "expected_failed": true,
+    "failed": [
+      "R5:hole_pattern",
+      "R7:edge_margin"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [6.5], depths [5.0] vs 5.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "15873.8 vs 15873.8 mm3 predicted from measurement",
+      "R1:length": "105.0 vs 105.0 mm",
+      "R2:width": "31.5 vs 31.5 mm",
+      "R3:thickness": "5.0 vs 5.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[6.5] vs 6.5 mm",
+      "R5:hole_pattern": "0/4 positions matched",
+      "R6:material": "15873.8 vs 15873.8 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.60 mm from 9.5 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L4",
+    "spec_id": "test-0005",
+    "kind": "diameter",
+    "delta": 0.5,
+    "edits": [
+      {
+        "before": "4.0",
+        "after": "4.0 + 0.5",
+        "line": 46
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L4-test-0005-diameter-0.5.py",
+    "reward": 0.8889,
+    "caught": true,
+    "expected_check": "R4b:hole_diameter",
+    "expected_failed": true,
+    "failed": [
+      "R4b:hole_diameter"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [4.5], depths [13.0] vs 13.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "207693.0 vs 207693.0 mm3 predicted from measurement",
+      "R1:length": "200.5 vs 200.5 mm",
+      "R2:width": "80.0 vs 80.0 mm",
+      "R3:thickness": "13.0 vs 13.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[4.5] vs 4.0 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "207693.0 vs 207866.5 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.00 mm from 21.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L4",
+    "spec_id": "test-0005",
+    "kind": "length",
+    "delta": 1.0,
+    "edits": [
+      {
+        "before": "200.5",
+        "after": "200.5 + 1.0",
+        "line": 46
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L4-test-0005-length-1.py",
+    "reward": 0.8889,
+    "caught": true,
+    "expected_check": "R1:length",
+    "expected_failed": true,
+    "failed": [
+      "R1:length"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [4.0], depths [13.0] vs 13.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "208906.5 vs 208906.5 mm3 predicted from measurement",
+      "R1:length": "201.5 vs 200.5 mm",
+      "R2:width": "80.0 vs 80.0 mm",
+      "R3:thickness": "13.0 vs 13.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[4.0] vs 4.0 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "208906.5 vs 208906.5 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.50 mm from 21.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L4",
+    "spec_id": "test-0005",
+    "kind": "pitch",
+    "delta": 1.0,
+    "edits": [
+      {
+        "before": "158.5",
+        "after": "158.5 + 1.0",
+        "line": 46
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L4-test-0005-pitch-1.py",
+    "reward": 1.0,
+    "caught": false,
+    "expected_check": "R5:hole_pattern",
+    "expected_failed": false,
+    "failed": [],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [4.0], depths [13.0] vs 13.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "207866.5 vs 207866.5 mm3 predicted from measurement",
+      "R1:length": "200.5 vs 200.5 mm",
+      "R2:width": "80.0 vs 80.0 mm",
+      "R3:thickness": "13.0 vs 13.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[4.0] vs 4.0 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "207866.5 vs 207866.5 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.50 mm from 21.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L4",
+    "spec_id": "test-0005",
+    "kind": "pitch",
+    "delta": 1.2,
+    "edits": [
+      {
+        "before": "158.5",
+        "after": "158.5 + 1.2",
+        "line": 46
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L4-test-0005-pitch-1.2.py",
+    "reward": 0.7778,
+    "caught": true,
+    "expected_check": "R5:hole_pattern",
+    "expected_failed": true,
+    "failed": [
+      "R5:hole_pattern",
+      "R7:edge_margin"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [4.0], depths [13.0] vs 13.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "207866.5 vs 207866.5 mm3 predicted from measurement",
+      "R1:length": "200.5 vs 200.5 mm",
+      "R2:width": "80.0 vs 80.0 mm",
+      "R3:thickness": "13.0 vs 13.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[4.0] vs 4.0 mm",
+      "R5:hole_pattern": "0/4 positions matched",
+      "R6:material": "207866.5 vs 207866.5 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.60 mm from 21.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L4",
+    "spec_id": "test-0006",
+    "kind": "diameter",
+    "delta": 0.5,
+    "edits": [
+      {
+        "before": "D_hole",
+        "after": "D_hole + 0.5",
+        "line": 39
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L4-test-0006-diameter-0.5.py",
+    "reward": 0.8889,
+    "caught": true,
+    "expected_check": "R4b:hole_diameter",
+    "expected_failed": true,
+    "failed": [
+      "R4b:hole_diameter"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [7.5], depths [7.5] vs 7.5 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "25749.6 vs 25749.6 mm3 predicted from measurement",
+      "R1:length": "76.0 vs 76.0 mm",
+      "R2:width": "47.5 vs 47.5 mm",
+      "R3:thickness": "7.5 vs 7.5 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[7.5] vs 7.0 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "25749.6 vs 25920.5 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.00 mm from 15.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L4",
+    "spec_id": "test-0006",
+    "kind": "length",
+    "delta": 1.0,
+    "edits": [
+      {
+        "before": "L_new",
+        "after": "L_new + 1.0",
+        "line": 39
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L4-test-0006-length-1.py",
+    "reward": 0.8889,
+    "caught": true,
+    "expected_check": "R1:length",
+    "expected_failed": true,
+    "failed": [
+      "R1:length"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [7.0], depths [7.5] vs 7.5 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "26276.7 vs 26276.7 mm3 predicted from measurement",
+      "R1:length": "77.0 vs 76.0 mm",
+      "R2:width": "47.5 vs 47.5 mm",
+      "R3:thickness": "7.5 vs 7.5 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[7.0] vs 7.0 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "26276.7 vs 26276.7 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.50 mm from 15.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L4",
+    "spec_id": "test-0006",
+    "kind": "pitch",
+    "delta": 1.0,
+    "edits": [
+      {
+        "before": "hole_centers",
+        "after": "[(x + (1.0 / 2 if x >= 0 else -1.0 / 2), y) for x, y in hole_centers]",
+        "line": 39
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L4-test-0006-pitch-1.py",
+    "reward": 1.0,
+    "caught": false,
+    "expected_check": "R5:hole_pattern",
+    "expected_failed": false,
+    "failed": [],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [7.0], depths [7.5] vs 7.5 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "25920.5 vs 25920.5 mm3 predicted from measurement",
+      "R1:length": "76.0 vs 76.0 mm",
+      "R2:width": "47.5 vs 47.5 mm",
+      "R3:thickness": "7.5 vs 7.5 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[7.0] vs 7.0 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "25920.5 vs 25920.5 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.50 mm from 15.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L4",
+    "spec_id": "test-0006",
+    "kind": "pitch",
+    "delta": 1.2,
+    "edits": [
+      {
+        "before": "hole_centers",
+        "after": "[(x + (1.2 / 2 if x >= 0 else -1.2 / 2), y) for x, y in hole_centers]",
+        "line": 39
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L4-test-0006-pitch-1.2.py",
+    "reward": 0.7778,
+    "caught": true,
+    "expected_check": "R5:hole_pattern",
+    "expected_failed": true,
+    "failed": [
+      "R5:hole_pattern",
+      "R7:edge_margin"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [7.0], depths [7.5] vs 7.5 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "25920.5 vs 25920.5 mm3 predicted from measurement",
+      "R1:length": "76.0 vs 76.0 mm",
+      "R2:width": "47.5 vs 47.5 mm",
+      "R3:thickness": "7.5 vs 7.5 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[7.0] vs 7.0 mm",
+      "R5:hole_pattern": "0/4 positions matched",
+      "R6:material": "25920.5 vs 25920.5 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.60 mm from 15.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L4",
+    "spec_id": "test-0007",
+    "kind": "diameter",
+    "delta": 0.5,
+    "edits": [
+      {
+        "before": "Hole_D",
+        "after": "Hole_D + 0.5",
+        "line": 45
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L4-test-0007-diameter-0.5.py",
+    "reward": 0.8889,
+    "caught": true,
+    "expected_check": "R4b:hole_diameter",
+    "expected_failed": true,
+    "failed": [
+      "R4b:hole_diameter"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [6.0], depths [9.5] vs 9.5 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "81732.3 vs 81732.3 mm3 predicted from measurement",
+      "R1:length": "149.0 vs 149.0 mm",
+      "R2:width": "58.5 vs 58.5 mm",
+      "R3:thickness": "9.5 vs 9.5 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[6.0] vs 5.5 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "81732.3 vs 81903.9 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.00 mm from 6.5 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L4",
+    "spec_id": "test-0007",
+    "kind": "length",
+    "delta": 1.0,
+    "edits": [
+      {
+        "before": "L_new",
+        "after": "L_new + 1.0",
+        "line": 45
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L4-test-0007-length-1.py",
+    "reward": 0.8889,
+    "caught": true,
+    "expected_check": "R1:length",
+    "expected_failed": true,
+    "failed": [
+      "R1:length"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [5.5], depths [9.5] vs 9.5 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "82459.7 vs 82459.7 mm3 predicted from measurement",
+      "R1:length": "150.0 vs 149.0 mm",
+      "R2:width": "58.5 vs 58.5 mm",
+      "R3:thickness": "9.5 vs 9.5 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[5.5] vs 5.5 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "82459.7 vs 82459.7 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.50 mm from 6.5 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L4",
+    "spec_id": "test-0007",
+    "kind": "pitch",
+    "delta": 1.0,
+    "edits": [
+      {
+        "before": "[(68.0, 22.75), (68.0, -22.75), (-68.0, 22.75), (-68.0, -22.75)]",
+        "after": "[(x + (1.0 / 2 if x >= 0 else -1.0 / 2), y) for x, y in [(68.0, 22.75), (68.0, -22.75), (-68.0, 22.75), (-68.0, -22.75)]]",
+        "line": 45
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L4-test-0007-pitch-1.py",
+    "reward": 1.0,
+    "caught": false,
+    "expected_check": "R5:hole_pattern",
+    "expected_failed": false,
+    "failed": [],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [5.5], depths [9.5] vs 9.5 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "81903.9 vs 81903.9 mm3 predicted from measurement",
+      "R1:length": "149.0 vs 149.0 mm",
+      "R2:width": "58.5 vs 58.5 mm",
+      "R3:thickness": "9.5 vs 9.5 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[5.5] vs 5.5 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "81903.9 vs 81903.9 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.50 mm from 6.5 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L4",
+    "spec_id": "test-0007",
+    "kind": "pitch",
+    "delta": 1.2,
+    "edits": [
+      {
+        "before": "[(68.0, 22.75), (68.0, -22.75), (-68.0, 22.75), (-68.0, -22.75)]",
+        "after": "[(x + (1.2 / 2 if x >= 0 else -1.2 / 2), y) for x, y in [(68.0, 22.75), (68.0, -22.75), (-68.0, 22.75), (-68.0, -22.75)]]",
+        "line": 45
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L4-test-0007-pitch-1.2.py",
+    "reward": 0.7778,
+    "caught": true,
+    "expected_check": "R5:hole_pattern",
+    "expected_failed": true,
+    "failed": [
+      "R5:hole_pattern",
+      "R7:edge_margin"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [5.5], depths [9.5] vs 9.5 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "81903.9 vs 81903.9 mm3 predicted from measurement",
+      "R1:length": "149.0 vs 149.0 mm",
+      "R2:width": "58.5 vs 58.5 mm",
+      "R3:thickness": "9.5 vs 9.5 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[5.5] vs 5.5 mm",
+      "R5:hole_pattern": "0/4 positions matched",
+      "R6:material": "81903.9 vs 81903.9 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.60 mm from 6.5 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L4",
+    "spec_id": "test-0008",
+    "kind": "diameter",
+    "delta": 0.5,
+    "edits": [
+      {
+        "before": "Hole_D",
+        "after": "Hole_D + 0.5",
+        "line": 44
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L4-test-0008-diameter-0.5.py",
+    "reward": 0.8889,
+    "caught": true,
+    "expected_check": "R4b:hole_diameter",
+    "expected_failed": true,
+    "failed": [
+      "R4b:hole_diameter"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [9.5], depths [7.0] vs 7.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "19671.5 vs 19671.5 mm3 predicted from measurement",
+      "R1:length": "49.5 vs 49.5 mm",
+      "R2:width": "62.5 vs 62.5 mm",
+      "R3:thickness": "7.0 vs 7.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[9.5] vs 9.0 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "19671.5 vs 19875.0 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.00 mm from 6.5 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L4",
+    "spec_id": "test-0008",
+    "kind": "length",
+    "delta": 1.0,
+    "edits": [
+      {
+        "before": "L_new",
+        "after": "L_new + 1.0",
+        "line": 44
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L4-test-0008-length-1.py",
+    "reward": 0.8889,
+    "caught": true,
+    "expected_check": "R1:length",
+    "expected_failed": true,
+    "failed": [
+      "R1:length"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [9.0], depths [7.0] vs 7.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "20312.5 vs 20312.5 mm3 predicted from measurement",
+      "R1:length": "50.5 vs 49.5 mm",
+      "R2:width": "62.5 vs 62.5 mm",
+      "R3:thickness": "7.0 vs 7.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[9.0] vs 9.0 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "20312.5 vs 20312.5 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.50 mm from 6.5 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L4",
+    "spec_id": "test-0008",
+    "kind": "pitch",
+    "delta": 1.0,
+    "edits": [
+      {
+        "before": "X_rect",
+        "after": "X_rect + 1.0",
+        "line": 44
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L4-test-0008-pitch-1.py",
+    "reward": 1.0,
+    "caught": false,
+    "expected_check": "R5:hole_pattern",
+    "expected_failed": false,
+    "failed": [],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [9.0], depths [7.0] vs 7.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "19875.0 vs 19875.0 mm3 predicted from measurement",
+      "R1:length": "49.5 vs 49.5 mm",
+      "R2:width": "62.5 vs 62.5 mm",
+      "R3:thickness": "7.0 vs 7.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[9.0] vs 9.0 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "19875.0 vs 19875.0 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.50 mm from 6.5 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L4",
+    "spec_id": "test-0008",
+    "kind": "pitch",
+    "delta": 1.2,
+    "edits": [
+      {
+        "before": "X_rect",
+        "after": "X_rect + 1.2",
+        "line": 44
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L4-test-0008-pitch-1.2.py",
+    "reward": 0.7778,
+    "caught": true,
+    "expected_check": "R5:hole_pattern",
+    "expected_failed": true,
+    "failed": [
+      "R5:hole_pattern",
+      "R7:edge_margin"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [9.0], depths [7.0] vs 7.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "19875.0 vs 19875.0 mm3 predicted from measurement",
+      "R1:length": "49.5 vs 49.5 mm",
+      "R2:width": "62.5 vs 62.5 mm",
+      "R3:thickness": "7.0 vs 7.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[9.0] vs 9.0 mm",
+      "R5:hole_pattern": "0/4 positions matched",
+      "R6:material": "19875.0 vs 19875.0 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.60 mm from 6.5 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L4",
+    "spec_id": "test-0009",
+    "kind": "diameter",
+    "delta": 0.5,
+    "edits": [
+      {
+        "before": "6.0",
+        "after": "6.0 + 0.5",
+        "line": 65
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L4-test-0009-diameter-0.5.py",
+    "reward": 0.8889,
+    "caught": true,
+    "expected_check": "R4b:hole_diameter",
+    "expected_failed": true,
+    "failed": [
+      "R4b:hole_diameter"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [6.5], depths [5.0] vs 5.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "66806.3 vs 66806.3 mm3 predicted from measurement",
+      "R1:length": "86.5 vs 86.5 mm",
+      "R2:width": "156.0 vs 156.0 mm",
+      "R3:thickness": "5.0 vs 5.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[6.5] vs 6.0 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "66806.3 vs 66904.5 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.00 mm from 9.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L4",
+    "spec_id": "test-0009",
+    "kind": "length",
+    "delta": 1.0,
+    "edits": [
+      {
+        "before": "86.5",
+        "after": "86.5 + 1.0",
+        "line": 65
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L4-test-0009-length-1.py",
+    "reward": 0.8889,
+    "caught": true,
+    "expected_check": "R1:length",
+    "expected_failed": true,
+    "failed": [
+      "R1:length"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [6.0], depths [5.0] vs 5.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "67684.5 vs 67684.5 mm3 predicted from measurement",
+      "R1:length": "87.5 vs 86.5 mm",
+      "R2:width": "156.0 vs 156.0 mm",
+      "R3:thickness": "5.0 vs 5.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[6.0] vs 6.0 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "67684.5 vs 67684.5 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.50 mm from 9.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L4",
+    "spec_id": "test-0009",
+    "kind": "pitch",
+    "delta": 1.0,
+    "edits": [
+      {
+        "before": "68.5",
+        "after": "68.5 + 1.0",
+        "line": 65
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L4-test-0009-pitch-1.py",
+    "reward": 1.0,
+    "caught": false,
+    "expected_check": "R5:hole_pattern",
+    "expected_failed": false,
+    "failed": [],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [6.0], depths [5.0] vs 5.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "66904.5 vs 66904.5 mm3 predicted from measurement",
+      "R1:length": "86.5 vs 86.5 mm",
+      "R2:width": "156.0 vs 156.0 mm",
+      "R3:thickness": "5.0 vs 5.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[6.0] vs 6.0 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "66904.5 vs 66904.5 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.50 mm from 9.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L4",
+    "spec_id": "test-0009",
+    "kind": "pitch",
+    "delta": 1.2,
+    "edits": [
+      {
+        "before": "68.5",
+        "after": "68.5 + 1.2",
+        "line": 65
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L4-test-0009-pitch-1.2.py",
+    "reward": 0.7778,
+    "caught": true,
+    "expected_check": "R5:hole_pattern",
+    "expected_failed": true,
+    "failed": [
+      "R5:hole_pattern",
+      "R7:edge_margin"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [6.0], depths [5.0] vs 5.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "66904.5 vs 66904.5 mm3 predicted from measurement",
+      "R1:length": "86.5 vs 86.5 mm",
+      "R2:width": "156.0 vs 156.0 mm",
+      "R3:thickness": "5.0 vs 5.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[6.0] vs 6.0 mm",
+      "R5:hole_pattern": "0/4 positions matched",
+      "R6:material": "66904.5 vs 66904.5 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.60 mm from 9.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L4",
+    "spec_id": "test-0010",
+    "kind": "diameter",
+    "delta": 0.5,
+    "edits": [
+      {
+        "before": "new_hole_dia",
+        "after": "new_hole_dia + 0.5",
+        "line": 42
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L4-test-0010-diameter-0.5.py",
+    "reward": 0.8889,
+    "caught": true,
+    "expected_check": "R4b:hole_diameter",
+    "expected_failed": true,
+    "failed": [
+      "R4b:hole_diameter"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [5.0], depths [3.5] vs 3.5 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "19657.6 vs 19657.6 mm3 predicted from measurement",
+      "R1:length": "67.0 vs 67.0 mm",
+      "R2:width": "85.0 vs 85.0 mm",
+      "R3:thickness": "3.5 vs 3.5 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[5.0] vs 4.5 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "19657.6 vs 19709.8 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.00 mm from 10.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L4",
+    "spec_id": "test-0010",
+    "kind": "length",
+    "delta": 1.0,
+    "edits": [
+      {
+        "before": "part_length",
+        "after": "part_length + 1.0",
+        "line": 42
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L4-test-0010-length-1.py",
+    "reward": 0.8889,
+    "caught": true,
+    "expected_check": "R1:length",
+    "expected_failed": true,
+    "failed": [
+      "R1:length"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [4.5], depths [3.5] vs 3.5 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "20007.3 vs 20007.3 mm3 predicted from measurement",
+      "R1:length": "68.0 vs 67.0 mm",
+      "R2:width": "85.0 vs 85.0 mm",
+      "R3:thickness": "3.5 vs 3.5 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[4.5] vs 4.5 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "20007.3 vs 20007.3 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.50 mm from 10.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L4",
+    "spec_id": "test-0010",
+    "kind": "pitch",
+    "delta": 1.0,
+    "edits": [
+      {
+        "before": "hole_points",
+        "after": "[(x + (1.0 / 2 if x >= 0 else -1.0 / 2), y) for x, y in hole_points]",
+        "line": 42
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L4-test-0010-pitch-1.py",
+    "reward": 1.0,
+    "caught": false,
+    "expected_check": "R5:hole_pattern",
+    "expected_failed": false,
+    "failed": [],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [4.5], depths [3.5] vs 3.5 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "19709.8 vs 19709.8 mm3 predicted from measurement",
+      "R1:length": "67.0 vs 67.0 mm",
+      "R2:width": "85.0 vs 85.0 mm",
+      "R3:thickness": "3.5 vs 3.5 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[4.5] vs 4.5 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "19709.8 vs 19709.8 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.50 mm from 10.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L4",
+    "spec_id": "test-0010",
+    "kind": "pitch",
+    "delta": 1.2,
+    "edits": [
+      {
+        "before": "hole_points",
+        "after": "[(x + (1.2 / 2 if x >= 0 else -1.2 / 2), y) for x, y in hole_points]",
+        "line": 42
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L4-test-0010-pitch-1.2.py",
+    "reward": 0.7778,
+    "caught": true,
+    "expected_check": "R5:hole_pattern",
+    "expected_failed": true,
+    "failed": [
+      "R5:hole_pattern",
+      "R7:edge_margin"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [4.5], depths [3.5] vs 3.5 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "19709.8 vs 19709.8 mm3 predicted from measurement",
+      "R1:length": "67.0 vs 67.0 mm",
+      "R2:width": "85.0 vs 85.0 mm",
+      "R3:thickness": "3.5 vs 3.5 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[4.5] vs 4.5 mm",
+      "R5:hole_pattern": "0/4 positions matched",
+      "R6:material": "19709.8 vs 19709.8 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.60 mm from 10.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L4",
+    "spec_id": "test-0011",
+    "kind": "diameter",
+    "delta": 0.5,
+    "edits": [
+      {
+        "before": "hole_diameter",
+        "after": "hole_diameter + 0.5",
+        "line": 63
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L4-test-0011-diameter-0.5.py",
+    "reward": 0.8889,
+    "caught": true,
+    "expected_check": "R4b:hole_diameter",
+    "expected_failed": true,
+    "failed": [
+      "R4b:hole_diameter"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [11.5], depths [3.5] vs 3.5 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "31214.0 vs 31214.0 mm3 predicted from measurement",
+      "R1:length": "196.5 vs 196.5 mm",
+      "R2:width": "47.5 vs 47.5 mm",
+      "R3:thickness": "3.5 vs 3.5 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[11.5] vs 11.0 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "31214.0 vs 31337.7 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.00 mm from 8.5 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L4",
+    "spec_id": "test-0011",
+    "kind": "length",
+    "delta": 1.0,
+    "edits": [
+      {
+        "before": "part_length",
+        "after": "part_length + 1.0",
+        "line": 63
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L4-test-0011-length-1.py",
+    "reward": 0.8889,
+    "caught": true,
+    "expected_check": "R1:length",
+    "expected_failed": true,
+    "failed": [
+      "R1:length"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [11.0], depths [3.5] vs 3.5 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "31503.9 vs 31503.9 mm3 predicted from measurement",
+      "R1:length": "197.5 vs 196.5 mm",
+      "R2:width": "47.5 vs 47.5 mm",
+      "R3:thickness": "3.5 vs 3.5 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[11.0] vs 11.0 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "31503.9 vs 31503.9 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.50 mm from 8.5 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L4",
+    "spec_id": "test-0011",
+    "kind": "pitch",
+    "delta": 1.0,
+    "edits": [
+      {
+        "before": "points",
+        "after": "[(x + (1.0 / 2 if x >= 0 else -1.0 / 2), y) for x, y in points]",
+        "line": 63
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L4-test-0011-pitch-1.py",
+    "reward": 1.0,
+    "caught": false,
+    "expected_check": "R5:hole_pattern",
+    "expected_failed": false,
+    "failed": [],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [11.0], depths [3.5] vs 3.5 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "31337.7 vs 31337.7 mm3 predicted from measurement",
+      "R1:length": "196.5 vs 196.5 mm",
+      "R2:width": "47.5 vs 47.5 mm",
+      "R3:thickness": "3.5 vs 3.5 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[11.0] vs 11.0 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "31337.7 vs 31337.7 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.50 mm from 8.5 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L4",
+    "spec_id": "test-0011",
+    "kind": "pitch",
+    "delta": 1.2,
+    "edits": [
+      {
+        "before": "points",
+        "after": "[(x + (1.2 / 2 if x >= 0 else -1.2 / 2), y) for x, y in points]",
+        "line": 63
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L4-test-0011-pitch-1.2.py",
+    "reward": 0.7778,
+    "caught": true,
+    "expected_check": "R5:hole_pattern",
+    "expected_failed": true,
+    "failed": [
+      "R5:hole_pattern",
+      "R7:edge_margin"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [11.0], depths [3.5] vs 3.5 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "31337.7 vs 31337.7 mm3 predicted from measurement",
+      "R1:length": "196.5 vs 196.5 mm",
+      "R2:width": "47.5 vs 47.5 mm",
+      "R3:thickness": "3.5 vs 3.5 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[11.0] vs 11.0 mm",
+      "R5:hole_pattern": "0/4 positions matched",
+      "R6:material": "31337.7 vs 31337.7 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.60 mm from 8.5 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L4",
+    "spec_id": "test-0012",
+    "kind": "diameter",
+    "delta": 0.5,
+    "edits": [
+      {
+        "before": "12.5",
+        "after": "12.5 + 0.5",
+        "line": 28
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L4-test-0012-diameter-0.5.py",
+    "reward": 0.8889,
+    "caught": true,
+    "expected_check": "R4b:hole_diameter",
+    "expected_failed": true,
+    "failed": [
+      "R4b:hole_diameter"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [13.0], depths [10.0] vs 10.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "40800.7 vs 40800.7 mm3 predicted from measurement",
+      "R1:length": "58.0 vs 58.0 mm",
+      "R2:width": "79.5 vs 79.5 mm",
+      "R3:thickness": "10.0 vs 10.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[13.0] vs 12.5 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "40800.7 vs 41201.3 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.00 mm from 10.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L4",
+    "spec_id": "test-0012",
+    "kind": "length",
+    "delta": 1.0,
+    "edits": [
+      {
+        "before": "L_X",
+        "after": "L_X + 1.0",
+        "line": 28
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L4-test-0012-length-1.py",
+    "reward": 0.8889,
+    "caught": true,
+    "expected_check": "R1:length",
+    "expected_failed": true,
+    "failed": [
+      "R1:length"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [12.5], depths [10.0] vs 10.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "41996.3 vs 41996.3 mm3 predicted from measurement",
+      "R1:length": "59.0 vs 58.0 mm",
+      "R2:width": "79.5 vs 79.5 mm",
+      "R3:thickness": "10.0 vs 10.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[12.5] vs 12.5 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "41996.3 vs 41996.3 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.50 mm from 10.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L4",
+    "spec_id": "test-0012",
+    "kind": "pitch",
+    "delta": 1.0,
+    "edits": [
+      {
+        "before": "[(19.0, 29.75), (19.0, -29.75), (-19.0, 29.75), (-19.0, -29.75)]",
+        "after": "[(x + (1.0 / 2 if x >= 0 else -1.0 / 2), y) for x, y in [(19.0, 29.75), (19.0, -29.75), (-19.0, 29.75), (-19.0, -29.75)]]",
+        "line": 28
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L4-test-0012-pitch-1.py",
+    "reward": 1.0,
+    "caught": false,
+    "expected_check": "R5:hole_pattern",
+    "expected_failed": false,
+    "failed": [],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [12.5], depths [10.0] vs 10.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "41201.3 vs 41201.3 mm3 predicted from measurement",
+      "R1:length": "58.0 vs 58.0 mm",
+      "R2:width": "79.5 vs 79.5 mm",
+      "R3:thickness": "10.0 vs 10.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[12.5] vs 12.5 mm",
+      "R5:hole_pattern": "4/4 positions matched",
+      "R6:material": "41201.3 vs 41201.3 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.50 mm from 10.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  },
+  {
+    "tier": "L4",
+    "spec_id": "test-0012",
+    "kind": "pitch",
+    "delta": 1.2,
+    "edits": [
+      {
+        "before": "[(19.0, 29.75), (19.0, -29.75), (-19.0, 29.75), (-19.0, -29.75)]",
+        "after": "[(x + (1.2 / 2 if x >= 0 else -1.2 / 2), y) for x, y in [(19.0, 29.75), (19.0, -29.75), (-19.0, 29.75), (-19.0, -29.75)]]",
+        "line": 28
+      }
+    ],
+    "code_file": "audit/scratch/run1-perturbations/L4-test-0012-pitch-1.2.py",
+    "reward": 0.7778,
+    "caught": true,
+    "expected_check": "R5:hole_pattern",
+    "expected_failed": true,
+    "failed": [
+      "R5:hole_pattern",
+      "R7:edge_margin"
+    ],
+    "details": {
+      "gate:single_solid": "1 solid(s)",
+      "gate:clean_solid": "valid=True, 1 shell(s) for 1 solid(s), 0 loose sub-shape(s)",
+      "gate:simple_through_holes": "4 position(s), diameters [12.5], depths [10.0] vs 10.0 mm stock",
+      "gate:hole_count_sane": "4 bore(s), degenerate above 12",
+      "gate:is_plate": "41201.3 vs 41201.3 mm3 predicted from measurement",
+      "R1:length": "58.0 vs 58.0 mm",
+      "R2:width": "79.5 vs 79.5 mm",
+      "R3:thickness": "10.0 vs 10.0 mm",
+      "R4a:hole_count": "4 vs 4",
+      "R4b:hole_diameter": "[12.5] vs 12.5 mm",
+      "R5:hole_pattern": "0/4 positions matched",
+      "R6:material": "41201.3 vs 41201.3 mm3 for this envelope",
+      "R7:edge_margin": "worst deviation 0.60 mm from 10.0 mm margin",
+      "R8:z_datum": "mid-plane at Z = 0.000 mm (nominal 0)"
+    },
+    "error": null
+  }
+]
