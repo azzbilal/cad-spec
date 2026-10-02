@@ -5,6 +5,23 @@ Scores are only comparable within one scorer version
 
 ## Unreleased
 
+### Training run 1: serving-route bridge check
+- Free post hoc check, rule registered in the pre-registration before the
+  step-1 rewards were read: all-pass rate of the untrained model inside the
+  training stack (step 1 of the archived metrics) against the base route at
+  matched sampling settings (screening, temperature 0.7, 8 samples).
+- **Verdict BRIDGED:** L4 28.4% (25 of 88) against 42.9%, inside the 95%
+  predictive interval [18.2%, 69.3%]; smoke run 32.3%; pooled 30.4%. A
+  stack that serves the same weights better is not supported as the
+  explanation of the L4 gain.
+- Recorded as unexplained: L2 is 59.1% against 68.8% in both runs, one answer
+  below its interval, in the non-inflating direction. The two runs very
+  likely share their first prompts. The adapter route is still not attested;
+  the claim is unchanged.
+- `scripts/bridge_check.py` (frozen, refuses mismatched settings),
+  `scripts/test_bridge_check.py`; CI runs the self-test and checks that the
+  committed result reproduces.
+
 ### Training run 1: Linux replay and portable hashes
 - `scripts/replay_eval.py`: re-scores saved evaluation files and compares
   every reward and check. Run 1 on Linux, `fork` sandbox: 0 mismatches over
