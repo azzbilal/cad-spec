@@ -1,0 +1,343 @@
+{
+  "run_id": "mk9qcuq2dsckzrf68gycyqls",
+  "prime_cli_version": "0.8.0",
+  "files": [
+    {
+      "file": "get.json",
+      "command": "prime train get mk9qcuq2dsckzrf68gycyqls -o json",
+      "captured_at_utc": "2026-10-02T14:11:41Z",
+      "exit_code": 0,
+      "bytes": 2414,
+      "sha256": "72b098d2b0fa4b56e87f6c390cc829fd9964dc622836fa429744d59027f3c8ea"
+    },
+    {
+      "file": "usage.json",
+      "command": "prime train usage mk9qcuq2dsckzrf68gycyqls -o json",
+      "captured_at_utc": "2026-10-02T14:11:43Z",
+      "exit_code": 0,
+      "bytes": 610,
+      "sha256": "6f461ab81fa7ec87f88c6bbba3fd3f908f36999ba5d2c1d8ecf517295e541ff1"
+    },
+    {
+      "file": "metrics.json",
+      "command": "prime train metrics mk9qcuq2dsckzrf68gycyqls",
+      "captured_at_utc": "2026-10-02T14:11:52Z",
+      "exit_code": 0,
+      "bytes": 3075694,
+      "sha256": "9c21fc7ecfca9f310510865915125c3e2226d71c0dffca6bd122d970aa2d0ad8"
+    },
+    {
+      "file": "distributions-step-1.json",
+      "command": "prime train distributions mk9qcuq2dsckzrf68gycyqls --step 1",
+      "captured_at_utc": "2026-10-02T14:11:54Z",
+      "exit_code": 0,
+      "bytes": 2917,
+      "sha256": "8110149f5088f5d55ccee8555ca388e4b74d61163ba2b8ea3daaf51340bbd35e"
+    },
+    {
+      "file": "distributions-step-2.json",
+      "command": "prime train distributions mk9qcuq2dsckzrf68gycyqls --step 2",
+      "captured_at_utc": "2026-10-02T14:11:57Z",
+      "exit_code": 0,
+      "bytes": 2916,
+      "sha256": "b8d74d9a7989db985e2b1770a04008e85b3970b064d8e0f3e3fd4428c3099ad7"
+    },
+    {
+      "file": "distributions-step-3.json",
+      "command": "prime train distributions mk9qcuq2dsckzrf68gycyqls --step 3",
+      "captured_at_utc": "2026-10-02T14:11:59Z",
+      "exit_code": 0,
+      "bytes": 2915,
+      "sha256": "90f5a11b24ba2a1951713b8e49a73b01caa7f949173c3e7afc3dbb586e542de7"
+    },
+    {
+      "file": "distributions-step-4.json",
+      "command": "prime train distributions mk9qcuq2dsckzrf68gycyqls --step 4",
+      "captured_at_utc": "2026-10-02T14:12:00Z",
+      "exit_code": 0,
+      "bytes": 2913,
+      "sha256": "7ee61741d2629f2e46fa9c18c89fa591a221e8513dd6a1783e3ae2104df48c0b"
+    },
+    {
+      "file": "distributions-step-5.json",
+      "command": "prime train distributions mk9qcuq2dsckzrf68gycyqls --step 5",
+      "captured_at_utc": "2026-10-02T14:12:03Z",
+      "exit_code": 0,
+      "bytes": 2915,
+      "sha256": "81f3a74cab551497f0597d3c4e527c40b8755e40eac2f9487fcf5ed441053725"
+    },
+    {
+      "file": "distributions-step-6.json",
+      "command": "prime train distributions mk9qcuq2dsckzrf68gycyqls --step 6",
+      "captured_at_utc": "2026-10-02T14:12:04Z",
+      "exit_code": 0,
+      "bytes": 2914,
+      "sha256": "d8e3ae3964544a9004349fd64e4b720f28e9e249e661a4aa5fe5fec8a11ec659"
+    },
+    {
+      "file": "distributions-step-7.json",
+      "command": "prime train distributions mk9qcuq2dsckzrf68gycyqls --step 7",
+      "captured_at_utc": "2026-10-02T14:12:06Z",
+      "exit_code": 0,
+      "bytes": 2916,
+      "sha256": "12803ae1dea3a2fb0349b38d0ca23b4d4d5854b5771825db02acb0fb26cfeb99"
+    },
+    {
+      "file": "distributions-step-8.json",
+      "command": "prime train distributions mk9qcuq2dsckzrf68gycyqls --step 8",
+      "captured_at_utc": "2026-10-02T14:12:10Z",
+      "exit_code": 0,
+      "bytes": 2916,
+      "sha256": "5a97c5490e859c5de8dae223d2fabdae27d8b5af52a62997e47e26035b8f8447"
+    },
+    {
+      "file": "distributions-step-9.json",
+      "command": "prime train distributions mk9qcuq2dsckzrf68gycyqls --step 9",
+      "captured_at_utc": "2026-10-02T14:12:11Z",
+      "exit_code": 0,
+      "bytes": 2915,
+      "sha256": "a203f180373f8af5cd6ba040fcc36130acc9a01db5754cac1340f11c921edc73"
+    },
+    {
+      "file": "distributions-step-10.json",
+      "command": "prime train distributions mk9qcuq2dsckzrf68gycyqls --step 10",
+      "captured_at_utc": "2026-10-02T14:12:13Z",
+      "exit_code": 0,
+      "bytes": 2915,
+      "sha256": "83f3783eac4609fcd02f5301549e986169acadd905b30aa8843e635691e11a28"
+    },
+    {
+      "file": "distributions-step-11.json",
+      "command": "prime train distributions mk9qcuq2dsckzrf68gycyqls --step 11",
+      "captured_at_utc": "2026-10-02T14:12:16Z",
+      "exit_code": 0,
+      "bytes": 2918,
+      "sha256": "75795112cdefc8306d66ae6a98dc3a7493b6aeddbdb01d2f8fb422e6b2950080"
+    },
+    {
+      "file": "distributions-step-12.json",
+      "command": "prime train distributions mk9qcuq2dsckzrf68gycyqls --step 12",
+      "captured_at_utc": "2026-10-02T14:12:17Z",
+      "exit_code": 0,
+      "bytes": 2917,
+      "sha256": "617dbbba45e10606fcfe22f53e8f9ce48dda3c35feebe49d9abbed8ab3153be2"
+    },
+    {
+      "file": "distributions-step-13.json",
+      "command": "prime train distributions mk9qcuq2dsckzrf68gycyqls --step 13",
+      "captured_at_utc": "2026-10-02T14:12:19Z",
+      "exit_code": 0,
+      "bytes": 2917,
+      "sha256": "08244d3a24026c5f8a8478472907c00970b95beecb01bbad2ff8454524b2c5b1"
+    },
+    {
+      "file": "distributions-step-14.json",
+      "command": "prime train distributions mk9qcuq2dsckzrf68gycyqls --step 14",
+      "captured_at_utc": "2026-10-02T14:12:21Z",
+      "exit_code": 0,
+      "bytes": 2916,
+      "sha256": "922f8611826a26e1e4db332ba9112068879e5bb23cc6bf72395c5ce67ab9fea5"
+    },
+    {
+      "file": "distributions-step-15.json",
+      "command": "prime train distributions mk9qcuq2dsckzrf68gycyqls --step 15",
+      "captured_at_utc": "2026-10-02T14:12:22Z",
+      "exit_code": 0,
+      "bytes": 2915,
+      "sha256": "c232c1788a7c9c13cb5640cf04a00eb7fd6ca0a3269e21447fc5008607d9ea4b"
+    },
+    {
+      "file": "distributions-step-16.json",
+      "command": "prime train distributions mk9qcuq2dsckzrf68gycyqls --step 16",
+      "captured_at_utc": "2026-10-02T14:12:24Z",
+      "exit_code": 0,
+      "bytes": 2916,
+      "sha256": "36d4f7982739e073893542139c270921b7e504c9d75c0fd12c20ea163170e170"
+    },
+    {
+      "file": "distributions-step-17.json",
+      "command": "prime train distributions mk9qcuq2dsckzrf68gycyqls --step 17",
+      "captured_at_utc": "2026-10-02T14:12:26Z",
+      "exit_code": 0,
+      "bytes": 2916,
+      "sha256": "0512a93529b25009844c6aebdb65440ec986a0d15214842bc42e57261ac3197b"
+    },
+    {
+      "file": "distributions-step-18.json",
+      "command": "prime train distributions mk9qcuq2dsckzrf68gycyqls --step 18",
+      "captured_at_utc": "2026-10-02T14:12:27Z",
+      "exit_code": 0,
+      "bytes": 2916,
+      "sha256": "071e5969dce7820fe5c6e55018460f9f6d8272ff35b0226220f1c82f510bbd75"
+    },
+    {
+      "file": "distributions-step-19.json",
+      "command": "prime train distributions mk9qcuq2dsckzrf68gycyqls --step 19",
+      "captured_at_utc": "2026-10-02T14:12:29Z",
+      "exit_code": 0,
+      "bytes": 2916,
+      "sha256": "a1709f7bd655e5d0aed4944178c3f4887d0ac9f14a73b1bfdfdfa653e27caa0e"
+    },
+    {
+      "file": "distributions-step-20.json",
+      "command": "prime train distributions mk9qcuq2dsckzrf68gycyqls --step 20",
+      "captured_at_utc": "2026-10-02T14:12:30Z",
+      "exit_code": 0,
+      "bytes": 2916,
+      "sha256": "210873efcbee3c6b02863e4c160faabc07a07e7a91a4cac8cd04cd3050009c2f"
+    },
+    {
+      "file": "distributions-step-21.json",
+      "command": "prime train distributions mk9qcuq2dsckzrf68gycyqls --step 21",
+      "captured_at_utc": "2026-10-02T14:12:32Z",
+      "exit_code": 0,
+      "bytes": 2916,
+      "sha256": "f7e54d115d4d7d101a020abf32527bce2e747775968f69bbff38ffe11a42afba"
+    },
+    {
+      "file": "distributions-step-22.json",
+      "command": "prime train distributions mk9qcuq2dsckzrf68gycyqls --step 22",
+      "captured_at_utc": "2026-10-02T14:12:34Z",
+      "exit_code": 0,
+      "bytes": 2916,
+      "sha256": "d8e6fe7c58d217b54a2fe651da3dbc1906b54624c07fd416af79ad626c708c41"
+    },
+    {
+      "file": "distributions-step-23.json",
+      "command": "prime train distributions mk9qcuq2dsckzrf68gycyqls --step 23",
+      "captured_at_utc": "2026-10-02T14:12:36Z",
+      "exit_code": 0,
+      "bytes": 2916,
+      "sha256": "9f7ed53c32a4eac1852ab92a35e69b75cc2baf4cc8fc9d4a65bdae5fad842d3a"
+    },
+    {
+      "file": "distributions-step-24.json",
+      "command": "prime train distributions mk9qcuq2dsckzrf68gycyqls --step 24",
+      "captured_at_utc": "2026-10-02T14:12:38Z",
+      "exit_code": 0,
+      "bytes": 2916,
+      "sha256": "d438a878fdd15f6a15d5ab2078182ac5b356e0e8cdfe4500aee2deb8041eb010"
+    },
+    {
+      "file": "distributions-step-25.json",
+      "command": "prime train distributions mk9qcuq2dsckzrf68gycyqls --step 25",
+      "captured_at_utc": "2026-10-02T14:12:39Z",
+      "exit_code": 0,
+      "bytes": 2916,
+      "sha256": "e7057d2d18ad5d78d427635e05c1b37a719f3310141f9157c4e2a3c4a7b8eb43"
+    },
+    {
+      "file": "distributions-step-26.json",
+      "command": "prime train distributions mk9qcuq2dsckzrf68gycyqls --step 26",
+      "captured_at_utc": "2026-10-02T14:12:41Z",
+      "exit_code": 0,
+      "bytes": 2915,
+      "sha256": "687490994c68be77505fdf301fbb049b0b57f5cb1a6dd3264e8fea78d395ce1b"
+    },
+    {
+      "file": "distributions-step-27.json",
+      "command": "prime train distributions mk9qcuq2dsckzrf68gycyqls --step 27",
+      "captured_at_utc": "2026-10-02T14:12:43Z",
+      "exit_code": 0,
+      "bytes": 2917,
+      "sha256": "0e5859f02d81d23b06c0128df7c55eab72fad4df86299fdf3766300dcba6faf3"
+    },
+    {
+      "file": "distributions-step-28.json",
+      "command": "prime train distributions mk9qcuq2dsckzrf68gycyqls --step 28",
+      "captured_at_utc": "2026-10-02T14:12:45Z",
+      "exit_code": 0,
+      "bytes": 2916,
+      "sha256": "941930b5f0f1e686bcab53e5f43aa487d0c541974bea412f36022f091adcf372"
+    },
+    {
+      "file": "distributions-step-29.json",
+      "command": "prime train distributions mk9qcuq2dsckzrf68gycyqls --step 29",
+      "captured_at_utc": "2026-10-02T14:12:47Z",
+      "exit_code": 0,
+      "bytes": 2916,
+      "sha256": "92d6fe1d9913e553878d478556fcb8e769118ed52bb1e1f0e1ab313bf52ac6ab"
+    },
+    {
+      "file": "distributions-step-30.json",
+      "command": "prime train distributions mk9qcuq2dsckzrf68gycyqls --step 30",
+      "captured_at_utc": "2026-10-02T14:12:49Z",
+      "exit_code": 0,
+      "bytes": 2916,
+      "sha256": "5680ce0fa028b9cc89a92e32d28219ca4b68f558dad5e63599a5dd41b7da178c"
+    },
+    {
+      "file": "distributions-step-31.json",
+      "command": "prime train distributions mk9qcuq2dsckzrf68gycyqls --step 31",
+      "captured_at_utc": "2026-10-02T14:12:51Z",
+      "exit_code": 0,
+      "bytes": 2917,
+      "sha256": "8c9946fb5d3083525c3508c405ef0b63d432d839edca2fce266d5806adc6e3a4"
+    },
+    {
+      "file": "distributions-step-32.json",
+      "command": "prime train distributions mk9qcuq2dsckzrf68gycyqls --step 32",
+      "captured_at_utc": "2026-10-02T14:12:52Z",
+      "exit_code": 0,
+      "bytes": 2916,
+      "sha256": "d10855768299ba2f19fe3d2d255b7cfa2b10069fa5237be544108070a393d68e"
+    },
+    {
+      "file": "distributions-step-33.json",
+      "command": "prime train distributions mk9qcuq2dsckzrf68gycyqls --step 33",
+      "captured_at_utc": "2026-10-02T14:12:54Z",
+      "exit_code": 0,
+      "bytes": 2915,
+      "sha256": "033152de3da4e43a9943efcaa8157cc07949d459f804ea81b5159109e19bd487"
+    },
+    {
+      "file": "distributions-step-34.json",
+      "command": "prime train distributions mk9qcuq2dsckzrf68gycyqls --step 34",
+      "captured_at_utc": "2026-10-02T14:12:55Z",
+      "exit_code": 1,
+      "bytes": 105,
+      "sha256": "5220b1e51552b6d6356b8964fe8fae8c0afa5f29d9611212d52a4fb9f7ee2748"
+    },
+    {
+      "file": "distributions-step-35.json",
+      "command": "prime train distributions mk9qcuq2dsckzrf68gycyqls --step 35",
+      "captured_at_utc": "2026-10-02T14:12:57Z",
+      "exit_code": 1,
+      "bytes": 105,
+      "sha256": "5220b1e51552b6d6356b8964fe8fae8c0afa5f29d9611212d52a4fb9f7ee2748"
+    },
+    {
+      "file": "distributions-step-36.json",
+      "command": "prime train distributions mk9qcuq2dsckzrf68gycyqls --step 36",
+      "captured_at_utc": "2026-10-02T14:12:58Z",
+      "exit_code": 1,
+      "bytes": 105,
+      "sha256": "5220b1e51552b6d6356b8964fe8fae8c0afa5f29d9611212d52a4fb9f7ee2748"
+    },
+    {
+      "file": "distributions-step-37.json",
+      "command": "prime train distributions mk9qcuq2dsckzrf68gycyqls --step 37",
+      "captured_at_utc": "2026-10-02T14:13:00Z",
+      "exit_code": 0,
+      "bytes": 2916,
+      "sha256": "cf45f4cb392ab2a0e97b82f369afb289aedabc0992b3946c115c0d7062649c31"
+    },
+    {
+      "file": "distributions-step-38.json",
+      "command": "prime train distributions mk9qcuq2dsckzrf68gycyqls --step 38",
+      "captured_at_utc": "2026-10-02T14:13:03Z",
+      "exit_code": 0,
+      "bytes": 2916,
+      "sha256": "236fd90389189a6558b5e77f2f4d6a40a83e8f8703f59e0b46e3f9b33e4adc7f"
+    },
+    {
+      "file": "logs.txt",
+      "command": "prime train logs mk9qcuq2dsckzrf68gycyqls -n 5000",
+      "captured_at_utc": "2026-10-02T14:13:06Z",
+      "exit_code": 0,
+      "bytes": 41951,
+      "sha256": "2f16cd18f3c5b77f0337400edbd08d43c9003647e91d1064f120297ac9ec374a"
+    }
+  ],
+  "steps_reached": 38
+}

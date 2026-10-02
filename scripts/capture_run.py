@@ -4,7 +4,8 @@
 
 Writes OUT/RUN_ID/: `get.json` (run record), `usage.json` (billed tokens and
 cost), `metrics.json` (per-step metrics), `distributions-step-N.json` for
-every step 1..max_steps that has data, `logs.txt` (orchestrator log tail),
+every step the run reached (from its metrics; all of 1..max_steps if the
+metrics list no steps), `logs.txt` (orchestrator log tail),
 and `manifest.json` listing, for each file, the exact command, the UTC time,
 the Prime CLI version, the exit code, the byte size and the SHA-256. Reads
 only; it never changes the run. Needs a logged-in Prime CLI on PATH.
@@ -43,6 +44,17 @@ def cli_version() -> str:
     return text.strip().split()[-1] if code == 0 and text.strip() else "unknown"
 
 
+def _steps_reached(metrics: Any) -> list[int]:
+    """Step numbers present in `prime train metrics` output."""
+    rows = (metrics or {}).get("metrics") if isinstance(metrics, dict) else None
+    out = []
+    for row in rows or []:
+        step = row.get("step") if isinstance(row, dict) else None
+        if isinstance(step, int):
+            out.append(step)
+    return out
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("run_id")
@@ -74,9 +86,12 @@ def main(argv: list[str] | None = None) -> int:
 
     run = save("get.json", ["train", "get", args.run_id, "-o", "json"], True)
     save("usage.json", ["train", "usage", args.run_id, "-o", "json"], True)
-    save("metrics.json", ["train", "metrics", args.run_id], True)
+    metrics = save("metrics.json", ["train", "metrics", args.run_id], True)
     max_steps = int(((run or {}).get("run") or {}).get("max_steps") or 0)
-    for step in range(1, max_steps + 1):
+    reached = _steps_reached(metrics)
+    last = max(reached) if reached else max_steps  # a stopped run ends early
+    manifest["steps_reached"] = last
+    for step in range(1, last + 1):
         save(f"distributions-step-{step}.json",
              ["train", "distributions", args.run_id, "--step", str(step)], True)
     save("logs.txt", ["train", "logs", args.run_id, "-n", str(LOG_LINES)], False)

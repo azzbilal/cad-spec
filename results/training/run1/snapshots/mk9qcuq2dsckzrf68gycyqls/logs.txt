@@ -1,0 +1,605 @@
+16:33:07 [INFO] Train batch 88/128 (68.8%) (cad-spec-L4=32, cad-spec-L2=24, 
+cad-spec-L1-L3=32) (+61 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=43, cad-spec-L2=33, cad-spec-L1-L3=52)
+16:33:17 [INFO] Train batch 96/128 (75.0%) (cad-spec-L4=32, cad-spec-L2=24, 
+cad-spec-L1-L3=40) (+67 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=61, cad-spec-L2=38, cad-spec-L1-L3=29)
+16:33:27 [INFO] Train batch 96/128 (75.0%) (cad-spec-L4=32, cad-spec-L2=24, 
+cad-spec-L1-L3=40) (+64 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=72, cad-spec-L2=27, cad-spec-L1-L3=29)
+16:33:37 [INFO] Train batch 104/128 (81.2%) (cad-spec-L4=32, cad-spec-L2=24, 
+cad-spec-L1-L3=48) (+60 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=84, cad-spec-L2=11, cad-spec-L1-L3=33)
+16:33:47 [INFO] Train batch 112/128 (87.5%) (cad-spec-L4=32, cad-spec-L2=24, 
+cad-spec-L1-L3=56) (+64 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=73, cad-spec-L2=18, cad-spec-L1-L3=37)
+16:33:57 [INFO] Train batch 112/128 (87.5%) (cad-spec-L4=32, cad-spec-L2=24, 
+cad-spec-L1-L3=56) (+59 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=67, cad-spec-L2=35, cad-spec-L1-L3=26)
+16:34:07 [INFO] Train batch 120/128 (93.8%) (cad-spec-L4=40, cad-spec-L2=24, 
+cad-spec-L1-L3=56) (+50 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=54, cad-spec-L2=39, cad-spec-L1-L3=35)
+16:34:16 [INFO] Logging 64 samples to Prime Intellect API at step 33
+16:34:16 [INFO] Logging distributions to Prime Intellect API at step 33
+16:34:16 [SUCCESS] Step 33 |  3m 56s | Reward 0.8438 | Trainable 128/1208 
+(10.6%) | Turns 1.0 | Branches 1.0 | Max Off-Policy 1 | Error 0.0% | Truncation
+2.3%
+                 ╰─ cad-spec-L1-L3 | Ratio 26.5% | Reward 0.8036 | Turns 1.0 | 
+Branches 1.0 | Max Off-Policy 1 | Error 0.0% | Truncation 0.0%
+                 ╰─ cad-spec-L2    | Ratio 28.5% | Reward 0.8750 | Turns 1.0 | 
+Branches 1.0 | Max Off-Policy 0 | Error 0.0% | Truncation 4.2%
+                 ╰─ cad-spec-L4    | Ratio 45.0% | Reward 0.8750 | Turns 1.0 | 
+Branches 1.0 | Max Off-Policy 1 | Error 0.0% | Truncation 4.2%
+16:34:17 [INFO] Train batch 0/128 (0.0%) (cad-spec-L4=0, cad-spec-L2=0, 
+cad-spec-L1-L3=0) (+88 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=49, cad-spec-L2=42, cad-spec-L1-L3=37)
+16:34:27 [INFO] Train batch 0/128 (0.0%) (cad-spec-L4=0, cad-spec-L2=0, 
+cad-spec-L1-L3=0) (+69 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=54, cad-spec-L2=39, cad-spec-L1-L3=35)
+16:34:37 [INFO] Train batch 16/128 (12.5%) (cad-spec-L4=8, cad-spec-L2=0, 
+cad-spec-L1-L3=8) (+58 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=57, cad-spec-L2=41, cad-spec-L1-L3=30)
+16:34:47 [INFO] Train batch 24/128 (18.8%) (cad-spec-L4=16, cad-spec-L2=0, 
+cad-spec-L1-L3=8) (+72 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=51, cad-spec-L2=51, cad-spec-L1-L3=26)
+16:34:57 [INFO] Train batch 24/128 (18.8%) (cad-spec-L4=16, cad-spec-L2=0, 
+cad-spec-L1-L3=8) (+81 buffered); 127 inflight rollouts (train=127, eval=0 | 
+cad-spec-L4=39, cad-spec-L2=57, cad-spec-L1-L3=31)
+16:35:07 [INFO] Train batch 40/128 (31.2%) (cad-spec-L4=24, cad-spec-L2=0, 
+cad-spec-L1-L3=16) (+28 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=27, cad-spec-L2=69, cad-spec-L1-L3=32)
+16:35:17 [INFO] Train batch 56/128 (43.8%) (cad-spec-L4=32, cad-spec-L2=0, 
+cad-spec-L1-L3=24) (+13 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=17, cad-spec-L2=74, cad-spec-L1-L3=37)
+16:35:27 [INFO] Train batch 56/128 (43.8%) (cad-spec-L4=32, cad-spec-L2=0, 
+cad-spec-L1-L3=24) (+68 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=64, cad-spec-L2=21, cad-spec-L1-L3=43)
+16:35:37 [INFO] Train batch 56/128 (43.8%) (cad-spec-L4=32, cad-spec-L2=0, 
+cad-spec-L1-L3=24) (+37 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=81, cad-spec-L2=11, cad-spec-L1-L3=36)
+16:35:47 [INFO] Train batch 56/128 (43.8%) (cad-spec-L4=32, cad-spec-L2=0, 
+cad-spec-L1-L3=24) (+58 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=61, cad-spec-L2=42, cad-spec-L1-L3=25)
+16:35:57 [INFO] Train batch 64/128 (50.0%) (cad-spec-L4=40, cad-spec-L2=0, 
+cad-spec-L1-L3=24) (+76 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=52, cad-spec-L2=62, cad-spec-L1-L3=14)
+16:36:07 [INFO] Train batch 64/128 (50.0%) (cad-spec-L4=40, cad-spec-L2=0, 
+cad-spec-L1-L3=24) (+52 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=55, cad-spec-L2=44, cad-spec-L1-L3=29)
+16:36:17 [INFO] Train batch 64/128 (50.0%) (cad-spec-L4=40, cad-spec-L2=0, 
+cad-spec-L1-L3=24) (+48 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=59, cad-spec-L2=36, cad-spec-L1-L3=33)
+16:36:27 [INFO] Train batch 64/128 (50.0%) (cad-spec-L4=40, cad-spec-L2=0, 
+cad-spec-L1-L3=24) (+57 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=63, cad-spec-L2=43, cad-spec-L1-L3=22)
+16:36:37 [INFO] Train batch 72/128 (56.2%) (cad-spec-L4=48, cad-spec-L2=0, 
+cad-spec-L1-L3=24) (+56 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=76, cad-spec-L2=31, cad-spec-L1-L3=21)
+16:36:47 [INFO] Train batch 72/128 (56.2%) (cad-spec-L4=48, cad-spec-L2=0, 
+cad-spec-L1-L3=24) (+52 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=86, cad-spec-L2=13, cad-spec-L1-L3=29)
+16:36:57 [INFO] Train batch 72/128 (56.2%) (cad-spec-L4=48, cad-spec-L2=0, 
+cad-spec-L1-L3=24) (+61 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=64, cad-spec-L2=19, cad-spec-L1-L3=45)
+16:37:07 [INFO] Train batch 72/128 (56.2%) (cad-spec-L4=48, cad-spec-L2=0, 
+cad-spec-L1-L3=24) (+64 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=48, cad-spec-L2=33, cad-spec-L1-L3=47)
+16:37:17 [INFO] Train batch 72/128 (56.2%) (cad-spec-L4=48, cad-spec-L2=0, 
+cad-spec-L1-L3=24) (+76 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=44, cad-spec-L2=41, cad-spec-L1-L3=43)
+16:37:27 [INFO] Train batch 80/128 (62.5%) (cad-spec-L4=48, cad-spec-L2=0, 
+cad-spec-L1-L3=32) (+77 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=52, cad-spec-L2=38, cad-spec-L1-L3=38)
+16:37:37 [INFO] Train batch 80/128 (62.5%) (cad-spec-L4=48, cad-spec-L2=0, 
+cad-spec-L1-L3=32) (+77 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=63, cad-spec-L2=36, cad-spec-L1-L3=29)
+16:37:47 [INFO] Train batch 104/128 (81.2%) (cad-spec-L4=64, cad-spec-L2=0, 
+cad-spec-L1-L3=40) (+83 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=68, cad-spec-L2=21, cad-spec-L1-L3=39)
+16:37:57 [INFO] Train batch 104/128 (81.2%) (cad-spec-L4=64, cad-spec-L2=0, 
+cad-spec-L1-L3=40) (+75 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=57, cad-spec-L2=33, cad-spec-L1-L3=38)
+16:38:07 [INFO] Train batch 104/128 (81.2%) (cad-spec-L4=64, cad-spec-L2=0, 
+cad-spec-L1-L3=40) (+50 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=62, cad-spec-L2=37, cad-spec-L1-L3=29)
+16:38:17 [INFO] Train batch 112/128 (87.5%) (cad-spec-L4=72, cad-spec-L2=0, 
+cad-spec-L1-L3=40) (+58 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=63, cad-spec-L2=37, cad-spec-L1-L3=28)
+16:38:27 [INFO] Train batch 120/128 (93.8%) (cad-spec-L4=80, cad-spec-L2=0, 
+cad-spec-L1-L3=40) (+43 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=51, cad-spec-L2=36, cad-spec-L1-L3=41)
+16:38:37 [INFO] Train batch 120/128 (93.8%) (cad-spec-L4=80, cad-spec-L2=0, 
+cad-spec-L1-L3=40) (+59 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=61, cad-spec-L2=30, cad-spec-L1-L3=37)
+16:38:47 [INFO] Train batch 120/128 (93.8%) (cad-spec-L4=80, cad-spec-L2=0, 
+cad-spec-L1-L3=40) (+43 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=76, cad-spec-L2=18, cad-spec-L1-L3=34)
+16:38:47 [WARNING] Only 128/1488 generated rollouts are trainable (8.6%) — 
+consider reviewing task difficulty / filter config
+16:38:48 [INFO] Logging 64 samples to Prime Intellect API at step 34
+16:38:48 [INFO] Logging distributions to Prime Intellect API at step 34
+16:38:48 [SUCCESS] Step 34 |  4m 32s | Reward 0.8281 | Trainable 128/1488 
+(8.6%) | Turns 1.0 | Branches 1.0 | Max Off-Policy 1 | Error 0.0% | Truncation 
+2.3%
+                 ╰─ cad-spec-L1-L3 | Ratio 23.7% | Reward 0.7250 | Turns 1.0 | 
+Branches 1.0 | Max Off-Policy 1 | Error 0.0% | Truncation 2.5%
+                 ╰─ cad-spec-L2    | Ratio 34.4% | Reward 0.8750 | Turns 1.0 | 
+Branches 1.0 | Max Off-Policy 0 | Error 0.0% | Truncation 0.0%
+                 ╰─ cad-spec-L4    | Ratio 41.9% | Reward 0.8750 | Turns 1.0 | 
+Branches 1.0 | Max Off-Policy 1 | Error 0.0% | Truncation 2.5%
+16:38:57 [INFO] Train batch 8/128 (6.2%) (cad-spec-L4=8, cad-spec-L2=0, 
+cad-spec-L1-L3=0) (+39 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=81, cad-spec-L2=19, cad-spec-L1-L3=28)
+16:39:07 [INFO] Train batch 8/128 (6.2%) (cad-spec-L4=8, cad-spec-L2=0, 
+cad-spec-L1-L3=0) (+27 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=65, cad-spec-L2=39, cad-spec-L1-L3=24)
+16:39:17 [INFO] Train batch 8/128 (6.2%) (cad-spec-L4=8, cad-spec-L2=0, 
+cad-spec-L1-L3=0) (+62 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=70, cad-spec-L2=35, cad-spec-L1-L3=23)
+16:39:27 [INFO] Train batch 8/128 (6.2%) (cad-spec-L4=8, cad-spec-L2=0, 
+cad-spec-L1-L3=0) (+73 buffered); 127 inflight rollouts (train=127, eval=0 | 
+cad-spec-L4=64, cad-spec-L2=21, cad-spec-L1-L3=42)
+16:39:37 [INFO] Train batch 16/128 (12.5%) (cad-spec-L4=8, cad-spec-L2=0, 
+cad-spec-L1-L3=8) (+81 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=79, cad-spec-L2=12, cad-spec-L1-L3=37)
+16:39:47 [INFO] Train batch 32/128 (25.0%) (cad-spec-L4=24, cad-spec-L2=0, 
+cad-spec-L1-L3=8) (+70 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=73, cad-spec-L2=25, cad-spec-L1-L3=30)
+16:39:57 [INFO] Train batch 40/128 (31.2%) (cad-spec-L4=24, cad-spec-L2=0, 
+cad-spec-L1-L3=16) (+68 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=69, cad-spec-L2=44, cad-spec-L1-L3=15)
+16:40:07 [INFO] Train batch 40/128 (31.2%) (cad-spec-L4=24, cad-spec-L2=0, 
+cad-spec-L1-L3=16) (+53 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=73, cad-spec-L2=38, cad-spec-L1-L3=17)
+16:40:17 [INFO] Train batch 40/128 (31.2%) (cad-spec-L4=24, cad-spec-L2=0, 
+cad-spec-L1-L3=16) (+59 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=54, cad-spec-L2=31, cad-spec-L1-L3=43)
+16:40:27 [INFO] Train batch 40/128 (31.2%) (cad-spec-L4=24, cad-spec-L2=0, 
+cad-spec-L1-L3=16) (+63 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=69, cad-spec-L2=25, cad-spec-L1-L3=34)
+16:40:37 [INFO] Train batch 48/128 (37.5%) (cad-spec-L4=32, cad-spec-L2=0, 
+cad-spec-L1-L3=16) (+51 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=63, cad-spec-L2=35, cad-spec-L1-L3=30)
+16:40:47 [INFO] Train batch 56/128 (43.8%) (cad-spec-L4=40, cad-spec-L2=0, 
+cad-spec-L1-L3=16) (+65 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=75, cad-spec-L2=36, cad-spec-L1-L3=17)
+16:40:57 [INFO] Train batch 64/128 (50.0%) (cad-spec-L4=48, cad-spec-L2=0, 
+cad-spec-L1-L3=16) (+81 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=45, cad-spec-L2=45, cad-spec-L1-L3=38)
+16:41:07 [INFO] Train batch 72/128 (56.2%) (cad-spec-L4=48, cad-spec-L2=8, 
+cad-spec-L1-L3=16) (+53 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=37, cad-spec-L2=44, cad-spec-L1-L3=47)
+16:41:17 [INFO] Train batch 72/128 (56.2%) (cad-spec-L4=48, cad-spec-L2=8, 
+cad-spec-L1-L3=16) (+72 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=44, cad-spec-L2=38, cad-spec-L1-L3=46)
+16:41:27 [INFO] Train batch 72/128 (56.2%) (cad-spec-L4=48, cad-spec-L2=8, 
+cad-spec-L1-L3=16) (+78 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=46, cad-spec-L2=19, cad-spec-L1-L3=63)
+16:41:37 [INFO] Train batch 80/128 (62.5%) (cad-spec-L4=56, cad-spec-L2=8, 
+cad-spec-L1-L3=16) (+55 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=47, cad-spec-L2=17, cad-spec-L1-L3=64)
+16:41:47 [INFO] Train batch 80/128 (62.5%) (cad-spec-L4=56, cad-spec-L2=8, 
+cad-spec-L1-L3=16) (+49 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=57, cad-spec-L2=30, cad-spec-L1-L3=41)
+16:41:57 [INFO] Train batch 96/128 (75.0%) (cad-spec-L4=64, cad-spec-L2=8, 
+cad-spec-L1-L3=24) (+62 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=72, cad-spec-L2=38, cad-spec-L1-L3=18)
+16:42:07 [INFO] Train batch 112/128 (87.5%) (cad-spec-L4=72, cad-spec-L2=8, 
+cad-spec-L1-L3=32) (+47 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=73, cad-spec-L2=37, cad-spec-L1-L3=18)
+16:42:17 [INFO] Train batch 112/128 (87.5%) (cad-spec-L4=72, cad-spec-L2=8, 
+cad-spec-L1-L3=32) (+40 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=70, cad-spec-L2=46, cad-spec-L1-L3=12)
+16:42:27 [INFO] Train batch 120/128 (93.8%) (cad-spec-L4=72, cad-spec-L2=8, 
+cad-spec-L1-L3=40) (+63 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=67, cad-spec-L2=34, cad-spec-L1-L3=27)
+16:42:37 [INFO] Train batch 120/128 (93.8%) (cad-spec-L4=72, cad-spec-L2=8, 
+cad-spec-L1-L3=40) (+87 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=52, cad-spec-L2=20, cad-spec-L1-L3=56)
+16:42:42 [INFO] Saving checkpoint at step 35
+16:42:43 [INFO] Logging 64 samples to Prime Intellect API at step 35
+16:42:43 [INFO] Logging distributions to Prime Intellect API at step 35
+16:42:43 [SUCCESS] Step 35 |  3m 55s | Reward 0.8438 | Trainable 128/1216 
+(10.5%) | Turns 1.0 | Branches 1.0 | Max Off-Policy 1 | Error 0.0% | Truncation
+4.7%
+                 ╰─ cad-spec-L1-L3 | Ratio 25.7% | Reward 0.8750 | Turns 1.0 | 
+Branches 1.0 | Max Off-Policy 1 | Error 0.0% | Truncation 0.0%
+                 ╰─ cad-spec-L2    | Ratio 30.9% | Reward 0.8750 | Turns 1.0 | 
+Branches 1.0 | Max Off-Policy 0 | Error 0.0% | Truncation 0.0%
+                 ╰─ cad-spec-L4    | Ratio 43.4% | Reward 0.8194 | Turns 1.0 | 
+Branches 1.0 | Max Off-Policy 1 | Error 0.0% | Truncation 8.3%
+16:42:47 [INFO] Train batch 8/128 (6.2%) (cad-spec-L4=8, cad-spec-L2=0, 
+cad-spec-L1-L3=0) (+61 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=45, cad-spec-L2=33, cad-spec-L1-L3=50)
+16:42:57 [INFO] Train batch 8/128 (6.2%) (cad-spec-L4=8, cad-spec-L2=0, 
+cad-spec-L1-L3=0) (+71 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=59, cad-spec-L2=33, cad-spec-L1-L3=36)
+16:43:07 [INFO] Train batch 16/128 (12.5%) (cad-spec-L4=16, cad-spec-L2=0, 
+cad-spec-L1-L3=0) (+59 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=56, cad-spec-L2=36, cad-spec-L1-L3=36)
+16:43:17 [INFO] Train batch 16/128 (12.5%) (cad-spec-L4=16, cad-spec-L2=0, 
+cad-spec-L1-L3=0) (+76 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=61, cad-spec-L2=20, cad-spec-L1-L3=47)
+16:43:27 [INFO] Train batch 16/128 (12.5%) (cad-spec-L4=16, cad-spec-L2=0, 
+cad-spec-L1-L3=0) (+65 buffered); 127 inflight rollouts (train=127, eval=0 | 
+cad-spec-L4=59, cad-spec-L2=22, cad-spec-L1-L3=46)
+16:43:37 [INFO] Train batch 16/128 (12.5%) (cad-spec-L4=16, cad-spec-L2=0, 
+cad-spec-L1-L3=0) (+59 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=58, cad-spec-L2=50, cad-spec-L1-L3=20)
+16:43:47 [INFO] Train batch 16/128 (12.5%) (cad-spec-L4=16, cad-spec-L2=0, 
+cad-spec-L1-L3=0) (+39 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=51, cad-spec-L2=53, cad-spec-L1-L3=24)
+16:43:57 [INFO] Train batch 16/128 (12.5%) (cad-spec-L4=16, cad-spec-L2=0, 
+cad-spec-L1-L3=0) (+52 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=52, cad-spec-L2=45, cad-spec-L1-L3=31)
+16:44:07 [INFO] Train batch 16/128 (12.5%) (cad-spec-L4=16, cad-spec-L2=0, 
+cad-spec-L1-L3=0) (+75 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=70, cad-spec-L2=43, cad-spec-L1-L3=15)
+16:44:17 [INFO] Train batch 16/128 (12.5%) (cad-spec-L4=16, cad-spec-L2=0, 
+cad-spec-L1-L3=0) (+37 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=72, cad-spec-L2=39, cad-spec-L1-L3=17)
+16:44:27 [INFO] Train batch 16/128 (12.5%) (cad-spec-L4=16, cad-spec-L2=0, 
+cad-spec-L1-L3=0) (+58 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=86, cad-spec-L2=16, cad-spec-L1-L3=26)
+16:44:37 [INFO] Train batch 16/128 (12.5%) (cad-spec-L4=16, cad-spec-L2=0, 
+cad-spec-L1-L3=0) (+61 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=81, cad-spec-L2=15, cad-spec-L1-L3=32)
+16:44:47 [INFO] Train batch 24/128 (18.8%) (cad-spec-L4=16, cad-spec-L2=8, 
+cad-spec-L1-L3=0) (+82 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=76, cad-spec-L2=25, cad-spec-L1-L3=27)
+16:44:57 [INFO] Train batch 40/128 (31.2%) (cad-spec-L4=16, cad-spec-L2=8, 
+cad-spec-L1-L3=16) (+62 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=81, cad-spec-L2=35, cad-spec-L1-L3=12)
+16:45:07 [INFO] Train batch 48/128 (37.5%) (cad-spec-L4=24, cad-spec-L2=8, 
+cad-spec-L1-L3=16) (+68 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=77, cad-spec-L2=40, cad-spec-L1-L3=11)
+16:45:17 [INFO] Train batch 56/128 (43.8%) (cad-spec-L4=32, cad-spec-L2=8, 
+cad-spec-L1-L3=16) (+62 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=79, cad-spec-L2=18, cad-spec-L1-L3=31)
+16:45:27 [INFO] Train batch 56/128 (43.8%) (cad-spec-L4=32, cad-spec-L2=8, 
+cad-spec-L1-L3=16) (+64 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=72, cad-spec-L2=3, cad-spec-L1-L3=53)
+16:45:37 [INFO] Train batch 56/128 (43.8%) (cad-spec-L4=32, cad-spec-L2=8, 
+cad-spec-L1-L3=16) (+35 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=64, cad-spec-L2=3, cad-spec-L1-L3=61)
+16:45:47 [INFO] Train batch 64/128 (50.0%) (cad-spec-L4=40, cad-spec-L2=8, 
+cad-spec-L1-L3=16) (+64 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=59, cad-spec-L2=16, cad-spec-L1-L3=53)
+16:45:57 [INFO] Train batch 64/128 (50.0%) (cad-spec-L4=40, cad-spec-L2=8, 
+cad-spec-L1-L3=16) (+83 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=55, cad-spec-L2=20, cad-spec-L1-L3=53)
+16:46:07 [INFO] Train batch 72/128 (56.2%) (cad-spec-L4=48, cad-spec-L2=8, 
+cad-spec-L1-L3=16) (+67 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=74, cad-spec-L2=25, cad-spec-L1-L3=29)
+16:46:17 [INFO] Train batch 72/128 (56.2%) (cad-spec-L4=48, cad-spec-L2=8, 
+cad-spec-L1-L3=16) (+49 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=84, cad-spec-L2=13, cad-spec-L1-L3=31)
+16:46:27 [INFO] Train batch 72/128 (56.2%) (cad-spec-L4=48, cad-spec-L2=8, 
+cad-spec-L1-L3=16) (+77 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=85, cad-spec-L2=10, cad-spec-L1-L3=33)
+16:46:37 [INFO] Train batch 80/128 (62.5%) (cad-spec-L4=48, cad-spec-L2=8, 
+cad-spec-L1-L3=24) (+57 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=57, cad-spec-L2=25, cad-spec-L1-L3=46)
+16:46:47 [INFO] Train batch 80/128 (62.5%) (cad-spec-L4=48, cad-spec-L2=8, 
+cad-spec-L1-L3=24) (+80 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=53, cad-spec-L2=29, cad-spec-L1-L3=46)
+16:46:57 [INFO] Train batch 80/128 (62.5%) (cad-spec-L4=48, cad-spec-L2=8, 
+cad-spec-L1-L3=24) (+70 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=57, cad-spec-L2=39, cad-spec-L1-L3=32)
+16:47:07 [INFO] Train batch 80/128 (62.5%) (cad-spec-L4=48, cad-spec-L2=8, 
+cad-spec-L1-L3=24) (+66 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=72, cad-spec-L2=42, cad-spec-L1-L3=14)
+16:47:17 [INFO] Train batch 88/128 (68.8%) (cad-spec-L4=48, cad-spec-L2=8, 
+cad-spec-L1-L3=32) (+75 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=77, cad-spec-L2=26, cad-spec-L1-L3=25)
+16:47:27 [INFO] Train batch 96/128 (75.0%) (cad-spec-L4=48, cad-spec-L2=16, 
+cad-spec-L1-L3=32) (+50 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=80, cad-spec-L2=3, cad-spec-L1-L3=45)
+16:47:37 [INFO] Train batch 96/128 (75.0%) (cad-spec-L4=48, cad-spec-L2=16, 
+cad-spec-L1-L3=32) (+29 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=77, cad-spec-L2=0, cad-spec-L1-L3=51)
+16:47:47 [INFO] Train batch 112/128 (87.5%) (cad-spec-L4=56, cad-spec-L2=16, 
+cad-spec-L1-L3=40) (+41 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=70, cad-spec-L2=8, cad-spec-L1-L3=50)
+16:47:57 [INFO] Train batch 112/128 (87.5%) (cad-spec-L4=56, cad-spec-L2=16, 
+cad-spec-L1-L3=40) (+73 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=67, cad-spec-L2=24, cad-spec-L1-L3=37)
+16:48:07 [INFO] Train batch 112/128 (87.5%) (cad-spec-L4=56, cad-spec-L2=16, 
+cad-spec-L1-L3=40) (+59 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=53, cad-spec-L2=39, cad-spec-L1-L3=36)
+16:48:17 [INFO] Train batch 112/128 (87.5%) (cad-spec-L4=56, cad-spec-L2=16, 
+cad-spec-L1-L3=40) (+52 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=68, cad-spec-L2=31, cad-spec-L1-L3=29)
+16:48:27 [INFO] Train batch 112/128 (87.5%) (cad-spec-L4=56, cad-spec-L2=16, 
+cad-spec-L1-L3=40) (+57 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=85, cad-spec-L2=11, cad-spec-L1-L3=32)
+16:48:37 [INFO] Train batch 120/128 (93.8%) (cad-spec-L4=56, cad-spec-L2=24, 
+cad-spec-L1-L3=40) (+68 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=96, cad-spec-L2=13, cad-spec-L1-L3=19)
+16:48:47 [INFO] Train batch 120/128 (93.8%) (cad-spec-L4=56, cad-spec-L2=24, 
+cad-spec-L1-L3=40) (+58 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=71, cad-spec-L2=31, cad-spec-L1-L3=26)
+16:48:48 [WARNING] Only 128/2032 generated rollouts are trainable (6.3%) — 
+consider reviewing task difficulty / filter config
+16:48:49 [INFO] Logging 64 samples to Prime Intellect API at step 36
+16:48:49 [INFO] Logging distributions to Prime Intellect API at step 36
+16:48:49 [SUCCESS] Step 36 |   6m 5s | Reward 0.8281 | Trainable 128/2032 
+(6.3%) | Turns 1.0 | Branches 1.0 | Max Off-Policy 0 | Error 0.0% | Truncation 
+0.8%
+                 ╰─ cad-spec-L1-L3 | Ratio 25.6% | Reward 0.7250 | Turns 1.0 | 
+Branches 1.0 | Max Off-Policy 0 | Error 0.0% | Truncation 0.0%
+                 ╰─ cad-spec-L2    | Ratio 23.2% | Reward 0.8750 | Turns 1.0 | 
+Branches 1.0 | Max Off-Policy 0 | Error 0.0% | Truncation 4.2%
+                 ╰─ cad-spec-L4    | Ratio 51.2% | Reward 0.8750 | Turns 1.0 | 
+Branches 1.0 | Max Off-Policy 0 | Error 0.0% | Truncation 0.0%
+16:48:57 [INFO] Train batch 8/128 (6.2%) (cad-spec-L4=0, cad-spec-L2=0, 
+cad-spec-L1-L3=8) (+53 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=66, cad-spec-L2=43, cad-spec-L1-L3=19)
+16:49:07 [INFO] Train batch 16/128 (12.5%) (cad-spec-L4=8, cad-spec-L2=0, 
+cad-spec-L1-L3=8) (+68 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=79, cad-spec-L2=31, cad-spec-L1-L3=18)
+16:49:17 [INFO] Train batch 16/128 (12.5%) (cad-spec-L4=8, cad-spec-L2=0, 
+cad-spec-L1-L3=8) (+73 buffered); 127 inflight rollouts (train=127, eval=0 | 
+cad-spec-L4=70, cad-spec-L2=32, cad-spec-L1-L3=25)
+16:49:27 [INFO] Train batch 16/128 (12.5%) (cad-spec-L4=8, cad-spec-L2=0, 
+cad-spec-L1-L3=8) (+73 buffered); 127 inflight rollouts (train=127, eval=0 | 
+cad-spec-L4=70, cad-spec-L2=32, cad-spec-L1-L3=25)
+16:49:37 [INFO] Train batch 32/128 (25.0%) (cad-spec-L4=16, cad-spec-L2=0, 
+cad-spec-L1-L3=16) (+17 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=47, cad-spec-L2=25, cad-spec-L1-L3=56)
+16:49:47 [INFO] Train batch 40/128 (31.2%) (cad-spec-L4=24, cad-spec-L2=0, 
+cad-spec-L1-L3=16) (+12 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=45, cad-spec-L2=29, cad-spec-L1-L3=54)
+16:49:57 [INFO] Train batch 40/128 (31.2%) (cad-spec-L4=24, cad-spec-L2=0, 
+cad-spec-L1-L3=16) (+52 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=53, cad-spec-L2=31, cad-spec-L1-L3=44)
+16:50:07 [INFO] Train batch 40/128 (31.2%) (cad-spec-L4=24, cad-spec-L2=0, 
+cad-spec-L1-L3=16) (+40 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=64, cad-spec-L2=28, cad-spec-L1-L3=36)
+16:50:17 [INFO] Train batch 48/128 (37.5%) (cad-spec-L4=24, cad-spec-L2=0, 
+cad-spec-L1-L3=24) (+63 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=80, cad-spec-L2=24, cad-spec-L1-L3=24)
+16:50:27 [INFO] Train batch 56/128 (43.8%) (cad-spec-L4=32, cad-spec-L2=0, 
+cad-spec-L1-L3=24) (+61 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=69, cad-spec-L2=39, cad-spec-L1-L3=20)
+16:50:37 [INFO] Train batch 64/128 (50.0%) (cad-spec-L4=32, cad-spec-L2=0, 
+cad-spec-L1-L3=32) (+48 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=70, cad-spec-L2=41, cad-spec-L1-L3=17)
+16:50:47 [INFO] Train batch 64/128 (50.0%) (cad-spec-L4=32, cad-spec-L2=0, 
+cad-spec-L1-L3=32) (+65 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=80, cad-spec-L2=30, cad-spec-L1-L3=18)
+16:50:57 [INFO] Train batch 72/128 (56.2%) (cad-spec-L4=40, cad-spec-L2=0, 
+cad-spec-L1-L3=32) (+58 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=74, cad-spec-L2=20, cad-spec-L1-L3=34)
+16:51:07 [INFO] Train batch 72/128 (56.2%) (cad-spec-L4=40, cad-spec-L2=0, 
+cad-spec-L1-L3=32) (+37 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=72, cad-spec-L2=29, cad-spec-L1-L3=27)
+16:51:17 [INFO] Train batch 72/128 (56.2%) (cad-spec-L4=40, cad-spec-L2=0, 
+cad-spec-L1-L3=32) (+66 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=74, cad-spec-L2=28, cad-spec-L1-L3=26)
+16:51:27 [INFO] Train batch 104/128 (81.2%) (cad-spec-L4=56, cad-spec-L2=0, 
+cad-spec-L1-L3=48) (+50 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=58, cad-spec-L2=38, cad-spec-L1-L3=32)
+16:51:37 [INFO] Train batch 104/128 (81.2%) (cad-spec-L4=56, cad-spec-L2=0, 
+cad-spec-L1-L3=48) (+55 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=51, cad-spec-L2=46, cad-spec-L1-L3=31)
+16:51:47 [INFO] Train batch 104/128 (81.2%) (cad-spec-L4=56, cad-spec-L2=0, 
+cad-spec-L1-L3=48) (+70 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=53, cad-spec-L2=42, cad-spec-L1-L3=33)
+16:51:57 [INFO] Train batch 104/128 (81.2%) (cad-spec-L4=56, cad-spec-L2=0, 
+cad-spec-L1-L3=48) (+34 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=71, cad-spec-L2=26, cad-spec-L1-L3=31)
+16:52:07 [INFO] Train batch 104/128 (81.2%) (cad-spec-L4=56, cad-spec-L2=0, 
+cad-spec-L1-L3=48) (+62 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=74, cad-spec-L2=28, cad-spec-L1-L3=26)
+16:52:17 [INFO] Train batch 104/128 (81.2%) (cad-spec-L4=56, cad-spec-L2=0, 
+cad-spec-L1-L3=48) (+47 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=64, cad-spec-L2=36, cad-spec-L1-L3=28)
+16:52:27 [INFO] Train batch 104/128 (81.2%) (cad-spec-L4=56, cad-spec-L2=0, 
+cad-spec-L1-L3=48) (+61 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=55, cad-spec-L2=34, cad-spec-L1-L3=39)
+16:52:37 [INFO] Train batch 120/128 (93.8%) (cad-spec-L4=64, cad-spec-L2=8, 
+cad-spec-L1-L3=48) (+44 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=71, cad-spec-L2=17, cad-spec-L1-L3=40)
+16:52:45 [INFO] Logging 64 samples to Prime Intellect API at step 37
+16:52:45 [INFO] Logging distributions to Prime Intellect API at step 37
+16:52:45 [SUCCESS] Step 37 |  3m 55s | Reward 0.8750 | Trainable 128/1264 
+(10.1%) | Turns 1.0 | Branches 1.0 | Max Off-Policy 1 | Error 0.0% | Truncation
+0.0%
+                 ╰─ cad-spec-L1-L3 | Ratio 22.2% | Reward 0.8750 | Turns 1.0 | 
+Branches 1.0 | Max Off-Policy 1 | Error 0.0% | Truncation 0.0%
+                 ╰─ cad-spec-L2    | Ratio 28.5% | Reward 0.8750 | Turns 1.0 | 
+Branches 1.0 | Max Off-Policy 0 | Error 0.0% | Truncation 0.0%
+                 ╰─ cad-spec-L4    | Ratio 49.4% | Reward 0.8750 | Turns 1.0 | 
+Branches 1.0 | Max Off-Policy 1 | Error 0.0% | Truncation 0.0%
+16:52:47 [INFO] Train batch 0/128 (0.0%) (cad-spec-L4=0, cad-spec-L2=0, 
+cad-spec-L1-L3=0) (+48 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=74, cad-spec-L2=4, cad-spec-L1-L3=50)
+16:52:57 [INFO] Train batch 0/128 (0.0%) (cad-spec-L4=0, cad-spec-L2=0, 
+cad-spec-L1-L3=0) (+50 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=58, cad-spec-L2=34, cad-spec-L1-L3=36)
+16:53:07 [INFO] Train batch 8/128 (6.2%) (cad-spec-L4=8, cad-spec-L2=0, 
+cad-spec-L1-L3=0) (+63 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=68, cad-spec-L2=47, cad-spec-L1-L3=13)
+16:53:17 [INFO] Train batch 16/128 (12.5%) (cad-spec-L4=16, cad-spec-L2=0, 
+cad-spec-L1-L3=0) (+60 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=61, cad-spec-L2=47, cad-spec-L1-L3=20)
+16:53:27 [INFO] Train batch 16/128 (12.5%) (cad-spec-L4=16, cad-spec-L2=0, 
+cad-spec-L1-L3=0) (+65 buffered); 127 inflight rollouts (train=127, eval=0 | 
+cad-spec-L4=62, cad-spec-L2=46, cad-spec-L1-L3=19)
+16:53:37 [INFO] Train batch 16/128 (12.5%) (cad-spec-L4=16, cad-spec-L2=0, 
+cad-spec-L1-L3=0) (+65 buffered); 127 inflight rollouts (train=127, eval=0 | 
+cad-spec-L4=62, cad-spec-L2=46, cad-spec-L1-L3=19)
+16:53:47 [INFO] Train batch 48/128 (37.5%) (cad-spec-L4=48, cad-spec-L2=0, 
+cad-spec-L1-L3=0) (+13 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=51, cad-spec-L2=37, cad-spec-L1-L3=40)
+16:53:57 [INFO] Train batch 56/128 (43.8%) (cad-spec-L4=56, cad-spec-L2=0, 
+cad-spec-L1-L3=0) (+6 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=44, cad-spec-L2=38, cad-spec-L1-L3=46)
+16:54:07 [INFO] Train batch 56/128 (43.8%) (cad-spec-L4=56, cad-spec-L2=0, 
+cad-spec-L1-L3=0) (+46 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=57, cad-spec-L2=32, cad-spec-L1-L3=39)
+16:54:17 [INFO] Train batch 56/128 (43.8%) (cad-spec-L4=56, cad-spec-L2=0, 
+cad-spec-L1-L3=0) (+66 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=61, cad-spec-L2=41, cad-spec-L1-L3=26)
+16:54:27 [INFO] Train batch 56/128 (43.8%) (cad-spec-L4=56, cad-spec-L2=0, 
+cad-spec-L1-L3=0) (+60 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=82, cad-spec-L2=26, cad-spec-L1-L3=20)
+16:54:37 [INFO] Train batch 72/128 (56.2%) (cad-spec-L4=64, cad-spec-L2=0, 
+cad-spec-L1-L3=8) (+43 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=87, cad-spec-L2=8, cad-spec-L1-L3=33)
+16:54:47 [INFO] Train batch 80/128 (62.5%) (cad-spec-L4=72, cad-spec-L2=0, 
+cad-spec-L1-L3=8) (+68 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=85, cad-spec-L2=9, cad-spec-L1-L3=34)
+16:54:57 [INFO] Train batch 80/128 (62.5%) (cad-spec-L4=72, cad-spec-L2=0, 
+cad-spec-L1-L3=8) (+73 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=65, cad-spec-L2=24, cad-spec-L1-L3=39)
+16:55:07 [INFO] Train batch 80/128 (62.5%) (cad-spec-L4=72, cad-spec-L2=0, 
+cad-spec-L1-L3=8) (+58 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=50, cad-spec-L2=33, cad-spec-L1-L3=45)
+16:55:17 [INFO] Train batch 96/128 (75.0%) (cad-spec-L4=88, cad-spec-L2=0, 
+cad-spec-L1-L3=8) (+62 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=49, cad-spec-L2=45, cad-spec-L1-L3=34)
+16:55:27 [INFO] Train batch 96/128 (75.0%) (cad-spec-L4=88, cad-spec-L2=0, 
+cad-spec-L1-L3=8) (+55 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=59, cad-spec-L2=26, cad-spec-L1-L3=43)
+16:55:37 [INFO] Train batch 96/128 (75.0%) (cad-spec-L4=88, cad-spec-L2=0, 
+cad-spec-L1-L3=8) (+45 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=65, cad-spec-L2=8, cad-spec-L1-L3=55)
+16:55:47 [INFO] Train batch 104/128 (81.2%) (cad-spec-L4=88, cad-spec-L2=0, 
+cad-spec-L1-L3=16) (+57 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=66, cad-spec-L2=8, cad-spec-L1-L3=54)
+16:55:57 [INFO] Train batch 104/128 (81.2%) (cad-spec-L4=88, cad-spec-L2=0, 
+cad-spec-L1-L3=16) (+70 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=65, cad-spec-L2=30, cad-spec-L1-L3=33)
+16:56:07 [INFO] Train batch 120/128 (93.8%) (cad-spec-L4=96, cad-spec-L2=0, 
+cad-spec-L1-L3=24) (+59 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=81, cad-spec-L2=24, cad-spec-L1-L3=23)
+16:56:17 [INFO] Train batch 120/128 (93.8%) (cad-spec-L4=96, cad-spec-L2=0, 
+cad-spec-L1-L3=24) (+71 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=75, cad-spec-L2=20, cad-spec-L1-L3=33)
+16:56:27 [INFO] Train batch 120/128 (93.8%) (cad-spec-L4=96, cad-spec-L2=0, 
+cad-spec-L1-L3=24) (+64 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=63, cad-spec-L2=41, cad-spec-L1-L3=24)
+16:56:37 [INFO] Train batch 120/128 (93.8%) (cad-spec-L4=96, cad-spec-L2=0, 
+cad-spec-L1-L3=24) (+76 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=60, cad-spec-L2=55, cad-spec-L1-L3=13)
+16:56:47 [INFO] Train batch 120/128 (93.8%) (cad-spec-L4=96, cad-spec-L2=0, 
+cad-spec-L1-L3=24) (+74 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=73, cad-spec-L2=23, cad-spec-L1-L3=32)
+16:56:53 [INFO] Logging 64 samples to Prime Intellect API at step 38
+16:56:53 [INFO] Logging distributions to Prime Intellect API at step 38
+16:56:53 [SUCCESS] Step 38 |   4m 8s | Reward 0.8516 | Trainable 128/1232 
+(10.4%) | Turns 1.0 | Branches 1.0 | Max Off-Policy 1 | Error 0.0% | Truncation
+3.1%
+                 ╰─ cad-spec-L1-L3 | Ratio 27.3% | Reward 0.8750 | Turns 1.0 | 
+Branches 1.0 | Max Off-Policy 0 | Error 0.0% | Truncation 0.0%
+                 ╰─ cad-spec-L2    | Ratio 27.9% | Reward 0.0000 | Turns 0.0 | 
+Branches 0.0 | Max Off-Policy 0 | Error 0.0% | Truncation 0.0%
+                 ╰─ cad-spec-L4    | Ratio 44.8% | Reward 0.8462 | Turns 1.0 | 
+Branches 1.0 | Max Off-Policy 1 | Error 0.0% | Truncation 3.8%
+16:56:57 [INFO] Train batch 0/128 (0.0%) (cad-spec-L4=0, cad-spec-L2=0, 
+cad-spec-L1-L3=0) (+59 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=74, cad-spec-L2=13, cad-spec-L1-L3=41)
+16:57:07 [INFO] Train batch 0/128 (0.0%) (cad-spec-L4=0, cad-spec-L2=0, 
+cad-spec-L1-L3=0) (+45 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=78, cad-spec-L2=3, cad-spec-L1-L3=47)
+16:57:17 [INFO] Train batch 0/128 (0.0%) (cad-spec-L4=0, cad-spec-L2=0, 
+cad-spec-L1-L3=0) (+61 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=82, cad-spec-L2=16, cad-spec-L1-L3=30)
+16:57:27 [INFO] Train batch 0/128 (0.0%) (cad-spec-L4=0, cad-spec-L2=0, 
+cad-spec-L1-L3=0) (+73 buffered); 127 inflight rollouts (train=127, eval=0 | 
+cad-spec-L4=74, cad-spec-L2=24, cad-spec-L1-L3=29)
+16:57:37 [INFO] Train batch 0/128 (0.0%) (cad-spec-L4=0, cad-spec-L2=0, 
+cad-spec-L1-L3=0) (+73 buffered); 127 inflight rollouts (train=127, eval=0 | 
+cad-spec-L4=74, cad-spec-L2=24, cad-spec-L1-L3=29)
+16:57:47 [INFO] Train batch 8/128 (6.2%) (cad-spec-L4=8, cad-spec-L2=0, 
+cad-spec-L1-L3=0) (+41 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=84, cad-spec-L2=24, cad-spec-L1-L3=20)
+16:57:57 [INFO] Train batch 8/128 (6.2%) (cad-spec-L4=8, cad-spec-L2=0, 
+cad-spec-L1-L3=0) (+32 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=89, cad-spec-L2=21, cad-spec-L1-L3=18)
+16:58:07 [INFO] Train batch 16/128 (12.5%) (cad-spec-L4=8, cad-spec-L2=0, 
+cad-spec-L1-L3=8) (+61 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=61, cad-spec-L2=42, cad-spec-L1-L3=25)
+16:58:17 [INFO] Train batch 32/128 (25.0%) (cad-spec-L4=16, cad-spec-L2=0, 
+cad-spec-L1-L3=16) (+68 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=56, cad-spec-L2=20, cad-spec-L1-L3=52)
+16:58:27 [INFO] Train batch 40/128 (31.2%) (cad-spec-L4=16, cad-spec-L2=0, 
+cad-spec-L1-L3=24) (+45 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=74, cad-spec-L2=3, cad-spec-L1-L3=51)
+16:58:37 [INFO] Train batch 40/128 (31.2%) (cad-spec-L4=16, cad-spec-L2=0, 
+cad-spec-L1-L3=24) (+42 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=74, cad-spec-L2=18, cad-spec-L1-L3=36)
+16:58:47 [INFO] Train batch 40/128 (31.2%) (cad-spec-L4=16, cad-spec-L2=0, 
+cad-spec-L1-L3=24) (+65 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=56, cad-spec-L2=39, cad-spec-L1-L3=33)
+16:58:57 [INFO] Train batch 40/128 (31.2%) (cad-spec-L4=16, cad-spec-L2=0, 
+cad-spec-L1-L3=24) (+66 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=53, cad-spec-L2=45, cad-spec-L1-L3=30)
+16:59:07 [INFO] Train batch 40/128 (31.2%) (cad-spec-L4=16, cad-spec-L2=0, 
+cad-spec-L1-L3=24) (+53 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=65, cad-spec-L2=32, cad-spec-L1-L3=31)
+16:59:17 [INFO] Train batch 40/128 (31.2%) (cad-spec-L4=16, cad-spec-L2=0, 
+cad-spec-L1-L3=24) (+61 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=80, cad-spec-L2=20, cad-spec-L1-L3=28)
+16:59:27 [INFO] Train batch 40/128 (31.2%) (cad-spec-L4=16, cad-spec-L2=0, 
+cad-spec-L1-L3=24) (+68 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=79, cad-spec-L2=30, cad-spec-L1-L3=19)
+16:59:37 [INFO] Train batch 40/128 (31.2%) (cad-spec-L4=16, cad-spec-L2=0, 
+cad-spec-L1-L3=24) (+50 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=87, cad-spec-L2=23, cad-spec-L1-L3=18)
+16:59:47 [INFO] Train batch 40/128 (31.2%) (cad-spec-L4=16, cad-spec-L2=0, 
+cad-spec-L1-L3=24) (+71 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=78, cad-spec-L2=11, cad-spec-L1-L3=39)
+16:59:57 [INFO] Train batch 48/128 (37.5%) (cad-spec-L4=24, cad-spec-L2=0, 
+cad-spec-L1-L3=24) (+57 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=70, cad-spec-L2=33, cad-spec-L1-L3=25)
+17:00:07 [INFO] Train batch 48/128 (37.5%) (cad-spec-L4=24, cad-spec-L2=0, 
+cad-spec-L1-L3=24) (+66 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=90, cad-spec-L2=31, cad-spec-L1-L3=7)
+17:00:17 [INFO] Train batch 48/128 (37.5%) (cad-spec-L4=24, cad-spec-L2=0, 
+cad-spec-L1-L3=24) (+50 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=93, cad-spec-L2=27, cad-spec-L1-L3=8)
+17:00:27 [INFO] Train batch 48/128 (37.5%) (cad-spec-L4=24, cad-spec-L2=0, 
+cad-spec-L1-L3=24) (+50 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=77, cad-spec-L2=43, cad-spec-L1-L3=8)
+17:00:37 [INFO] Train batch 56/128 (43.8%) (cad-spec-L4=32, cad-spec-L2=0, 
+cad-spec-L1-L3=24) (+82 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=83, cad-spec-L2=36, cad-spec-L1-L3=9)
+17:00:47 [INFO] Train batch 64/128 (50.0%) (cad-spec-L4=40, cad-spec-L2=0, 
+cad-spec-L1-L3=24) (+50 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=71, cad-spec-L2=41, cad-spec-L1-L3=16)
+17:00:57 [INFO] Train batch 64/128 (50.0%) (cad-spec-L4=40, cad-spec-L2=0, 
+cad-spec-L1-L3=24) (+53 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=50, cad-spec-L2=40, cad-spec-L1-L3=38)
+17:01:07 [INFO] Train batch 64/128 (50.0%) (cad-spec-L4=40, cad-spec-L2=0, 
+cad-spec-L1-L3=24) (+65 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=61, cad-spec-L2=28, cad-spec-L1-L3=39)
+17:01:17 [INFO] Train batch 88/128 (68.8%) (cad-spec-L4=64, cad-spec-L2=0, 
+cad-spec-L1-L3=24) (+62 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=42, cad-spec-L2=27, cad-spec-L1-L3=59)
+17:01:27 [INFO] Train batch 88/128 (68.8%) (cad-spec-L4=64, cad-spec-L2=0, 
+cad-spec-L1-L3=24) (+69 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=29, cad-spec-L2=32, cad-spec-L1-L3=67)
+17:01:37 [INFO] Train batch 88/128 (68.8%) (cad-spec-L4=64, cad-spec-L2=0, 
+cad-spec-L1-L3=24) (+55 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=41, cad-spec-L2=28, cad-spec-L1-L3=59)
+17:01:47 [INFO] Train batch 88/128 (68.8%) (cad-spec-L4=64, cad-spec-L2=0, 
+cad-spec-L1-L3=24) (+56 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=72, cad-spec-L2=32, cad-spec-L1-L3=24)
+17:01:57 [INFO] Train batch 88/128 (68.8%) (cad-spec-L4=64, cad-spec-L2=0, 
+cad-spec-L1-L3=24) (+82 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=89, cad-spec-L2=15, cad-spec-L1-L3=24)
+17:02:07 [INFO] Train batch 104/128 (81.2%) (cad-spec-L4=72, cad-spec-L2=0, 
+cad-spec-L1-L3=32) (+45 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=80, cad-spec-L2=19, cad-spec-L1-L3=29)
+17:02:17 [INFO] Train batch 104/128 (81.2%) (cad-spec-L4=72, cad-spec-L2=0, 
+cad-spec-L1-L3=32) (+81 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=60, cad-spec-L2=20, cad-spec-L1-L3=48)
+17:02:27 [INFO] Train batch 104/128 (81.2%) (cad-spec-L4=72, cad-spec-L2=0, 
+cad-spec-L1-L3=32) (+40 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=60, cad-spec-L2=17, cad-spec-L1-L3=51)
+17:02:37 [INFO] Train batch 104/128 (81.2%) (cad-spec-L4=72, cad-spec-L2=0, 
+cad-spec-L1-L3=32) (+57 buffered); 128 inflight rollouts (train=128, eval=0 | 
+cad-spec-L4=73, cad-spec-L2=23, cad-spec-L1-L3=32)

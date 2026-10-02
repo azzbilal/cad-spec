@@ -5,6 +5,16 @@ Scores are only comparable within one scorer version
 
 ## Unreleased
 
+### Training run 1: stopped at step 38 on cost (Amendment 5)
+- Run `mk9qcuq2dsckzrf68gycyqls` completed 38 of 104 steps before being
+  stopped: cost per step rose from $0.13 to about $0.68 as most generated
+  answers were dropped by the zero-advantage filter (inference 73% of the
+  $13.87 bill). Total spend $14.56, within the $15 ceiling.
+- Its end-of-run adapter `xfisiyo5vlhn0ys65sf4uad7` (state at the stop,
+  step 38) is the one evaluated, as registered.
+- `scripts/capture_run.py` fetches distributions only for steps the run
+  reached (from its metrics), instead of every step up to `max_steps`.
+
 ### Training run 1: smoke test passed (step 5)
 - Smoke run `k3rwpbbk5sio4936onuai7ok` on cad-spec 0.4.5: 5 steps, no
   scoring errors, rewards 0 and 1 at every step, $0.13208 per step (recorded

@@ -1,0 +1,95 @@
+{
+  "run": {
+    "id": "mk9qcuq2dsckzrf68gycyqls",
+    "name": "cad-spec-9b-run1",
+    "user_id": "cmsrm9ezm01fjxlxy71dmwcy2",
+    "team_id": null,
+    "cluster_id": "gj5kdoc31a6zopcmm7xsz236",
+    "status": "STOPPED",
+    "kind": "SHARED_RFT_HOSTED",
+    "rollouts_per_example": 8,
+    "seq_len": 65536,
+    "max_steps": 104,
+    "max_tokens": 2048,
+    "batch_size": 128,
+    "loss": "rl",
+    "teacher": null,
+    "base_model": "Qwen/Qwen3.5-9B",
+    "environments": [
+      {
+        "id": "bazzouzi/cad-spec",
+        "args": {
+          "tier": [
+            "L4"
+          ],
+          "hints": true,
+          "reward": "binary"
+        },
+        "name": "cad-spec-L4",
+        "ratio": 0.5,
+        "version": "0.4.5",
+        "version_id": "s41pd72x99yh706fv3vnftl8",
+        "visibility": "PUBLIC"
+      },
+      {
+        "id": "bazzouzi/cad-spec",
+        "args": {
+          "tier": [
+            "L2"
+          ],
+          "hints": true,
+          "reward": "binary"
+        },
+        "name": "cad-spec-L2",
+        "ratio": 0.25,
+        "version": "0.4.5",
+        "version_id": "s41pd72x99yh706fv3vnftl8",
+        "visibility": "PUBLIC"
+      },
+      {
+        "id": "bazzouzi/cad-spec",
+        "args": {
+          "tier": [
+            "L1",
+            "L3"
+          ],
+          "hints": true,
+          "reward": "binary"
+        },
+        "name": "cad-spec-L1-L3",
+        "ratio": 0.25,
+        "version": "0.4.5",
+        "version_id": "s41pd72x99yh706fv3vnftl8",
+        "visibility": "PUBLIC"
+      }
+    ],
+    "run_config": {
+      "pre_batch_filters": [
+        {
+          "type": "zero_advantage",
+          "enforce": true
+        }
+      ]
+    },
+    "eval_config": null,
+    "val_config": null,
+    "buffer_config": null,
+    "learning_rate": null,
+    "lora_alpha": null,
+    "max_inflight_rollouts": null,
+    "oversampling_factor": null,
+    "max_async_level": null,
+    "wandb_entity": null,
+    "wandb_project": null,
+    "wandb_run_name": null,
+    "runs_ahead": null,
+    "queue_reason": null,
+    "notice": null,
+    "started_at": "2026-09-30 15:44:56.551000",
+    "completed_at": "2026-09-30 17:02:52.081000",
+    "error_message": null,
+    "created_at": "2026-09-30 15:44:21.301000",
+    "updated_at": "2026-09-30 17:02:52.081000",
+    "failure_analysis": null
+  }
+}
