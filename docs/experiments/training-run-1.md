@@ -401,3 +401,64 @@ nothing yet about other part families.
   CRLF form). `scripts/verify_manifest.py` checks them on any OS and reports
   which form matched; CI runs it. From now on `capture_run.py` and
   `archive_run_payload.py` write LF on every OS.
+
+### Addendum (2 October 2026): serving-route bridge check, rule registered before the data is read
+
+This is an unplanned, free, post hoc check on the limit "base and adapter
+were served by different Prime routes". It was not part of the registered
+analysis and changes neither the verdict nor the claim. The rule below was
+written and committed before any step-1 reward value of the archived
+training metrics was opened; only key names, sample counts and the archived
+create requests had been read.
+
+**Question.** Could a difference between the serving stacks, rather than
+training, explain the jump on L4? If the nearly untrained model scores
+inside the training stack what the base model scores on the base route, it
+cannot.
+
+**Quantities.**
+
+- Observed: `train/<env>/all/metrics/all_pass_reward/mean` at step 1 of
+  `metrics.json`, for the training run `mk9qcuq2dsckzrf68gycyqls` (primary)
+  and the 0.4.5 smoke run `k3rwpbbk5sio4936onuai7ok` (second sample; its
+  create request has the same sampling settings). The `all` set is used, not
+  `effective`, so the zero-advantage filter cannot bias the rate.
+- Reference: `results/training/screening/qwen3.5-9b-t0.7-x8-2k.jsonl`, the
+  base route at matched settings (temperature 0.7, 8 samples per spec,
+  2,048 tokens, thinking off, cheat-sheet on), 30 dev specs per tier. This
+  replaces the greedy screening level as the comparison point because
+  training samples at temperature 0.7.
+- Interval: whole spec groups of 8 answers are resampled with replacement
+  from the reference, as many groups as step 1 has prompts of that
+  environment (batch share times prompts), 10,000 draws, seed 20261002. The
+  2.5th and 97.5th percentiles form a 95% predictive interval for "same
+  model, same settings".
+
+**Verdict, on L4 of the training run (primary).**
+
+- **BRIDGED**: the step-1 rate is inside the interval. A route difference is
+  not supported as an explanation of the L4 gain.
+- **OPEN_INFLATING**: above the interval. The gap to the reference is
+  reported as a share of the registered +63.3 point L4 gain.
+- **STACKS_DIFFER_NOT_INFLATING**: below the interval. The gain is not a
+  route artifact, and the difference is recorded as unexplained.
+
+L4 of the smoke run, L2, L1+L3 and the pooled L4 value of both runs are
+reported as corroboration and do not change the verdict; any disagreement is
+stated.
+
+**Precondition.** The step-1 batch must have been generated before any
+weight update (a LoRA adapter starts as a zero change to the base model).
+This is checked in `logs.txt` of each snapshot and reported with the result.
+
+**Limits known in advance.** Step 1 holds about 11 L4 prompts per run, so the
+interval is wide: the check can rule out a stack effect large enough to
+explain a 63 point jump, not a small one. Training prompts come from the
+train split and the reference from the dev split (same generator, different
+specs). The reference was produced with package 0.4.1 and the runs with
+0.4.5 (scorer 0.4.0 in both). The check says nothing about the adapter route
+itself.
+
+**Analysis.** `scripts/bridge_check.py` (self-test
+`scripts/test_bridge_check.py`, synthetic data only), frozen in this commit.
+It refuses to run if the sampling settings of the three sources differ.
