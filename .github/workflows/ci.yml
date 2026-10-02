@@ -100,6 +100,27 @@ jobs:
           python scripts/bridge_check.py --out /tmp/bridge/bridge-check > /dev/null
           diff /tmp/bridge/bridge-check.json results/training/run1/bridge-check.json
           diff /tmp/bridge/bridge-check.md results/training/run1/bridge-check.md
+      - name: Replication analysis and split self-test (registered rules, refusals, fingerprint, disjointness)
+        working-directory: .
+        run: python scripts/test_compare_replication.py
+      - name: Replication split is solvable and locked (reference 240 of 240, unedited rev A 0 of 60)
+        working-directory: .
+        run: |
+          python scripts/run_baseline.py --provider reference --tiers L1 L2 L3 L4 \
+            --split replication --unlock-replication --out /tmp/rep-ref.jsonl --quiet
+          python scripts/run_baseline.py --provider rev-a --tiers L4 \
+            --split replication --unlock-replication --out /tmp/rep-reva.jsonl --quiet
+          python - <<'PY'
+          import json
+
+          def rewards(path):
+              return [r["reward"] for r in map(json.loads, open(path)) if "tier" in r]
+
+          ref, reva = rewards("/tmp/rep-ref.jsonl"), rewards("/tmp/rep-reva.jsonl")
+          assert len(ref) == 240 and min(ref) == 1.0, (len(ref), min(ref))
+          assert len(reva) == 60 and max(reva) < 1.0, (len(reva), max(reva))
+          print("reference 240/240, rev A 0/60")
+          PY
       - name: Release check (every linked evidence file exists)
         working-directory: .
         run: python scripts/check_release.py

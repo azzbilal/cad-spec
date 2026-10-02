@@ -27,6 +27,7 @@ import cad_spec
 from cad_spec.measure import _sandbox_mode
 from cad_spec.rubric import SCORER_VERSION, score
 from cad_spec.tasks import make_test_split
+from replication_split import make_replication_split
 
 
 def replay(path: Path, specs: dict) -> dict:
@@ -53,7 +54,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("files", type=Path, nargs="+")
     ap.add_argument("--out", type=Path, default=None, help="write the result as JSON (LF line endings)")
     args = ap.parse_args(argv)
-    specs = {s.id: s for s in make_test_split()}
+    # Ids never collide: test-NNNN for the locked test split, rep-NNNN for the replication split.
+    specs = {s.id: s for s in make_test_split() + make_replication_split()}
     t0 = time.time()
     result = {"platform": platform.platform(), "python": platform.python_version(),
               "sandbox_mode": _sandbox_mode(), "cad_spec": cad_spec.__version__, "scorer": SCORER_VERSION,

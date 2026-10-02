@@ -5,6 +5,25 @@ Scores are only comparable within one scorer version
 
 ## Unreleased
 
+### Replication 1: pre-registration (no model answer yet)
+- `docs/experiments/replication-1.md`: registered plan to evaluate the frozen
+  run 1 adapter and the base model on 60 fresh specs, same protocol. R1
+  (primary): replicated if the L2 + L4 gain has a 95% lower bound above 0 and
+  a point estimate of at least +10 points. R3 compares its size with the
+  original; R4 pools both splits for the ceiling. Ceiling $1.00, with the
+  deployment fee measured this time.
+- `scripts/replication_split.py`: the replication split (seed 20261003, 60
+  specs, disjoint from train, dev and the used test split, fingerprint
+  `01ac4bde...7bc14bdd`). Kept out of the package so the 0.4.5 wheel is
+  unchanged. Reference answers pass 240 of 240; the unedited rev A passes 0
+  of 60 on L4.
+- `scripts/run_baseline.py`: `--split replication` with
+  `--unlock-replication`; replication prompts use the held-out L3 wording.
+- `scripts/compare_replication.py` (reuses the frozen run 1 test and
+  conformity rules) and `scripts/test_compare_replication.py`; CI runs the
+  self-test and the solvability check.
+- `scripts/replay_eval.py` accepts replication answers.
+
 ### Training run 1: serving-route bridge check
 - Free post hoc check, rule registered in the pre-registration before the
   step-1 rewards were read: all-pass rate of the untrained model inside the

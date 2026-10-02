@@ -86,6 +86,12 @@ from cad_spec.tasks import (
     split_fingerprint,
 )
 from degenerate import is_degenerate
+from replication_split import (
+    REPLICATION_SEED,
+    REPLICATION_SPLIT_SHA256,
+    locked_replication_split,
+    prompt_split,
+)
 
 # A wrong key or model id fails every call; stop early instead of recording
 # a whole run of errors.
@@ -392,10 +398,14 @@ def main() -> int:
     ap.add_argument("--base-url", default="http://localhost:11434/v1")
     ap.add_argument("--key-env", default="OPENAI_API_KEY")
     ap.add_argument("--tiers", nargs="+", default=["L0"], choices=list(TIERS))
-    ap.add_argument("--split", default="eval", choices=["eval", "train", "test"],
-                    help="test = the locked final-comparison split; needs --unlock-test")
+    ap.add_argument("--split", default="eval", choices=["eval", "train", "test", "replication"],
+                    help="test = the locked final-comparison split; needs --unlock-test. "
+                         "replication = the replication split; needs --unlock-replication")
     ap.add_argument("--unlock-test", action="store_true",
                     help="confirm this is the registered final evaluation on the locked test split")
+    ap.add_argument("--unlock-replication", action="store_true",
+                    help="confirm this is the registered replication run (docs/experiments/replication-1.md) "
+                         "or a computed-answer check with no model (reference, rev-a)")
     ap.add_argument("--limit", type=int, default=0, help="first N specs only (0 = all)")
     ap.add_argument("--rollouts", type=int, default=1)
     ap.add_argument("--temperature", type=float, default=0.0)
@@ -436,6 +446,9 @@ def main() -> int:
     if args.split == "test" and not args.unlock_test:
         ap.error("the test split is locked for the final comparison (docs/EVALUATION_PROTOCOL.md); "
                  "pass --unlock-test only for that registered run")
+    if args.split == "replication" and not args.unlock_replication:
+        ap.error("the replication split is locked for the registered replication "
+                 "(docs/experiments/replication-1.md); pass --unlock-replication only for that run")
     args.system_prompt = SYSTEM_PROMPT
     if args.system_prompt_file:
         hints = Path(args.system_prompt_file).read_text(encoding="utf-8").strip()
@@ -457,6 +470,8 @@ def main() -> int:
         specs = make_test_split()
         if split_fingerprint(specs) != TEST_SPLIT_SHA256:
             raise SystemExit("cad-spec: the test split no longer matches its locked fingerprint")
+    elif args.split == "replication":
+        specs = locked_replication_split()
     else:
         specs = evals if args.split == "eval" else train
     if args.limit:
@@ -484,6 +499,8 @@ def main() -> int:
         "hints_source": ("package" if args.hints else "file" if args.system_prompt_file else None),
         "system_prompt_sha256": fingerprint(args.system_prompt),
         "test_split": ({"seed": TEST_SEED, "sha256": TEST_SPLIT_SHA256} if args.split == "test" else None),
+        "replication_split": ({"seed": REPLICATION_SEED, "sha256": REPLICATION_SPLIT_SHA256}
+                              if args.split == "replication" else None),
         "price_per_mtok": ({"in": args.price_in, "out": args.price_out} if args.price_in is not None else None),
         "base_url": args.base_url if args.provider == "openai" else None,
         "extra_body": args.extra_body or None, "budget_usd": args.budget or None,
@@ -505,7 +522,7 @@ def main() -> int:
         try:
             for tier in args.tiers:
                 for spec in specs:
-                    prompt = prompt_for(spec, tier, args.split)
+                    prompt = prompt_for(spec, tier, prompt_split(args.split))
                     for k in range(args.rollouts):
                         # Stop before a call that would likely cross the budget:
                         # spend so far plus the average cost of a call so far.

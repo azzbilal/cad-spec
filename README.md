@@ -297,6 +297,9 @@ model without training, both with the cheat-sheet:
   42.9%, inside the registered interval), so a stack that serves the same
   weights better is not supported as the explanation. The adapter route
   itself is still not attested (`results/training/run1/bridge-check.md`).
+- **Replication:** pre-registered, not run yet. The same frozen adapter on
+  60 fresh specs, same protocol
+  ([plan](docs/experiments/replication-1.md)).
 - **Cost:** the run cost $13.87, of which about $7 paid for answers the
   filter discarded once most prompts were solved
   ([cost audit](audit/README.md), report `audit/run1-cost-report.md`).
