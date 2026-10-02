@@ -1,0 +1,31 @@
+{
+  "run_id": "mk9qcuq2dsckzrf68gycyqls",
+  "prime_cli_version": "0.8.0",
+  "files": [
+    {
+      "file": "distributions-step-34.json",
+      "command": "prime train distributions mk9qcuq2dsckzrf68gycyqls --step 34",
+      "captured_at_utc": "2026-10-02T15:28:16Z",
+      "exit_code": 0,
+      "bytes": 2915,
+      "sha256": "97e62969478c472f02c72a58aede9348acfc999acd6d6650a514fb2ceb6a4174"
+    },
+    {
+      "file": "distributions-step-35.json",
+      "command": "prime train distributions mk9qcuq2dsckzrf68gycyqls --step 35",
+      "captured_at_utc": "2026-10-02T15:28:17Z",
+      "exit_code": 0,
+      "bytes": 2916,
+      "sha256": "4ba3d2c645fd955694b38982db37278e840cbc6ccb44f44344384237411715fa"
+    },
+    {
+      "file": "distributions-step-36.json",
+      "command": "prime train distributions mk9qcuq2dsckzrf68gycyqls --step 36",
+      "captured_at_utc": "2026-10-02T15:28:19Z",
+      "exit_code": 0,
+      "bytes": 2916,
+      "sha256": "3accde2d0c534bea4b73b9e9c69f6773a39ca61080467bf9313281a271643735"
+    }
+  ],
+  "retry_of": "distributions"
+}
