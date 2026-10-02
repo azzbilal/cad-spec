@@ -264,6 +264,38 @@ intervals: [`results/experiments/hint-feedback-results.md`](results/experiments/
 - **Exploratory:** the cheat-sheet lowered the control model, gpt-4o-mini,
   from 40% to 31%.
 
+## Can training fix the reasoning? A pre-registered RL run
+
+The experiment above left the reasoning failures (change orders not
+propagated to the hole pitch, margins misused) untouched by prompting. This
+run asked whether reinforcement learning on cad-spec's measured reward fixes
+them. Model, reward, data, analysis and thresholds were registered before
+training ([pre-registration and amendments](docs/experiments/training-run-1.md)).
+
+Qwen3.5-9B, LoRA, GRPO on the binary all-pass reward, cheat-sheet in the
+prompt, train split only; stopped on cost after 38 of 104 registered steps.
+Evaluated once on the locked 60-spec test split, greedy, against the same
+model without training, both with the cheat-sheet:
+
+| Tier | Base | Adapter (38 steps) | Difference [95% interval] |
+|---|---:|---:|---|
+| L1 table | 86.7% | 100.0% | +13.3 [+5.0, +21.7] |
+| L2 derive pitch | 83.3% | **100.0%** | +16.7 [+8.3, +26.7] |
+| L3 prose | 75.0% | 98.3% | +23.3 [+13.3, +35.0] |
+| L4 change order | 36.7% | **100.0%** | +63.3 [+51.7, +75.0] |
+
+- **H1 confirmed:** on L2 + L4, 60% to 100%, +40 points [+32.5, +47.5]
+  (registered minimum +10). 70 pairs improved, none worsened.
+- **Integrity:** an independent audit found no reward hacking or leakage;
+  every passing part has the exact requested geometry under a separate
+  check, and perturbed answers fail
+  ([audit](audit/README.md), report `audit/run1-result-integrity.md`).
+- **Limits:** one run, one model, one plate family, a ceiling at 100%
+  (lower bound about 94%), base and adapter on different serving routes.
+- **Cost:** the run cost $13.87, of which about $7 paid for answers the
+  filter discarded once most prompts were solved
+  ([cost audit](audit/README.md), report `audit/run1-cost-report.md`).
+
 ## Evidence
 
 | File | What it shows |
@@ -280,7 +312,9 @@ intervals: [`results/experiments/hint-feedback-results.md`](results/experiments/
 | [`docs/experiments/hint-feedback.md`](docs/experiments/hint-feedback.md) | the knowledge-or-reasoning experiment: pre-registration, amendment, outcome |
 | `results/rescored/0.4.0/*.jsonl` | every model answer behind the board, scored under 0.4.0 |
 
-No training result is published yet.
+| [`docs/experiments/training-run-1.md`](docs/experiments/training-run-1.md) | training run 1: pre-registration, five amendments, result, limits and claim |
+| `results/training/run1/` | smoke-test acceptance, archived run requests, hashed snapshots of both runs, the two test-split evaluations and the verdict |
+| [`audit/README.md`](audit/README.md) | independent audits: the smoke-test failure, the GL fallback, the run's cost, and the result's integrity |
 
 ## Running a model
 

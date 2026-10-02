@@ -5,6 +5,18 @@ Scores are only comparable within one scorer version
 
 ## Unreleased
 
+### Training run 1: result (step 6)
+- Registered evaluation, run once: base Qwen3.5-9B vs the 38-step adapter on
+  the locked 60-spec test split, greedy, cheat-sheet in both. **H1
+  confirmed:** L2 + L4 all-pass 60% to 100%, +40 points [+32.5, +47.5]; L4
+  36.7% to 100%; no regression on L1 or L3. Evaluation cost about $0.12.
+- Independent integrity audit (`audit/run1-result-integrity.md`): verdict
+  and all 480 scores reproduce; no reward hacking or leakage found; passing
+  parts verified by an independent geometry check; caveats on serving
+  routes, a single run and the ceiling.
+- Result, limits and claim in `docs/experiments/training-run-1.md`; README
+  section "Can training fix the reasoning?".
+
 ### Training run 1: cost audit
 - `audit/run1-cost-report.md`: independent audit of the run's cost. Main
   cause: refilling batches after flat (mostly all-solved) groups were
