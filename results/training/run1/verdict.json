@@ -1,0 +1,125 @@
+{
+  "status": "analysed",
+  "base_model": "Qwen/Qwen3.5-9B",
+  "adapter_model": "Qwen/Qwen3.5-9B:xfisiyo5vlhn0ys65sf4uad7",
+  "per_tier": {
+    "L1": {
+      "tiers": [
+        "L1"
+      ],
+      "base_all_pass": 0.8666666666666667,
+      "adapter_all_pass": 1.0,
+      "difference": 0.13333333333333333,
+      "ci95": [
+        0.05,
+        0.21666666666666667
+      ],
+      "pairs": 60
+    },
+    "L2": {
+      "tiers": [
+        "L2"
+      ],
+      "base_all_pass": 0.8333333333333334,
+      "adapter_all_pass": 1.0,
+      "difference": 0.16666666666666666,
+      "ci95": [
+        0.08333333333333333,
+        0.26666666666666666
+      ],
+      "pairs": 60
+    },
+    "L3": {
+      "tiers": [
+        "L3"
+      ],
+      "base_all_pass": 0.75,
+      "adapter_all_pass": 0.9833333333333333,
+      "difference": 0.23333333333333334,
+      "ci95": [
+        0.13333333333333333,
+        0.35
+      ],
+      "pairs": 60
+    },
+    "L4": {
+      "tiers": [
+        "L4"
+      ],
+      "base_all_pass": 0.36666666666666664,
+      "adapter_all_pass": 1.0,
+      "difference": 0.6333333333333333,
+      "ci95": [
+        0.5166666666666667,
+        0.75
+      ],
+      "pairs": 60
+    }
+  },
+  "H1": {
+    "tiers": [
+      "L2",
+      "L4"
+    ],
+    "base_all_pass": 0.6,
+    "adapter_all_pass": 1.0,
+    "difference": 0.4,
+    "ci95": [
+      0.325,
+      0.475
+    ],
+    "pairs": 120,
+    "verdict": "confirmed",
+    "worthwhile": true
+  },
+  "H2": {
+    "tiers": [
+      "L4"
+    ],
+    "base_all_pass": 0.36666666666666664,
+    "adapter_all_pass": 1.0,
+    "difference": 0.6333333333333333,
+    "ci95": [
+      0.5166666666666667,
+      0.75
+    ],
+    "pairs": 60,
+    "verdict": "gain"
+  },
+  "regression": {
+    "L1": {
+      "tiers": [
+        "L1"
+      ],
+      "base_all_pass": 0.8666666666666667,
+      "adapter_all_pass": 1.0,
+      "difference": 0.13333333333333333,
+      "ci95": [
+        0.05,
+        0.21666666666666667
+      ],
+      "pairs": 60,
+      "regression": false
+    },
+    "L3": {
+      "tiers": [
+        "L3"
+      ],
+      "base_all_pass": 0.75,
+      "adapter_all_pass": 0.9833333333333333,
+      "difference": 0.23333333333333334,
+      "ci95": [
+        0.13333333333333333,
+        0.35
+      ],
+      "pairs": 60,
+      "regression": false
+    }
+  },
+  "thresholds": {
+    "min_worthwhile": 0.1,
+    "regression_drop": 0.1,
+    "bootstrap": 10000,
+    "seed": 20261001
+  }
+}

@@ -1,0 +1,1790 @@
+{
+  "hashes": {
+    "results/training/run1/eval/base-test.jsonl": "6aee64245417a56614f9d0654bf944469de193ea5e09bdbdad71c6195639ffb3",
+    "results/training/run1/eval/adapter-test.jsonl": "d937884ce262766a375042cb327a5f360978338a5db5daaf47579da34f3117e4",
+    "results/training/run1/verdict.md": "5bfcc2e9d7c8d0d21cceda2f5a9f77a6f5d0090af230dc9dce65d4c7d1b627b5",
+    "results/training/run1/verdict.json": "30a037bf938cbe40879c0810ef07d0f9be9e82ee7efb5be32c6a8dda4f8925ed"
+  },
+  "test_fingerprint": "019d197efecedc079209fcb5900c7d5b2ff894481bc6cc85954826070c30c51b",
+  "system_prompt_sha256": "a9050c1da2a319200fd38c432c6505d2254b39249613b9079bf7cfb9f1e5128c",
+  "base": {
+    "meta": {
+      "run_id": "20261002T154022328234Z-65e7bc",
+      "provider": "openai",
+      "model": "Qwen/Qwen3.5-9B",
+      "temperature": 0.0,
+      "max_tokens": 2048,
+      "base_seed": 0,
+      "rollouts": 1,
+      "split": "test",
+      "sample_seed": 20260813,
+      "scorer_version": "0.4.0",
+      "package_version": "0.4.5",
+      "git_rev": "6f038c6",
+      "git_commit": "6f038c6c3ad7e2fb1cbb6872311d8d040ac21d24",
+      "runtime": {
+        "python": "3.12.10",
+        "platform": "Windows-11-10.0.26300-SP0",
+        "cadquery": "2.8.0",
+        "cadquery-ocp": "7.9.3.1.1",
+        "verifiers": "0.3.1",
+        "datasets": "5.0.1",
+        "numpy": "2.5.3"
+      },
+      "planned": {
+        "tiers": [
+          "L1",
+          "L2",
+          "L3",
+          "L4"
+        ],
+        "spec_ids": [
+          "test-0001",
+          "test-0002",
+          "test-0003",
+          "test-0004",
+          "test-0005",
+          "test-0006",
+          "test-0007",
+          "test-0008",
+          "test-0009",
+          "test-0010",
+          "test-0011",
+          "test-0012",
+          "test-0013",
+          "test-0014",
+          "test-0015",
+          "test-0016",
+          "test-0017",
+          "test-0018",
+          "test-0019",
+          "test-0020",
+          "test-0021",
+          "test-0022",
+          "test-0023",
+          "test-0024",
+          "test-0025",
+          "test-0026",
+          "test-0027",
+          "test-0028",
+          "test-0029",
+          "test-0030",
+          "test-0031",
+          "test-0032",
+          "test-0033",
+          "test-0034",
+          "test-0035",
+          "test-0036",
+          "test-0037",
+          "test-0038",
+          "test-0039",
+          "test-0040",
+          "test-0041",
+          "test-0042",
+          "test-0043",
+          "test-0044",
+          "test-0045",
+          "test-0046",
+          "test-0047",
+          "test-0048",
+          "test-0049",
+          "test-0050",
+          "test-0051",
+          "test-0052",
+          "test-0053",
+          "test-0054",
+          "test-0055",
+          "test-0056",
+          "test-0057",
+          "test-0058",
+          "test-0059",
+          "test-0060"
+        ],
+        "rollouts": 1,
+        "total": 240
+      },
+      "sandbox": {
+        "mode": "reuse",
+        "exec_timeout_s": 10.0,
+        "per_rollout_process": false,
+        "state_isolated": false,
+        "env_scrubbed": false,
+        "measured_in": "rollout process"
+      },
+      "system_prompt": "You are a mechanical design engineer who writes CadQuery.\nReturn a single Python code block and nothing else.\nImport cadquery as cq and bind the finished part to a variable named `result`.\nBuild solids with the Workplane API, for example cq.Workplane(\"XY\").box(l, w, h).\n\nCadQuery notes (general API facts, not specific to this part):\n- Operations act on what is on the stack. `.hole(d)` drills one hole at each point on the stack; with no points it drills once at the workplane origin, and calling `.hole()` again drills the same place again.\n- To drill several holes, make a workplane on the part's face, place the points, then drill once: `.faces(\">Z\").workplane().pushPoints([(x1, y1), (x2, y2)]).hole(d)`, or `.rect(a, b, forConstruction=True).vertices().hole(d)` for the four corners of an a x b rectangle centred on the origin.\n- `.translate()` moves the solid, not the drilling point. `.center(x, y)` shifts the workplane origin relative to its current position.\n- Signatures: `box(length, width, height, centered=True)` (centred on the origin in X, Y and Z by default); `hole(diameter, depth=None)` (a diameter, not a radius; no depth means through); `rect(xLen, yLen, centered=True, forConstruction=False)`; `rarray(xSpacing, ySpacing, xCount, yCount)` (the counts are integers).\n- There is no `.holes()`, `.centered()`, `.rectArray()` or `.rectangularPattern()` method.\n- Holes need a solid underneath: drill from a workplane on a face of the part, not from a fresh `cq.Workplane(\"XY\")`.\n",
+      "arm": "hint",
+      "system_prompt_file": null,
+      "feedback_retries": 0,
+      "hints_source": "package",
+      "system_prompt_sha256": "a9050c1da2a319200fd38c432c6505d2254b39249613b9079bf7cfb9f1e5128c",
+      "test_split": {
+        "seed": 20260927,
+        "sha256": "019d197efecedc079209fcb5900c7d5b2ff894481bc6cc85954826070c30c51b"
+      },
+      "price_per_mtok": {
+        "in": 0.18,
+        "out": 0.54
+      },
+      "base_url": "https://api.pinference.ai/api/v1",
+      "extra_body": "{\"chat_template_kwargs\": {\"enable_thinking\": false}}",
+      "budget_usd": 0.35
+    },
+    "end": {
+      "status": "complete",
+      "written": 240,
+      "planned": 240,
+      "spent_usd": 0.073392,
+      "unknown_cost_calls": 0,
+      "truncated": 1,
+      "degenerate": 0
+    },
+    "rows": 240,
+    "keys_equal_expected": true,
+    "duplicate_keys": 0,
+    "prompt_mismatches": [],
+    "local_system_prompt_equal": true,
+    "served_models": {
+      "Qwen/Qwen3.5-9B": 240
+    },
+    "row_seeds": {
+      "0": 240
+    },
+    "finish_reasons": {
+      "stop": 239,
+      "length": 1
+    },
+    "flags": {
+      "api_error": 0,
+      "error": 6,
+      "truncated": 1,
+      "timeout": 0,
+      "degenerate": 0,
+      "retries": 0,
+      "attempts": 0
+    },
+    "truncated_rows": [
+      {
+        "tier": "L1",
+        "spec_id": "test-0050",
+        "reward": 0.0
+      }
+    ],
+    "totals": {
+      "prompt_tokens": 135572,
+      "completion_tokens": 90721
+    },
+    "computed_cost": 0.07339230000000001,
+    "usage_reported_cost": 0.0764,
+    "lengths": {
+      "L1": {
+        "chars": {
+          "mean": 1622.4,
+          "median": 1392.0,
+          "min": 939,
+          "max": 5283
+        },
+        "tokens": {
+          "mean": 560.0166666666667,
+          "median": 476.0,
+          "min": 291,
+          "max": 2048
+        }
+      },
+      "L2": {
+        "chars": {
+          "mean": 1184.15,
+          "median": 1105.5,
+          "min": 809,
+          "max": 4666
+        },
+        "tokens": {
+          "mean": 363.7,
+          "median": 337.0,
+          "min": 249,
+          "max": 1563
+        }
+      },
+      "L3": {
+        "chars": {
+          "mean": 1399.6166666666666,
+          "median": 1129.5,
+          "min": 797,
+          "max": 4347
+        },
+        "tokens": {
+          "mean": 455.68333333333334,
+          "median": 379.5,
+          "min": 245,
+          "max": 1376
+        }
+      },
+      "L4": {
+        "chars": {
+          "mean": 324.03333333333336,
+          "median": 203.5,
+          "min": 201,
+          "max": 4155
+        },
+        "tokens": {
+          "mean": 132.61666666666667,
+          "median": 92.0,
+          "min": 90,
+          "max": 1559
+        }
+      }
+    },
+    "structures": {
+      "L1": {
+        "exact_answers": 60,
+        "numeric_normalized": 57,
+        "renamed_normalized": 47,
+        "arithmetic_assignments": 50,
+        "variables": 59,
+        "comments": 60
+      },
+      "L2": {
+        "exact_answers": 60,
+        "numeric_normalized": 43,
+        "renamed_normalized": 34,
+        "arithmetic_assignments": 56,
+        "variables": 60,
+        "comments": 60
+      },
+      "L3": {
+        "exact_answers": 60,
+        "numeric_normalized": 50,
+        "renamed_normalized": 45,
+        "arithmetic_assignments": 50,
+        "variables": 60,
+        "comments": 60
+      },
+      "L4": {
+        "exact_answers": 60,
+        "numeric_normalized": 7,
+        "renamed_normalized": 7,
+        "arithmetic_assignments": 5,
+        "variables": 6,
+        "comments": 6
+      }
+    }
+  },
+  "adapter": {
+    "meta": {
+      "run_id": "20261002T162418325438Z-c24829",
+      "provider": "openai",
+      "model": "Qwen/Qwen3.5-9B:xfisiyo5vlhn0ys65sf4uad7",
+      "temperature": 0.0,
+      "max_tokens": 2048,
+      "base_seed": 0,
+      "rollouts": 1,
+      "split": "test",
+      "sample_seed": 20260813,
+      "scorer_version": "0.4.0",
+      "package_version": "0.4.5",
+      "git_rev": "6f038c6",
+      "git_commit": "6f038c6c3ad7e2fb1cbb6872311d8d040ac21d24",
+      "runtime": {
+        "python": "3.12.10",
+        "platform": "Windows-11-10.0.26300-SP0",
+        "cadquery": "2.8.0",
+        "cadquery-ocp": "7.9.3.1.1",
+        "verifiers": "0.3.1",
+        "datasets": "5.0.1",
+        "numpy": "2.5.3"
+      },
+      "planned": {
+        "tiers": [
+          "L1",
+          "L2",
+          "L3",
+          "L4"
+        ],
+        "spec_ids": [
+          "test-0001",
+          "test-0002",
+          "test-0003",
+          "test-0004",
+          "test-0005",
+          "test-0006",
+          "test-0007",
+          "test-0008",
+          "test-0009",
+          "test-0010",
+          "test-0011",
+          "test-0012",
+          "test-0013",
+          "test-0014",
+          "test-0015",
+          "test-0016",
+          "test-0017",
+          "test-0018",
+          "test-0019",
+          "test-0020",
+          "test-0021",
+          "test-0022",
+          "test-0023",
+          "test-0024",
+          "test-0025",
+          "test-0026",
+          "test-0027",
+          "test-0028",
+          "test-0029",
+          "test-0030",
+          "test-0031",
+          "test-0032",
+          "test-0033",
+          "test-0034",
+          "test-0035",
+          "test-0036",
+          "test-0037",
+          "test-0038",
+          "test-0039",
+          "test-0040",
+          "test-0041",
+          "test-0042",
+          "test-0043",
+          "test-0044",
+          "test-0045",
+          "test-0046",
+          "test-0047",
+          "test-0048",
+          "test-0049",
+          "test-0050",
+          "test-0051",
+          "test-0052",
+          "test-0053",
+          "test-0054",
+          "test-0055",
+          "test-0056",
+          "test-0057",
+          "test-0058",
+          "test-0059",
+          "test-0060"
+        ],
+        "rollouts": 1,
+        "total": 240
+      },
+      "sandbox": {
+        "mode": "reuse",
+        "exec_timeout_s": 10.0,
+        "per_rollout_process": false,
+        "state_isolated": false,
+        "env_scrubbed": false,
+        "measured_in": "rollout process"
+      },
+      "system_prompt": "You are a mechanical design engineer who writes CadQuery.\nReturn a single Python code block and nothing else.\nImport cadquery as cq and bind the finished part to a variable named `result`.\nBuild solids with the Workplane API, for example cq.Workplane(\"XY\").box(l, w, h).\n\nCadQuery notes (general API facts, not specific to this part):\n- Operations act on what is on the stack. `.hole(d)` drills one hole at each point on the stack; with no points it drills once at the workplane origin, and calling `.hole()` again drills the same place again.\n- To drill several holes, make a workplane on the part's face, place the points, then drill once: `.faces(\">Z\").workplane().pushPoints([(x1, y1), (x2, y2)]).hole(d)`, or `.rect(a, b, forConstruction=True).vertices().hole(d)` for the four corners of an a x b rectangle centred on the origin.\n- `.translate()` moves the solid, not the drilling point. `.center(x, y)` shifts the workplane origin relative to its current position.\n- Signatures: `box(length, width, height, centered=True)` (centred on the origin in X, Y and Z by default); `hole(diameter, depth=None)` (a diameter, not a radius; no depth means through); `rect(xLen, yLen, centered=True, forConstruction=False)`; `rarray(xSpacing, ySpacing, xCount, yCount)` (the counts are integers).\n- There is no `.holes()`, `.centered()`, `.rectArray()` or `.rectangularPattern()` method.\n- Holes need a solid underneath: drill from a workplane on a face of the part, not from a fresh `cq.Workplane(\"XY\")`.\n",
+      "arm": "hint",
+      "system_prompt_file": null,
+      "feedback_retries": 0,
+      "hints_source": "package",
+      "system_prompt_sha256": "a9050c1da2a319200fd38c432c6505d2254b39249613b9079bf7cfb9f1e5128c",
+      "test_split": {
+        "seed": 20260927,
+        "sha256": "019d197efecedc079209fcb5900c7d5b2ff894481bc6cc85954826070c30c51b"
+      },
+      "price_per_mtok": {
+        "in": 0.1,
+        "out": 0.2
+      },
+      "base_url": "https://api.pinference.ai/api/v1",
+      "extra_body": "{\"chat_template_kwargs\": {\"enable_thinking\": false}}",
+      "budget_usd": 0.15
+    },
+    "end": {
+      "status": "complete",
+      "written": 240,
+      "planned": 240,
+      "spent_usd": 0.046434,
+      "unknown_cost_calls": 0,
+      "truncated": 0,
+      "degenerate": 0
+    },
+    "rows": 240,
+    "keys_equal_expected": true,
+    "duplicate_keys": 0,
+    "prompt_mismatches": [],
+    "local_system_prompt_equal": true,
+    "served_models": {
+      "Qwen/Qwen3.5-9B:xfisiyo5vlhn0ys65sf4uad7": 240
+    },
+    "row_seeds": {
+      "0": 240
+    },
+    "finish_reasons": {
+      "stop": 240
+    },
+    "flags": {
+      "api_error": 0,
+      "error": 0,
+      "truncated": 0,
+      "timeout": 0,
+      "degenerate": 0,
+      "retries": 0,
+      "attempts": 0
+    },
+    "truncated_rows": [],
+    "totals": {
+      "prompt_tokens": 135572,
+      "completion_tokens": 164384
+    },
+    "computed_cost": 0.046434,
+    "usage_reported_cost": 0.0473,
+    "lengths": {
+      "L1": {
+        "chars": {
+          "mean": 2000.8333333333333,
+          "median": 1926.5,
+          "min": 1448,
+          "max": 2783
+        },
+        "tokens": {
+          "mean": 752.5166666666667,
+          "median": 737.5,
+          "min": 558,
+          "max": 1063
+        }
+      },
+      "L2": {
+        "chars": {
+          "mean": 1683.8333333333333,
+          "median": 1454.5,
+          "min": 1094,
+          "max": 2881
+        },
+        "tokens": {
+          "mean": 601.7666666666667,
+          "median": 507.0,
+          "min": 398,
+          "max": 1153
+        }
+      },
+      "L3": {
+        "chars": {
+          "mean": 1921.5,
+          "median": 1678.0,
+          "min": 1246,
+          "max": 4873
+        },
+        "tokens": {
+          "mean": 703.7833333333333,
+          "median": 609.0,
+          "min": 408,
+          "max": 1872
+        }
+      },
+      "L4": {
+        "chars": {
+          "mean": 1703.6833333333334,
+          "median": 1797.0,
+          "min": 201,
+          "max": 3452
+        },
+        "tokens": {
+          "mean": 681.6666666666666,
+          "median": 708.5,
+          "min": 90,
+          "max": 1523
+        }
+      }
+    },
+    "structures": {
+      "L1": {
+        "exact_answers": 60,
+        "numeric_normalized": 45,
+        "renamed_normalized": 18,
+        "arithmetic_assignments": 43,
+        "variables": 60,
+        "comments": 60
+      },
+      "L2": {
+        "exact_answers": 60,
+        "numeric_normalized": 48,
+        "renamed_normalized": 23,
+        "arithmetic_assignments": 56,
+        "variables": 60,
+        "comments": 60
+      },
+      "L3": {
+        "exact_answers": 60,
+        "numeric_normalized": 55,
+        "renamed_normalized": 41,
+        "arithmetic_assignments": 49,
+        "variables": 60,
+        "comments": 60
+      },
+      "L4": {
+        "exact_answers": 60,
+        "numeric_normalized": 46,
+        "renamed_normalized": 44,
+        "arithmetic_assignments": 20,
+        "variables": 41,
+        "comments": 51
+      }
+    }
+  },
+  "prompt_arms_equal": true,
+  "leakage": {
+    "train_size": 200,
+    "eval_size": 30,
+    "test_size": 60,
+    "train_id_overlap": [],
+    "eval_id_overlap": [],
+    "train_tuple_overlap": [],
+    "eval_tuple_overlap": [],
+    "embedded_train_revA_tuple_overlap": [],
+    "embedded_eval_revA_tuple_overlap": [],
+    "exact_L3_prompt_overlap": [],
+    "train_wording_indices": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "test_wording_indices": [
+      4,
+      5
+    ],
+    "environment_train_rows": 800,
+    "environment_eval_rows": 120,
+    "dataset_test_id_overlap": [],
+    "dataset_prompt_mismatches": [],
+    "train_system_prompt": "a9050c1da2a319200fd38c432c6505d2254b39249613b9079bf7cfb9f1e5128c"
+  },
+  "hygiene": {
+    "import_counts": {
+      "cadquery": 240
+    },
+    "syntax_errors": [],
+    "dangerous": [],
+    "max_code_chars": 4859,
+    "max_lines": 96,
+    "exact_answers": 240,
+    "numeric_normalized": 194,
+    "renamed_normalized": 126,
+    "call_counts": {
+      "cq.Workplane('XY').box": 240,
+      "plate.faces('>Z').workplane().pushPoints(hole_centers).hole": 34,
+      "cq.Workplane": 240,
+      "plate.faces('>Z').workplane().pushPoints": 132,
+      "plate.faces('>Z').workplane": 132,
+      "plate.faces": 132,
+      "plate.faces('>Z').workplane().pushPoints(holes).hole": 6,
+      "plate.faces('>Z').workplane().pushPoints(points).hole": 33,
+      "points.append": 18,
+      "plate.faces('>Z').workplane().pushPoints([(hole_x, hole_y), (hole_x, -hole_y), (-hole_x, hole_y), (-hole_x, -hole_y)]).hole": 3,
+      "part.faces('>Z').workplane().pushPoints(hole_coords).hole": 7,
+      "part.faces('>Z').workplane().pushPoints": 42,
+      "part.faces('>Z').workplane": 42,
+      "part.faces": 42,
+      "plate.faces('>Z').workplane().pushPoints(hole_coords).hole": 16,
+      "plate.faces('>Z').workplane().pushPoints(hole_points).hole": 21,
+      "part.faces('>Z').workplane().pushPoints(hole_centers).hole": 6,
+      "hole_centers.append": 1,
+      "ValueError": 1,
+      "plate.faces('>Z').workplane().pushPoints([(x, y) for x in hole_offsets_x for y in hole_offsets_y]).hole": 1,
+      "part.faces('>Z').workplane().pushPoints(points).hole": 15,
+      "hole_coords.append": 6,
+      "part.faces('>Z').workplane().pushPoints(holes_coords).hole": 2,
+      "plate.faces('>Z').workplane().pushPoints([p1, p2, p3, p4]).hole": 3,
+      "part.faces('>Z').workplane().pushPoints(holes).hole": 1,
+      "plate.faces('>Z').workplane().pushPoints(holes_coords).hole": 4,
+      "hole_points.append": 2,
+      "plate.faces('>Z').workplane().pushPoints([(57.5, 27.75), (57.5, -27.75), (-57.5, 27.75), (-57.5, -27.75)]).hole": 1,
+      "plate.faces('>Z').workplane().pushPoints(hole_positions).hole": 8,
+      "plate.faces('>Z').workplane().pushPoints([(hole_X, hole_Y), (hole_X, -hole_Y), (-hole_X, hole_Y), (-hole_X, -hole_Y)]).hole": 1,
+      "cq.Workplane('XY').box(L, W, H, centered=True).faces('>Z').workplane().pushPoints(points).hole": 1,
+      "cq.Workplane('XY').box(L, W, H, centered=True).faces('>Z').workplane().pushPoints": 1,
+      "cq.Workplane('XY').box(L, W, H, centered=True).faces('>Z').workplane": 1,
+      "cq.Workplane('XY').box(L, W, H, centered=True).faces": 1,
+      "part.faces('>Z').workplane().pushPoints(hole_positions).hole": 3,
+      "block.faces('>Z').workplane().pushPoints(points).hole": 4,
+      "block.faces('>Z').workplane().pushPoints": 5,
+      "block.faces('>Z').workplane": 5,
+      "block.faces": 5,
+      "part.faces('>Z').workplane().pushPoints([(19, 29.75), (19, -29.75), (-19, 29.75), (-19, -29.75)]).hole": 1,
+      "part.faces('>Z').workplane().pushPoints([(9.75, 27.5), (9.75, -27.5), (-9.75, 27.5), (-9.75, -27.5)]).hole": 1,
+      "part.faces('>Z').workplane().pushPoints([(-73.5, -7.0), (-73.5, 7.0), (73.5, -7.0), (73.5, 7.0)]).hole": 1,
+      "result.faces('>Z').workplane().pushPoints(points).hole": 2,
+      "result.faces('>Z').workplane().pushPoints": 2,
+      "result.faces('>Z').workplane": 2,
+      "result.faces": 2,
+      "part.faces('>Z').workplane().pushPoints([(hole_x, hole_y), (-hole_x, hole_y), (hole_x, -hole_y), (-hole_x, -hole_y)]).hole": 1,
+      "block.faces('>Z').workplane().pushPoints([p1, p2, p3, p4]).hole": 1,
+      "part.faces('>Z').workplane().pushPoints(hole_points).hole": 3,
+      "plate.faces('>Z').workplane().pushPoints([(hole_spacing_x / 2, hole_spacing_y / 2), (hole_spacing_x / 2, -hole_spacing_y / 2), (-hole_spacing_x / 2, hole_spacing_y / 2), (-hole_spacing_x / 2, -hole_spacing_y / 2)]).hole": 1,
+      "cq.Workplane('XY').box(101.0, 154.5, 8.0).faces('>Z').workplane().rect(87.0, 140.5, forConstruction=True).vertices().hole": 1,
+      "cq.Workplane('XY').box(101.0, 154.5, 8.0).faces('>Z').workplane().rect(87.0, 140.5, forConstruction=True).vertices": 1,
+      "cq.Workplane('XY').box(101.0, 154.5, 8.0).faces('>Z').workplane().rect": 1,
+      "cq.Workplane('XY').box(101.0, 154.5, 8.0).faces('>Z').workplane": 1,
+      "cq.Workplane('XY').box(101.0, 154.5, 8.0).faces": 1,
+      "cq.Workplane('XY').box(plate_length, plate_width, new_thickness, centered=True).faces('>Z').workplane().rect(39.5, 136.5, centered=True).vertices().hole": 1,
+      "cq.Workplane('XY').box(plate_length, plate_width, new_thickness, centered=True).faces('>Z').workplane().rect(39.5, 136.5, centered=True).vertices": 1,
+      "cq.Workplane('XY').box(plate_length, plate_width, new_thickness, centered=True).faces('>Z').workplane().rect": 1,
+      "cq.Workplane('XY').box(plate_length, plate_width, new_thickness, centered=True).faces('>Z').workplane": 3,
+      "cq.Workplane('XY').box(plate_length, plate_width, new_thickness, centered=True).faces": 3,
+      "cq.Workplane('XY').box(119.5, 48.0, 5.5, centered=True).faces('>Z').workplane().rect(95.5, 24.0, centered=True).vertices().hole": 1,
+      "cq.Workplane('XY').box(119.5, 48.0, 5.5, centered=True).faces('>Z').workplane().rect(95.5, 24.0, centered=True).vertices": 1,
+      "cq.Workplane('XY').box(119.5, 48.0, 5.5, centered=True).faces('>Z').workplane().rect": 1,
+      "cq.Workplane('XY').box(119.5, 48.0, 5.5, centered=True).faces('>Z').workplane": 1,
+      "cq.Workplane('XY').box(119.5, 48.0, 5.5, centered=True).faces": 1,
+      "cq.Workplane('XY').box(105.0, 31.5, 5.0, centered=True).faces('>Z').workplane().rect(86.0, 12.5, centered=True, forConstruction=True).vertices().hole": 1,
+      "cq.Workplane('XY').box(105.0, 31.5, 5.0, centered=True).faces('>Z').workplane().rect(86.0, 12.5, centered=True, forConstruction=True).vertices": 1,
+      "cq.Workplane('XY').box(105.0, 31.5, 5.0, centered=True).faces('>Z').workplane().rect": 1,
+      "cq.Workplane('XY').box(105.0, 31.5, 5.0, centered=True).faces('>Z').workplane": 1,
+      "cq.Workplane('XY').box(105.0, 31.5, 5.0, centered=True).faces": 1,
+      "cq.Workplane('XY').box(200.5, 80.0, 13.0, centered=True).faces('>Z').workplane().rect(158.5, 38.0, centered=True).vertices().hole": 1,
+      "cq.Workplane('XY').box(200.5, 80.0, 13.0, centered=True).faces('>Z').workplane().rect(158.5, 38.0, centered=True).vertices": 1,
+      "cq.Workplane('XY').box(200.5, 80.0, 13.0, centered=True).faces('>Z').workplane().rect": 1,
+      "cq.Workplane('XY').box(200.5, 80.0, 13.0, centered=True).faces('>Z').workplane": 1,
+      "cq.Workplane('XY').box(200.5, 80.0, 13.0, centered=True).faces": 1,
+      "cq.Workplane('XY').box(L_new, W, H, centered=True).faces('>Z').workplane().pushPoints(hole_centers).hole": 1,
+      "cq.Workplane('XY').box(L_new, W, H, centered=True).faces('>Z').workplane().pushPoints": 1,
+      "cq.Workplane('XY').box(L_new, W, H, centered=True).faces('>Z').workplane": 1,
+      "cq.Workplane('XY').box(L_new, W, H, centered=True).faces": 1,
+      "cq.Workplane('XY').box(L_new, W_new, H, centered=True).faces('>Z').workplane().pushPoints([(68.0, 22.75), (68.0, -22.75), (-68.0, 22.75), (-68.0, -22.75)]).hole": 1,
+      "cq.Workplane('XY').box(L_new, W_new, H, centered=True).faces('>Z').workplane().pushPoints": 5,
+      "cq.Workplane('XY').box(L_new, W_new, H, centered=True).faces('>Z').workplane": 6,
+      "cq.Workplane('XY').box(L_new, W_new, H, centered=True).faces": 6,
+      "cq.Workplane('XY').box(L_new, W_new, H, centered=True).faces('>Z').workplane().rect(X_rect, Y_rect, centered=True, forConstruction=True).vertices().hole": 1,
+      "cq.Workplane('XY').box(L_new, W_new, H, centered=True).faces('>Z').workplane().rect(X_rect, Y_rect, centered=True, forConstruction=True).vertices": 1,
+      "cq.Workplane('XY').box(L_new, W_new, H, centered=True).faces('>Z').workplane().rect": 1,
+      "cq.Workplane('XY').box(86.5, 156.0, 5.0).faces('>Z').workplane().rect(68.5, 138.0, forConstruction=True).vertices().hole": 1,
+      "cq.Workplane('XY').box(86.5, 156.0, 5.0).faces('>Z').workplane().rect(68.5, 138.0, forConstruction=True).vertices": 1,
+      "cq.Workplane('XY').box(86.5, 156.0, 5.0).faces('>Z').workplane().rect": 1,
+      "cq.Workplane('XY').box(86.5, 156.0, 5.0).faces('>Z').workplane": 1,
+      "cq.Workplane('XY').box(86.5, 156.0, 5.0).faces": 1,
+      "cq.Workplane('XY').box(part_length, part_width, part_thickness, centered=True).faces('>Z').workplane().pushPoints(hole_points).hole": 1,
+      "cq.Workplane('XY').box(part_length, part_width, part_thickness, centered=True).faces('>Z').workplane().pushPoints": 9,
+      "cq.Workplane('XY').box(part_length, part_width, part_thickness, centered=True).faces('>Z').workplane": 10,
+      "cq.Workplane('XY').box(part_length, part_width, part_thickness, centered=True).faces": 10,
+      "cq.Workplane('XY').box(part_length, part_width, part_thickness, centered=True).faces('>Z').workplane().pushPoints(points).hole": 3,
+      "cq.Workplane('XY').box(L_X, L_Y_B, THICK, centered=True).faces('>Z').workplane().pushPoints([(19.0, 29.75), (19.0, -29.75), (-19.0, 29.75), (-19.0, -29.75)]).hole": 1,
+      "cq.Workplane('XY').box(L_X, L_Y_B, THICK, centered=True).faces('>Z').workplane().pushPoints": 1,
+      "cq.Workplane('XY').box(L_X, L_Y_B, THICK, centered=True).faces('>Z').workplane": 1,
+      "cq.Workplane('XY').box(L_X, L_Y_B, THICK, centered=True).faces": 1,
+      "cq.Workplane('XY').box(part_length, part_width, part_thickness, centered=True).faces('>Z').workplane().pushPoints(hole_centers).hole": 3,
+      "cq.Workplane('XY').box(length, width, new_thickness, centered=True).faces('>Z').workplane().pushPoints([(length / 2 - margin, width / 2 - margin), (length / 2 - margin, -(width / 2 - margin)), (-(length / 2 - margin), width / 2 - margin), (-(length / 2 - margin), -(width / 2 - margin))]).hole": 1,
+      "cq.Workplane('XY').box(length, width, new_thickness, centered=True).faces('>Z').workplane().pushPoints": 1,
+      "cq.Workplane('XY').box(length, width, new_thickness, centered=True).faces('>Z').workplane": 1,
+      "cq.Workplane('XY').box(length, width, new_thickness, centered=True).faces": 1,
+      "cq.Workplane('XY').box(166.0, 33.0, 4.5, centered=True).faces('>Z').workplane().pushPoints(hole_centers).hole": 1,
+      "cq.Workplane('XY').box(166.0, 33.0, 4.5, centered=True).faces('>Z').workplane().pushPoints": 1,
+      "cq.Workplane('XY').box(166.0, 33.0, 4.5, centered=True).faces('>Z').workplane": 1,
+      "cq.Workplane('XY').box(166.0, 33.0, 4.5, centered=True).faces": 1,
+      "cq.Workplane('XY').box(L_new, W_new, H, centered=True).faces('>Z').workplane().pushPoints([(hole_X, hole_Y), (hole_X, -hole_Y), (-hole_X, hole_Y), (-hole_X, -hole_Y)]).hole": 1,
+      "cq.Workplane('XY').box(L_new, W_new, H, centered=True).faces('>Z').workplane().pushPoints(points).hole": 1,
+      "cq.Workplane('XY').box(155.5, 63.5, 4.0, centered=True).faces('>Z').workplane().rect(105.5, 13.5, centered=True, forConstruction=True).vertices().hole": 1,
+      "cq.Workplane('XY').box(155.5, 63.5, 4.0, centered=True).faces('>Z').workplane().rect(105.5, 13.5, centered=True, forConstruction=True).vertices": 1,
+      "cq.Workplane('XY').box(155.5, 63.5, 4.0, centered=True).faces('>Z').workplane().rect": 1,
+      "cq.Workplane('XY').box(155.5, 63.5, 4.0, centered=True).faces('>Z').workplane": 1,
+      "cq.Workplane('XY').box(155.5, 63.5, 4.0, centered=True).faces": 1,
+      "cq.Workplane('XY').box(part_length, part_width, part_thickness, centered=True).faces('>Z').workplane().rect(hole_rect_x, hole_rect_y, centered=True).vertices().hole": 1,
+      "cq.Workplane('XY').box(part_length, part_width, part_thickness, centered=True).faces('>Z').workplane().rect(hole_rect_x, hole_rect_y, centered=True).vertices": 1,
+      "cq.Workplane('XY').box(part_length, part_width, part_thickness, centered=True).faces('>Z').workplane().rect": 1,
+      "cq.Workplane('XY').box(L_X, NEW_L_Y, H, centered=True).faces('>Z').workplane().pushPoints(points).hole": 1,
+      "cq.Workplane('XY').box(L_X, NEW_L_Y, H, centered=True).faces('>Z').workplane().pushPoints": 1,
+      "cq.Workplane('XY').box(L_X, NEW_L_Y, H, centered=True).faces('>Z').workplane": 1,
+      "cq.Workplane('XY').box(L_X, NEW_L_Y, H, centered=True).faces": 1,
+      "cq.Workplane('XY').box(177.5, 122.0, 7.5).faces('>Z').workplane().rect(150.5, 95.0, forConstruction=True).vertices().hole": 1,
+      "cq.Workplane('XY').box(177.5, 122.0, 7.5).faces('>Z').workplane().rect(150.5, 95.0, forConstruction=True).vertices": 1,
+      "cq.Workplane('XY').box(177.5, 122.0, 7.5).faces('>Z').workplane().rect": 1,
+      "cq.Workplane('XY').box(177.5, 122.0, 7.5).faces('>Z').workplane": 1,
+      "cq.Workplane('XY').box(177.5, 122.0, 7.5).faces": 1,
+      "cq.Workplane('XY').box(part_length, part_width, part_thickness, centered=True).faces('>Z').workplane().pushPoints([(hole_offset_x, hole_offset_y), (hole_offset_x, -hole_offset_y), (-hole_offset_x, hole_offset_y), (-hole_offset_x, -hole_offset_y)]).hole": 1,
+      "cq.Workplane('XY').box(L, W_new, H, centered=True).faces('>Z').workplane().rect(114.0, 61.5, centered=True).vertices().hole": 1,
+      "cq.Workplane('XY').box(L, W_new, H, centered=True).faces('>Z').workplane().rect(114.0, 61.5, centered=True).vertices": 1,
+      "cq.Workplane('XY').box(L, W_new, H, centered=True).faces('>Z').workplane().rect": 1,
+      "cq.Workplane('XY').box(L, W_new, H, centered=True).faces('>Z').workplane": 1,
+      "cq.Workplane('XY').box(L, W_new, H, centered=True).faces": 1,
+      "cq.Workplane('XY').box(L_new, W_new, H_new, centered=True).faces('>Z').workplane().rect(171.0, 67.0, centered=True).vertices().hole": 1,
+      "cq.Workplane('XY').box(L_new, W_new, H_new, centered=True).faces('>Z').workplane().rect(171.0, 67.0, centered=True).vertices": 1,
+      "cq.Workplane('XY').box(L_new, W_new, H_new, centered=True).faces('>Z').workplane().rect": 1,
+      "cq.Workplane('XY').box(L_new, W_new, H_new, centered=True).faces('>Z').workplane": 2,
+      "cq.Workplane('XY').box(L_new, W_new, H_new, centered=True).faces": 2,
+      "cq.Workplane('XY').box(L_X, L_Y_NEW, THICK, centered=True).faces('>Z').workplane().pushPoints(hole_centers).hole": 1,
+      "cq.Workplane('XY').box(L_X, L_Y_NEW, THICK, centered=True).faces('>Z').workplane().pushPoints": 1,
+      "cq.Workplane('XY').box(L_X, L_Y_NEW, THICK, centered=True).faces('>Z').workplane": 1,
+      "cq.Workplane('XY').box(L_X, L_Y_NEW, THICK, centered=True).faces": 1,
+      "cq.Workplane('XY').box(54.5, 84.0, 5.5).faces('>Z').workplane().rect(19.5, 49.0, forConstruction=True).vertices().hole": 1,
+      "cq.Workplane('XY').box(54.5, 84.0, 5.5).faces('>Z').workplane().rect(19.5, 49.0, forConstruction=True).vertices": 1,
+      "cq.Workplane('XY').box(54.5, 84.0, 5.5).faces('>Z').workplane().rect": 1,
+      "cq.Workplane('XY').box(54.5, 84.0, 5.5).faces('>Z').workplane": 1,
+      "cq.Workplane('XY').box(54.5, 84.0, 5.5).faces": 1,
+      "cq.Workplane('XY').box(182.5, 128.5, 10.0, centered=True).faces('>Z').workplane().pushPoints([(69.75, 42.75), (69.75, -42.75), (-69.75, 42.75), (-69.75, -42.75)]).hole": 1,
+      "cq.Workplane('XY').box(182.5, 128.5, 10.0, centered=True).faces('>Z').workplane().pushPoints": 1,
+      "cq.Workplane('XY').box(182.5, 128.5, 10.0, centered=True).faces('>Z').workplane": 1,
+      "cq.Workplane('XY').box(182.5, 128.5, 10.0, centered=True).faces": 1,
+      "cq.Workplane('XY').box(L_X, L_Y, THICK, centered=True).faces('>Z').workplane().pushPoints([(hole_offset_x, hole_offset_y), (-hole_offset_x, hole_offset_y), (-hole_offset_x, -hole_offset_y), (hole_offset_x, -hole_offset_y)]).hole": 1,
+      "cq.Workplane('XY').box(L_X, L_Y, THICK, centered=True).faces('>Z').workplane().pushPoints": 1,
+      "cq.Workplane('XY').box(L_X, L_Y, THICK, centered=True).faces('>Z').workplane": 1,
+      "cq.Workplane('XY').box(L_X, L_Y, THICK, centered=True).faces": 1,
+      "cq.Workplane('XY').box(102, 93.5, 9.5, centered=True).faces('>Z').workplane().rect(85.0, 76.5, centered=True, forConstruction=True).vertices().hole": 1,
+      "cq.Workplane('XY').box(102, 93.5, 9.5, centered=True).faces('>Z').workplane().rect(85.0, 76.5, centered=True, forConstruction=True).vertices": 1,
+      "cq.Workplane('XY').box(102, 93.5, 9.5, centered=True).faces('>Z').workplane().rect": 1,
+      "cq.Workplane('XY').box(102, 93.5, 9.5, centered=True).faces('>Z').workplane": 1,
+      "cq.Workplane('XY').box(102, 93.5, 9.5, centered=True).faces": 1,
+      "cq.Workplane('XY').box(65.5, 50.0, 10.0, centered=True).faces('>Z').workplane().rect(43.5, 28.0, forConstruction=True).vertices().hole": 1,
+      "cq.Workplane('XY').box(65.5, 50.0, 10.0, centered=True).faces('>Z').workplane().rect(43.5, 28.0, forConstruction=True).vertices": 1,
+      "cq.Workplane('XY').box(65.5, 50.0, 10.0, centered=True).faces('>Z').workplane().rect": 1,
+      "cq.Workplane('XY').box(65.5, 50.0, 10.0, centered=True).faces('>Z').workplane": 1,
+      "cq.Workplane('XY').box(65.5, 50.0, 10.0, centered=True).faces": 1,
+      "cq.Workplane('XY').box(119.0, 81.0, 9.0, centered=True).faces('>Z').workplane().pushPoints([(41.0, 22.0), (41.0, -22.0), (-41.0, 22.0), (-41.0, -22.0)]).hole": 1,
+      "cq.Workplane('XY').box(119.0, 81.0, 9.0, centered=True).faces('>Z').workplane().pushPoints": 1,
+      "cq.Workplane('XY').box(119.0, 81.0, 9.0, centered=True).faces('>Z').workplane": 1,
+      "cq.Workplane('XY').box(119.0, 81.0, 9.0, centered=True).faces": 1,
+      "cq.Workplane('XY').box(143.0, 102.0, 11.5, centered=True).faces('>Z').workplane().rect(97.0, 56.0, centered=True).vertices().hole": 1,
+      "cq.Workplane('XY').box(143.0, 102.0, 11.5, centered=True).faces('>Z').workplane().rect(97.0, 56.0, centered=True).vertices": 1,
+      "cq.Workplane('XY').box(143.0, 102.0, 11.5, centered=True).faces('>Z').workplane().rect": 1,
+      "cq.Workplane('XY').box(143.0, 102.0, 11.5, centered=True).faces('>Z').workplane": 1,
+      "cq.Workplane('XY').box(143.0, 102.0, 11.5, centered=True).faces": 1,
+      "cq.Workplane('XY').box(70.0, 84.0, 12.0).faces('>Z').workplane().rect(31.0, 45.0, forConstruction=True).vertices().hole": 1,
+      "cq.Workplane('XY').box(70.0, 84.0, 12.0).faces('>Z').workplane().rect(31.0, 45.0, forConstruction=True).vertices": 1,
+      "cq.Workplane('XY').box(70.0, 84.0, 12.0).faces('>Z').workplane().rect": 1,
+      "cq.Workplane('XY').box(70.0, 84.0, 12.0).faces('>Z').workplane": 1,
+      "cq.Workplane('XY').box(70.0, 84.0, 12.0).faces": 1,
+      "cq.Workplane('XY').box(60.0, 30.0, 3.0, centered=True).faces('>Z').workplane().rect(48.0, 18.0, forConstruction=True).vertices().hole": 1,
+      "cq.Workplane('XY').box(60.0, 30.0, 3.0, centered=True).faces('>Z').workplane().rect(48.0, 18.0, forConstruction=True).vertices": 1,
+      "cq.Workplane('XY').box(60.0, 30.0, 3.0, centered=True).faces('>Z').workplane().rect": 1,
+      "cq.Workplane('XY').box(60.0, 30.0, 3.0, centered=True).faces('>Z').workplane": 1,
+      "cq.Workplane('XY').box(60.0, 30.0, 3.0, centered=True).faces": 1,
+      "cq.Workplane('XY').box(173.5, 95.0, 4.5, centered=True).faces('>Z').workplane().rect(139.5, 61.0, centered=True).vertices().hole": 1,
+      "cq.Workplane('XY').box(173.5, 95.0, 4.5, centered=True).faces('>Z').workplane().rect(139.5, 61.0, centered=True).vertices": 1,
+      "cq.Workplane('XY').box(173.5, 95.0, 4.5, centered=True).faces('>Z').workplane().rect": 1,
+      "cq.Workplane('XY').box(173.5, 95.0, 4.5, centered=True).faces('>Z').workplane": 1,
+      "cq.Workplane('XY').box(173.5, 95.0, 4.5, centered=True).faces": 1,
+      "cq.Workplane('XY').box(77.5, 121.0, 12.0).faces('>Z').workplane().rect(28.5, 72.0, forConstruction=True).vertices().hole": 1,
+      "cq.Workplane('XY').box(77.5, 121.0, 12.0).faces('>Z').workplane().rect(28.5, 72.0, forConstruction=True).vertices": 1,
+      "cq.Workplane('XY').box(77.5, 121.0, 12.0).faces('>Z').workplane().rect": 1,
+      "cq.Workplane('XY').box(77.5, 121.0, 12.0).faces('>Z').workplane": 1,
+      "cq.Workplane('XY').box(77.5, 121.0, 12.0).faces": 1,
+      "cq.Workplane('XY').box(L_X, L_Y_B, T_Z_B, centered=True).faces('>Z').workplane().pushPoints([(hole_X, hole_Y), (-hole_X, hole_Y), (hole_X, -hole_Y), (-hole_X, -hole_Y)]).hole": 1,
+      "cq.Workplane('XY').box(L_X, L_Y_B, T_Z_B, centered=True).faces('>Z').workplane().pushPoints": 1,
+      "cq.Workplane('XY').box(L_X, L_Y_B, T_Z_B, centered=True).faces('>Z').workplane": 1,
+      "cq.Workplane('XY').box(L_X, L_Y_B, T_Z_B, centered=True).faces": 1,
+      "cq.Workplane('XY').box(plate_length, plate_width, new_thickness, centered=True).faces('>Z').workplane().pushPoints(hole_centers).hole": 1,
+      "cq.Workplane('XY').box(plate_length, plate_width, new_thickness, centered=True).faces('>Z').workplane().pushPoints": 2,
+      "cq.Workplane('XY').box(L_X, L_Y_B, L_Z, centered=True).faces('>Z').workplane().rect(X_len_holes, Y_len_holes, centered=True, forConstruction=True).vertices().hole": 1,
+      "cq.Workplane('XY').box(L_X, L_Y_B, L_Z, centered=True).faces('>Z').workplane().rect(X_len_holes, Y_len_holes, centered=True, forConstruction=True).vertices": 1,
+      "cq.Workplane('XY').box(L_X, L_Y_B, L_Z, centered=True).faces('>Z').workplane().rect": 1,
+      "cq.Workplane('XY').box(L_X, L_Y_B, L_Z, centered=True).faces('>Z').workplane": 1,
+      "cq.Workplane('XY').box(L_X, L_Y_B, L_Z, centered=True).faces": 1,
+      "cq.Workplane('XY').box(93.0, 145.0, 14.0).faces('>Z').workplane().rect(72.0, 124.0, forConstruction=True).vertices().hole": 1,
+      "cq.Workplane('XY').box(93.0, 145.0, 14.0).faces('>Z').workplane().rect(72.0, 124.0, forConstruction=True).vertices": 1,
+      "cq.Workplane('XY').box(93.0, 145.0, 14.0).faces('>Z').workplane().rect": 1,
+      "cq.Workplane('XY').box(93.0, 145.0, 14.0).faces('>Z').workplane": 1,
+      "cq.Workplane('XY').box(93.0, 145.0, 14.0).faces": 1,
+      "cq.Workplane('XY').box(116.5, 88.5, 11.0, centered=True).faces('>Z').workplane().rect(68.5, 40.5, centered=True).vertices().hole": 1,
+      "cq.Workplane('XY').box(116.5, 88.5, 11.0, centered=True).faces('>Z').workplane().rect(68.5, 40.5, centered=True).vertices": 1,
+      "cq.Workplane('XY').box(116.5, 88.5, 11.0, centered=True).faces('>Z').workplane().rect": 1,
+      "cq.Workplane('XY').box(116.5, 88.5, 11.0, centered=True).faces('>Z').workplane": 1,
+      "cq.Workplane('XY').box(116.5, 88.5, 11.0, centered=True).faces": 1,
+      "cq.Workplane('XY').box(L_X, L_Y, T, centered=True).faces('>Z').workplane().rect(24.5, 43.0, centered=True).vertices().hole": 1,
+      "cq.Workplane('XY').box(L_X, L_Y, T, centered=True).faces('>Z').workplane().rect(24.5, 43.0, centered=True).vertices": 1,
+      "cq.Workplane('XY').box(L_X, L_Y, T, centered=True).faces('>Z').workplane().rect": 1,
+      "cq.Workplane('XY').box(L_X, L_Y, T, centered=True).faces('>Z').workplane": 1,
+      "cq.Workplane('XY').box(L_X, L_Y, T, centered=True).faces": 1,
+      "part.faces('>Z').workplane().pushPoints([(hole_x_coords[0], hole_y_coords[0]), (hole_x_coords[0], hole_y_coords[1]), (hole_x_coords[1], hole_y_coords[0]), (hole_x_coords[1], hole_y_coords[1])]).hole": 1,
+      "cq.Workplane('XY').box(182.0, 103.0, 3.5, centered=True).faces('>Z').workplane().rect(168.0, 89.0, forConstruction=True).vertices().hole": 1,
+      "cq.Workplane('XY').box(182.0, 103.0, 3.5, centered=True).faces('>Z').workplane().rect(168.0, 89.0, forConstruction=True).vertices": 1,
+      "cq.Workplane('XY').box(182.0, 103.0, 3.5, centered=True).faces('>Z').workplane().rect": 1,
+      "cq.Workplane('XY').box(182.0, 103.0, 3.5, centered=True).faces('>Z').workplane": 1,
+      "cq.Workplane('XY').box(182.0, 103.0, 3.5, centered=True).faces": 1,
+      "cq.Workplane('XY').box(139.5, 154.5, 3.5).faces('>Z').workplane().rect(119.5, 134.5, forConstruction=True).vertices().hole": 1,
+      "cq.Workplane('XY').box(139.5, 154.5, 3.5).faces('>Z').workplane().rect(119.5, 134.5, forConstruction=True).vertices": 1,
+      "cq.Workplane('XY').box(139.5, 154.5, 3.5).faces('>Z').workplane().rect": 1,
+      "cq.Workplane('XY').box(139.5, 154.5, 3.5).faces('>Z').workplane": 1,
+      "cq.Workplane('XY').box(139.5, 154.5, 3.5).faces": 1,
+      "cq.Workplane('XY').box(plate_length, plate_width, new_thickness, centered=True).faces('>Z').workplane().pushPoints(hole_coords).hole": 1,
+      "cq.Workplane('XY').box(78.0, 148.5, 5.0, centered=True).faces('>Z').workplane().rect(29.0, 99.5, centered=True, forConstruction=True).vertices().hole": 1,
+      "cq.Workplane('XY').box(78.0, 148.5, 5.0, centered=True).faces('>Z').workplane().rect(29.0, 99.5, centered=True, forConstruction=True).vertices": 1,
+      "cq.Workplane('XY').box(78.0, 148.5, 5.0, centered=True).faces('>Z').workplane().rect": 1,
+      "cq.Workplane('XY').box(78.0, 148.5, 5.0, centered=True).faces('>Z').workplane": 1,
+      "cq.Workplane('XY').box(78.0, 148.5, 5.0, centered=True).faces": 1,
+      "cq.Workplane('XY').box(142.0, 78.0, 11.0).faces('>Z').workplane().rect(114.0, 50.0, forConstruction=True).vertices().hole": 1,
+      "cq.Workplane('XY').box(142.0, 78.0, 11.0).faces('>Z').workplane().rect(114.0, 50.0, forConstruction=True).vertices": 1,
+      "cq.Workplane('XY').box(142.0, 78.0, 11.0).faces('>Z').workplane().rect": 1,
+      "cq.Workplane('XY').box(142.0, 78.0, 11.0).faces('>Z').workplane": 1,
+      "cq.Workplane('XY').box(142.0, 78.0, 11.0).faces": 1,
+      "cq.Workplane('XY').box(part_length, part_width, part_thickness, centered=True).faces('>Z').workplane().pushPoints([(hole_x, hole_y), (hole_x, -hole_y), (-hole_x, hole_y), (-hole_x, -hole_y)]).hole": 1,
+      "cq.Workplane('XY').box(86.5, 155.0, 7.5, centered=True).faces('>Z').workplane().rect(38.5, 107.0, forConstruction=True).vertices().hole": 1,
+      "cq.Workplane('XY').box(86.5, 155.0, 7.5, centered=True).faces('>Z').workplane().rect(38.5, 107.0, forConstruction=True).vertices": 1,
+      "cq.Workplane('XY').box(86.5, 155.0, 7.5, centered=True).faces('>Z').workplane().rect": 1,
+      "cq.Workplane('XY').box(86.5, 155.0, 7.5, centered=True).faces('>Z').workplane": 1,
+      "cq.Workplane('XY').box(86.5, 155.0, 7.5, centered=True).faces": 1,
+      "cq.Workplane('XY').box(124.5, 120.0, 4.5, centered=True).faces('>Z').workplane().rect(80.5, 76.0, forConstruction=True).vertices().hole": 1,
+      "cq.Workplane('XY').box(124.5, 120.0, 4.5, centered=True).faces('>Z').workplane().rect(80.5, 76.0, forConstruction=True).vertices": 1,
+      "cq.Workplane('XY').box(124.5, 120.0, 4.5, centered=True).faces('>Z').workplane().rect": 1,
+      "cq.Workplane('XY').box(124.5, 120.0, 4.5, centered=True).faces('>Z').workplane": 1,
+      "cq.Workplane('XY').box(124.5, 120.0, 4.5, centered=True).faces": 1,
+      "cq.Workplane('XY').box(L_new, W_new, H, centered=True).faces('>Z').workplane().pushPoints([(38.25, 21.25), (38.25, -21.25), (-38.25, 21.25), (-38.25, -21.25)]).hole": 1,
+      "cq.Workplane('XY').box(L_new, W_new, H_new, centered=True).faces('>Z').workplane().pushPoints([(hole_X_offset, hole_Y_offset), (hole_X_offset, -hole_Y_offset), (-hole_X_offset, hole_Y_offset), (-hole_X_offset, -hole_Y_offset)]).hole": 1,
+      "cq.Workplane('XY').box(L_new, W_new, H_new, centered=True).faces('>Z').workplane().pushPoints": 1,
+      "cq.Workplane('XY').box(L_new, W_new, H, centered=True).faces('>Z').workplane().pushPoints([(Offset_X, Offset_Y), (Offset_X, -Offset_Y), (-Offset_X, Offset_Y), (-Offset_X, -Offset_Y)]).hole": 1,
+      "cq.Workplane('XY').box(181.5, 95.5, 3.5, centered=True).faces('>Z').workplane().pushPoints([(65.75, 22.75), (65.75, -22.75), (-65.75, 22.75), (-65.75, -22.75)]).hole": 1,
+      "cq.Workplane('XY').box(181.5, 95.5, 3.5, centered=True).faces('>Z').workplane().pushPoints": 1,
+      "cq.Workplane('XY').box(181.5, 95.5, 3.5, centered=True).faces('>Z').workplane": 1,
+      "cq.Workplane('XY').box(181.5, 95.5, 3.5, centered=True).faces": 1
+    }
+  },
+  "discordant": [
+    {
+      "tier": "L1",
+      "spec_id": "test-0003",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R4a:hole_count",
+        "R5:hole_pattern",
+        "R6:material",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L1",
+      "spec_id": "test-0004",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R4a:hole_count",
+        "R5:hole_pattern",
+        "R6:material",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L1",
+      "spec_id": "test-0007",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R4a:hole_count",
+        "R5:hole_pattern"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L1",
+      "spec_id": "test-0015",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R4a:hole_count",
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L1",
+      "spec_id": "test-0029",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R4a:hole_count",
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L1",
+      "spec_id": "test-0033",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R4a:hole_count",
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L1",
+      "spec_id": "test-0038",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "gate:simple_through_holes",
+        "R4a:hole_count",
+        "R4b:hole_diameter",
+        "R5:hole_pattern",
+        "R6:material",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L1",
+      "spec_id": "test-0050",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [],
+      "adapter_failed": [],
+      "base_error": "execution failed [raised in other library]: SyntaxError: invalid syntax (<model>, line 1)",
+      "adapter_error": null
+    },
+    {
+      "tier": "L2",
+      "spec_id": "test-0011",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R4a:hole_count",
+        "R5:hole_pattern",
+        "R6:material",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L2",
+      "spec_id": "test-0014",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L2",
+      "spec_id": "test-0021",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R4a:hole_count",
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L2",
+      "spec_id": "test-0023",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R4a:hole_count",
+        "R5:hole_pattern"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L2",
+      "spec_id": "test-0026",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L2",
+      "spec_id": "test-0033",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R4a:hole_count",
+        "R5:hole_pattern"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L2",
+      "spec_id": "test-0035",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R4a:hole_count",
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L2",
+      "spec_id": "test-0041",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L2",
+      "spec_id": "test-0057",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [],
+      "adapter_failed": [],
+      "base_error": "execution failed [raised in cadquery: Workplane.rarray]: ValueError: Spacing and count must be > 0 in at least one direction",
+      "adapter_error": null
+    },
+    {
+      "tier": "L2",
+      "spec_id": "test-0060",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L3",
+      "spec_id": "test-0010",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R4a:hole_count",
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L3",
+      "spec_id": "test-0018",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R4a:hole_count",
+        "R5:hole_pattern"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L3",
+      "spec_id": "test-0019",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R4a:hole_count",
+        "R5:hole_pattern"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L3",
+      "spec_id": "test-0024",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R4a:hole_count",
+        "R5:hole_pattern"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L3",
+      "spec_id": "test-0025",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R4a:hole_count",
+        "R5:hole_pattern"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L3",
+      "spec_id": "test-0033",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R4a:hole_count",
+        "R5:hole_pattern"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L3",
+      "spec_id": "test-0034",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "gate:simple_through_holes",
+        "R4a:hole_count",
+        "R5:hole_pattern",
+        "R6:material",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L3",
+      "spec_id": "test-0035",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R4a:hole_count",
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L3",
+      "spec_id": "test-0040",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [],
+      "adapter_failed": [],
+      "base_error": "execution failed [raised in model code]: AttributeError: 'Workplane' object has no attribute 'offset'",
+      "adapter_error": null
+    },
+    {
+      "tier": "L3",
+      "spec_id": "test-0041",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [],
+      "adapter_failed": [],
+      "base_error": "execution failed [raised in model code]: AttributeError: 'Workplane' object has no attribute 'holes'",
+      "adapter_error": null
+    },
+    {
+      "tier": "L3",
+      "spec_id": "test-0045",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L3",
+      "spec_id": "test-0048",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "gate:simple_through_holes",
+        "R4a:hole_count",
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L3",
+      "spec_id": "test-0051",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [],
+      "adapter_failed": [],
+      "base_error": "execution failed [raised in cadquery: Workplane.rarray]: ValueError: Spacing and count must be > 0 in at least one direction",
+      "adapter_error": null
+    },
+    {
+      "tier": "L3",
+      "spec_id": "test-0052",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [],
+      "adapter_failed": [],
+      "base_error": "execution failed [raised in model code]: AttributeError: 'Workplane' object has no attribute 'holes'",
+      "adapter_error": null
+    },
+    {
+      "tier": "L4",
+      "spec_id": "test-0002",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L4",
+      "spec_id": "test-0003",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "gate:simple_through_holes",
+        "R4a:hole_count",
+        "R4b:hole_diameter",
+        "R5:hole_pattern",
+        "R6:material",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L4",
+      "spec_id": "test-0004",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L4",
+      "spec_id": "test-0005",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L4",
+      "spec_id": "test-0006",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L4",
+      "spec_id": "test-0008",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "gate:simple_through_holes",
+        "R4a:hole_count",
+        "R4b:hole_diameter",
+        "R5:hole_pattern",
+        "R6:material",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L4",
+      "spec_id": "test-0009",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L4",
+      "spec_id": "test-0010",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L4",
+      "spec_id": "test-0011",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L4",
+      "spec_id": "test-0012",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L4",
+      "spec_id": "test-0013",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R4b:hole_diameter",
+        "R5:hole_pattern",
+        "R6:material",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L4",
+      "spec_id": "test-0016",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L4",
+      "spec_id": "test-0017",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L4",
+      "spec_id": "test-0018",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L4",
+      "spec_id": "test-0019",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "gate:simple_through_holes",
+        "R4a:hole_count",
+        "R4b:hole_diameter",
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L4",
+      "spec_id": "test-0020",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L4",
+      "spec_id": "test-0021",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L4",
+      "spec_id": "test-0022",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L4",
+      "spec_id": "test-0023",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L4",
+      "spec_id": "test-0025",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L4",
+      "spec_id": "test-0026",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L4",
+      "spec_id": "test-0027",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "gate:simple_through_holes",
+        "R4a:hole_count",
+        "R4b:hole_diameter",
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L4",
+      "spec_id": "test-0028",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L4",
+      "spec_id": "test-0031",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L4",
+      "spec_id": "test-0036",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L4",
+      "spec_id": "test-0039",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "gate:simple_through_holes",
+        "R4a:hole_count",
+        "R4b:hole_diameter",
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L4",
+      "spec_id": "test-0041",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L4",
+      "spec_id": "test-0045",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L4",
+      "spec_id": "test-0046",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L4",
+      "spec_id": "test-0047",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L4",
+      "spec_id": "test-0050",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L4",
+      "spec_id": "test-0051",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L4",
+      "spec_id": "test-0053",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "gate:simple_through_holes",
+        "R4a:hole_count",
+        "R4b:hole_diameter",
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L4",
+      "spec_id": "test-0056",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L4",
+      "spec_id": "test-0057",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L4",
+      "spec_id": "test-0058",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L4",
+      "spec_id": "test-0059",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    },
+    {
+      "tier": "L4",
+      "spec_id": "test-0060",
+      "base_pass": false,
+      "adapter_pass": true,
+      "base_failed": [
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "adapter_failed": [],
+      "base_error": null,
+      "adapter_error": null
+    }
+  ],
+  "adapter_failures": [
+    {
+      "tier": "L3",
+      "spec_id": "test-0054",
+      "reward": 0.0,
+      "failed": [
+        "gate:simple_through_holes",
+        "R4a:hole_count",
+        "R4b:hole_diameter",
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "completion": "```python\nimport cadquery as cq\n\n# Define dimensions\nplate_thickness = 7.5  # mm\nplate_width = 155      # mm (Y)\nplate_length = 86.5    # mm (X)\nhole_diameter = 8      # mm\nhole_spacing_x = 38.5  # mm (along length/X)\nhole_spacing_y = 107   # mm (across width/Y)\n\n# Create the base plate centered on the origin.\n# box(length, width, height, centered=True) creates a box centered at (0,0,0).\n# So X spans -43.25 to 43.25, Y spans -77.5 to 77.5.\nplate = cq.Workplane(\"XY\").box(plate_length, plate_width, plate_thickness, centered=True)\n\n# Calculate hole positions.\n# Since the plate is centered on the origin, the holes must also be centered on the origin.\n# The spacing is between holes. With 4 holes, there are 3 gaps.\n# Distance from center to the first hole = (spacing * 1) / 2 ? No.\n# Let's visualize: Holes at -1.5d, -0.5d, +0.5d, +1.5d relative to center?\n# If spacing is S, and we have 4 holes centered, the positions are:\n# -1.5*S, -0.5*S, +0.5*S, +1.5*S.\n# Check: distance between -0.5S and +0.5S is S. Correct.\n# So offset from center is 1.5 * spacing.\n\n# X offsets (along length): +/- 1.5 * 38.5\n# Y offsets (along width): +/- 1.5 * 107\n\nx_offsets = [-1.5 * hole_spacing_x, 1.5 * hole_spacing_x]\ny_offsets = [-1.5 * hole_spacing_y, 1.5 * hole_spacing_y]\n\n# Generate all 4 points\npoints = []\nfor x in x_offsets:\n    for y in y_offsets:\n        points.append((x, y))\n\n# Drill the holes\n# We face the top face (>Z), push the points, and drill.\nresult = (\n    plate \n    .faces(\">Z\") \n    .workplane()\n    .pushPoints(points)\n    .hole(hole_diameter)\n)\n```"
+    }
+  ],
+  "L4_failure_checks": {
+    "R5:hole_pattern": 38,
+    "R7:edge_margin": 38,
+    "gate:simple_through_holes": 6,
+    "R4a:hole_count": 6,
+    "R4b:hole_diameter": 7,
+    "R6:material": 3
+  }
+}
