@@ -26,7 +26,8 @@ lists each command, UTC time, CLI version and SHA-256).
   generated answers; at step 5, half of the L4 groups were flat (zero
   advantage), none of the L2 or L1-L3 groups.
 - Realized mix of trained groups: L4 48 to 56%, L2 24%, L1-L3 20 to 29%
-  (registered 50 / 25 / 25).
+  (registered 50 / 25 / 25). **Corrected on 2 October 2026, see below:**
+  these figures are the mix of generated answers, not of trained ones.
 - Platform filters: our pre-batch zero-advantage filter, plus the service's
   post-batch gibberish and repetition filters in monitoring mode only and a
   second zero-advantage filter (enforced).
@@ -62,3 +63,24 @@ sent; `scripts/test_archive_payload.py` checks that no write reaches the
 transport). Archived: `results/training/run1/payload-cad-spec-9b-smoke.json`
 (this smoke test's config, unchanged since the run) and
 `results/training/run1/payload-cad-spec-9b.json` (the training run).
+
+## Correction (2 October 2026)
+
+The original text above is kept unchanged; this section corrects it. Source:
+the independent cost audit of training run 1 (`audit/run1-cost-report.md`),
+recomputed from the archived `metrics.json` of this smoke run.
+
+- **"Realized mix of trained groups" was mislabelled.** The figures quoted
+  (L4 48 to 56%, L2 24%, L1-L3 20 to 29%) are the per-environment shares of
+  **generated** answers, the ratio the log line reports. The share of
+  **trained** answers is different: over the smoke run, L4 contributed
+  31.25% of the trained answers, because most L4 groups were flat and
+  dropped by the zero-advantage filter. The registered ratios (50 / 25 / 25)
+  govern sampling, so the generated mix is the one to compare with them.
+- **Archived requests.** "Identical except `max_steps`" is precise only
+  for the run settings: the two archived requests also differ by run `name`
+  (`cad-spec-9b-smoke` vs `cad-spec-9b-run1`), and the archive records
+  differ by config path, timestamp and hash. No setting that affects
+  training differs.
+
+No acceptance verdict changes.

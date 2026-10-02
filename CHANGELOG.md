@@ -5,6 +5,21 @@ Scores are only comparable within one scorer version
 
 ## Unreleased
 
+### Training run 1: cost audit
+- `audit/run1-cost-report.md`: independent audit of the run's cost. Main
+  cause: refilling batches after flat (mostly all-solved) groups were
+  dropped, the trained share of generated answers falling from 63% (smoke)
+  to 9% (steps 33 to 38), compounded by longer answers. About $7.01 of the
+  $13.87 went to discarded generation. Billed inference was 15 to 27% below
+  list price, unexplained. Guardrails in `audit/guardrails-proposed.patch`
+  are proposed, not applied.
+- `results/training/run1/smoke-acceptance.md`: dated correction (the
+  "realized mix of trained groups" figures were the generated mix; the
+  archived requests also differ by run name). Original text kept.
+- `scripts/capture_run.py --retry-steps`: re-fetches failed distributions
+  into a new dated folder with its own manifest; original captures,
+  failures included, are never modified.
+
 ### Training run 1: stopped at step 38 on cost (Amendment 5)
 - Run `mk9qcuq2dsckzrf68gycyqls` completed 38 of 104 steps before being
   stopped: cost per step rose from $0.13 to about $0.68 as most generated
