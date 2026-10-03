@@ -90,6 +90,17 @@ jobs:
       - name: Replay the run 1 test-split evaluations on Linux (fork sandbox, 0 mismatches)
         working-directory: .
         run: python scripts/replay_eval.py results/training/run1/eval/base-test.jsonl results/training/run1/eval/adapter-test.jsonl
+      - name: Replication 1 answers replay on Linux and the committed verdict reproduces
+        working-directory: .
+        run: |
+          python scripts/replay_eval.py results/training/replication1/eval/base-rep-run2.jsonl \
+            results/training/replication1/eval/adapter-rep.jsonl results/training/replication1/eval/base-rep.jsonl
+          python scripts/compare_replication.py \
+            --base results/training/replication1/eval/base-rep-run2.jsonl \
+            --adapter results/training/replication1/eval/adapter-rep.jsonl \
+            --out /tmp/replication1/verdict > /dev/null
+          diff /tmp/replication1/verdict.json results/training/replication1/verdict.json
+          diff /tmp/replication1/verdict.md results/training/replication1/verdict.md
       - name: Training analysis self-test (registered verdict rules, refusals)
         working-directory: .
         run: python scripts/test_compare_training.py

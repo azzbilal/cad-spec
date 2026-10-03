@@ -10,11 +10,38 @@ the evidence that meets it.
 | 0 Reproducible claims | **done** | clean-room CI job (cadquery only); `constraints.txt`; provenance in every run file |
 | 1 Geometric truth | **done** | audit regressions in the harness (37 cases); mutation suite 0/600 false full credit, 0/600 false rejection; the same suite finds 15% false full credit in 0.3.0 |
 | 2 Contain generated code | **done on POSIX**, Windows documented as trusted-only | BREP trust boundary; `SECURITY.md` per mode; sandbox tests; Docker CI job |
-| 3 Learning value | **in progress** | 16-model first-shot board; pre-registered hint/feedback experiment; training prepared (0.4.1: Hub copy verified, shared prompt, locked test split), no training run yet |
+| 3 Learning value | **shown on this task, with caveats** | 16-model first-shot board; pre-registered hint/feedback experiment; one pre-registered LoRA run (+40.0 points on L2 + L4) and its pre-registered replication (+39.2); one adapter, serving routes not attested |
 | 4 Transfer | **partial** | tiers L1 to L4 incl. held-out wording; new part families not started |
 | 5 Research-grade release | **partial** | changelog, data card, protocol, license; release tag waits for Phase 3 numbers |
 
-## Next, in order
+## After the external audit of 3 October 2026
+
+`audit/state-and-roadmap-audit.md` reproduced the training and replication
+numbers and found the weak points below. Accepted order of work, free items
+first. Both evaluation splits are used and are never a selection set.
+
+1. **Scorer 0.5, a stated contract (free).** Decide what the part family
+   allows (no extra cuts, fillets or pockets unless requested), then reject
+   what 0.4.0 accepts: extra edge cuts, slots, cross-bores, clipped corners,
+   wall obstructions in a bore. Tolerances below the grid step (hole centres
+   sit on a 0.25 mm grid, so 0.1 mm is the starting proposal), comparisons
+   on unrounded measurements. A defect suite is frozen before the
+   implementation; 0.4.0 and every recorded verdict stay as they are.
+2. **A built-in edit-capable L4 parser baseline (free).** The audit's parser
+   passes every L4 task; the board should show it next to the weak parsers.
+3. **A harder tier on fresh specs (free to build).** Three or four coupled
+   edits, several forms of rev A code, two-stage change orders; references
+   and an "unedited rev A fails" check for every task; sealed evaluation set.
+4. **A true route control (paid, small, only if it can be bounded).** Base
+   weights, a verified zero-delta adapter and the trained adapter on one
+   serving stack. The 5-step smoke adapter is not a null control.
+5. **Transfer set written by hand (paid, small).** New prose, new source
+   forms, inside the validated scorer's domain.
+6. **A second training experiment** only after 1 to 5, with a hard
+   cumulative cap, no refill of solved groups, and a platform chosen after
+   Prime's shared LoRA training closes to new runs (5 October 2026).
+
+## Next, in order (state before the audit)
 
 1. **Model baselines (Phase 3). Done:** 16 models (15 via OpenRouter, 1
    local), all tiers, greedy, rescored under 0.4.0; board, charts and

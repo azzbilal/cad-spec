@@ -16,13 +16,13 @@ What this is, and what it is not:
 | Claim | Status |
 |---|---|
 | Scores a CadQuery part against 9 measurable requirements with partial credit | yes, one part family (4-hole mounting plate) |
-| Measures the real geometry, not what the model's objects claim | yes since 0.4.0: model code hands over BREP geometry; a trusted process measures it ([SECURITY.md](SECURITY.md)) |
+| Measures the real geometry, not what the model's objects claim | yes since 0.4.0: model code hands over BREP geometry; a separate trusted process measures it on POSIX (`fork` mode). On Windows the default `reuse` mode measures in the process that ran the code, for trusted answers only ([SECURITY.md](SECURITY.md)) |
 | Scorer validated against labelled mutants | yes: 1,230 mutants, 0 false full credit on 600 wrong parts, 0 false rejection on 600 correct parts ([results](results/scorer-validation-0.4.0.md)) |
 | Separates "copying numbers" from "reading a spec" | partly: five prompt tiers, reported separately; L0 to L2 are solved by simple parsers, and L3 by a parser that knows its wording templates ([baselines](results/baselines-deterministic.md)) |
 | Runs untrusted model code safely | per-rollout sandbox on POSIX, container for untrusted scale ([SECURITY.md](SECURITY.md)) |
 | Ranks real models and shows *how* each one fails | yes: 16 models (15 hosted, 1 local), about $0.27 of API calls; failure labels checked by AI-assisted review of three fresh random samples: 28/30, 28/30, 27/30 ([leaderboard](#leaderboard)) |
 | Separates knowledge failures from reasoning failures | yes: a pre-registered experiment ([below](#knowledge-or-reasoning-a-pre-registered-experiment)); a 7-line CadQuery cheat-sheet lifts four models by 42 to 56 points, while reasoning failures do not move |
-| Shows that RL training improves a model | **not yet**: tooling is ready, no training run is published |
+| Shows that RL training improves a model | **on this task, with caveats**: one LoRA run on Qwen3.5-9B, +40.0 points on L2 + L4, replicated on a second split (+39.2). One adapter, one part family, serving routes not attested ([below](#can-training-fix-the-reasoning-a-pre-registered-rl-run)) |
 | Broad text-to-CAD benchmark, new part families | **no**: one family; see [ROADMAP.md](ROADMAP.md) |
 | "Material" means alloy, strength, fit, manufacturability | **no**: R6 is volume consistency only |
 
@@ -92,6 +92,10 @@ full passes, because most requirements did not change. Partial credit is a
 training signal; for L4 the headline metric is the all-requirements pass rate.
 Every change order moves at least one value clearly outside its tolerance, so
 an unedited model can never pass (checked on all 230 specs).
+L4 is still a small closed grammar: an external audit wrote a short
+deterministic parser for the change orders that passes all 60 L4 tasks of
+both evaluation splits (`audit/state-and-roadmap-audit.md`). A built-in
+version of that baseline is on the [roadmap](ROADMAP.md).
 
 ## Scoring
 
@@ -260,7 +264,8 @@ intervals: [`results/experiments/hint-feedback-results.md`](results/experiments/
   11% of retried answers then passed and 52% repeated the same error.
 - **Confirmed: reasoning failures are untouched.** Margin applied twice and
   change orders not propagated to the hole pitch moved by at most 3 points
-  under either arm. These are what training, not prompting, has to fix.
+  under either arm. Prompting of this kind does not fix them; the next
+  section tests whether training does.
 - **Exploratory:** the cheat-sheet lowered the control model, gpt-4o-mini,
   from 40% to 31%.
 
@@ -285,21 +290,43 @@ model without training, both with the cheat-sheet:
 | L4 change order | 36.7% | **100.0%** | +63.3 [+51.7, +75.0] |
 
 - **H1 confirmed:** on L2 + L4, 60% to 100%, +40 points [+32.5, +47.5]
-  (registered minimum +10). 70 pairs improved, none worsened.
+  (registered minimum +10). Over all four tiers, 70 pairs improved and
+  none worsened.
 - **Integrity:** an independent audit found no reward hacking or leakage;
-  every passing part has the exact requested geometry under a separate
-  check, and perturbed answers fail
+  each of the adapter's 239 passing parts is the requested part under a
+  separate check, and perturbed answers fail
   ([audit](audit/README.md), report `audit/run1-result-integrity.md`).
 - **Limits:** one run, one model, one plate family, a ceiling at 100%
-  (lower bound about 94%), base and adapter on different serving routes.
+  on this split (lower bound about 94%), base and adapter on different
+  serving routes.
   A free bridge check narrows the last one: with untrained weights the
   training stack scores no higher than the base route on L4 (28.4% against
   42.9%, inside the registered interval), so a stack that serves the same
   weights better is not supported as the explanation. The adapter route
   itself is still not attested (`results/training/run1/bridge-check.md`).
-- **Replication:** pre-registered, not run yet. The same frozen adapter on
-  60 fresh specs, same protocol
-  ([plan](docs/experiments/replication-1.md)).
+- **Replicated (3 October 2026):** the same frozen adapter on 60 fresh,
+  disjoint specs, same protocol, pre-registered
+  ([plan and result](docs/experiments/replication-1.md)). L2 + L4: 60.0% to
+  99.2%, **+39.2 points [+31.7, +46.7]**. The registered consistency rule
+  is met (difference from the original gain -0.8 points [-11.7, +10.0]);
+  that is a wide interval, not a proof of equal effects. Pooled over both
+  splits the adapter passes both tiers on 119 of 120 specs (lower bound
+  95.4% for this generator, this adapter and this protocol).
+- **What the replication also showed:** the adapter is not perfect. Two L3
+  answers ran past the 2,048-token limit on tasks the base model passes (it
+  reasons at length in code comments), and one L4 change order that alters
+  the width and the edge margin together was solved wrongly.
+- **How exact are the passing parts:** a second implementation compares
+  every answer with the ideal part. Of the 806 passing answers of the two
+  evaluations, 800 are the nominal part; six have a hole centre off by 0.25
+  or 0.5 mm, which scorer 0.4.0 accepts (five base answers, one adapter
+  answer). Neither verdict depends on them (+40.8 and +41.7 without them).
+- **Known scorer limit (external audit, 3 October 2026):** scorer 0.4.0 can
+  give full credit to a part with extra cuts. One saved development answer
+  has four notches through its edges and scores 1.0, because R6 tolerates
+  3% of missing material. No passing evaluation answer has this defect, but
+  reward 1 is not yet a guarantee of the requested part. A stricter scorer
+  0.5 is the next item on the [roadmap](ROADMAP.md).
 - **Cost:** the run cost $13.87, of which about $7 paid for answers the
   filter discarded once most prompts were solved
   ([cost audit](audit/README.md), report `audit/run1-cost-report.md`).

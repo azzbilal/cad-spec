@@ -1,0 +1,34 @@
+{
+ "platform": "Linux-6.18.44-fc-v64-x86_64-with-glibc2.39",
+ "python": "3.12.3",
+ "sandbox_mode": "fork",
+ "cad_spec": "0.4.5",
+ "scorer": "0.4.0",
+ "files": [
+  {
+   "file": "results/training/replication1/eval/base-rep-run2.jsonl",
+   "rows": 240,
+   "all_pass": 161,
+   "mismatches": [],
+   "sha256_lf": "d240c458bad0dc64e31561ca63e75492d318debe77e328745e8bdbdf6d2f1180",
+   "sha256_crlf": "210f900fd761b92f9c1e0771fbd9d6839c1e60dc27695f453791b80d78c8e5fe"
+  },
+  {
+   "file": "results/training/replication1/eval/adapter-rep.jsonl",
+   "rows": 240,
+   "all_pass": 237,
+   "mismatches": [],
+   "sha256_lf": "c132e4d8adc39974e444821c28e20d08bb89a89dc61e8fc63b286375481e7a9c",
+   "sha256_crlf": "790aab62d37b7b8af32549797157d9d22d2021eb4ebcedb1e38b3beb75f3814c"
+  },
+  {
+   "file": "results/training/replication1/eval/base-rep.jsonl",
+   "rows": 1,
+   "all_pass": 1,
+   "mismatches": [],
+   "sha256_lf": "0866dddeeccdd6defa11760ccece61ca0b4b8c7255ab4ffaf4d787a628ef8864",
+   "sha256_crlf": "8e14eb8b3f1be586012df312a92bc3c001736086102fd1f884f19fd363d6db1d"
+  }
+ ],
+ "seconds": 50.5
+}
