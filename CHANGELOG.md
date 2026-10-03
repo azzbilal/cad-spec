@@ -25,6 +25,11 @@ Scores are only comparable within one scorer version
   and consistency statements scoped, execution modes named, L4 parser
   result of the audit cited. ROADMAP: status and the order of work accepted
   from the audit.
+- Audit addendum (`audit/a7-addendum.md`): full reading of 28 adapter
+  answers. No exploitation in the sample; the adapter recovers the margin
+  and recomputes both pitches where the base keeps the old hole rectangle;
+  the two truncated L3 answers start from a "four holes in a line"
+  misreading.
 
 - **R1 REPLICATED:** L2 + L4 60.0% to 99.2%, +39.2 points [+31.7, +46.7] on
   the 60-spec replication split. **R3 CONSISTENT** with the original +40.0

@@ -488,6 +488,16 @@ again by the project before being accepted.
    only `cadquery` imports and none of a list of dangerous names. The two
    truncated adapter answers do not parse. This does not prove the absence
    of every exploit; geometry can be gamed with plain CadQuery.
+10. **The two truncated L3 answers, described more exactly** (audit
+    addendum, `audit/a7-addendum.md`; checked against the saved text).
+    Both open by misreading the pattern as four holes in a line ("With 4
+    holes, there are 3 gaps") and spend their tokens working back to the
+    2 x 2 layout. `rep-0014` ends with the correct coordinates in a point
+    list but never drills or assigns `result`. `rep-0056` reaches the
+    correct coordinates in its comments, then starts the final expression
+    with a wrong first coordinate (16.0 mm where 26.25 mm is needed). So the
+    failure is more than a missing closing fence, and a higher token limit
+    would not necessarily have saved the second one.
 
 Scope added by the audit (new information, verified by the project unless
 noted):
@@ -510,6 +520,17 @@ noted):
   the solid is measured in the process that ran the model's code. The Linux
   replay runs in `fork` mode, with a separate trusted worker, and reproduces
   every check of every answer.
+- **What the adapter does, from a full reading** (audit addendum: 24
+  adapter answers drawn by seed, six per tier, plus the four special cases,
+  with six base answers for contrast). All 24 sampled programs build the
+  nominal part with ordinary CadQuery; nothing reaches a pass without
+  building the plate. On L4 the base edits the literals named in the order
+  and keeps the old hole rectangle; the adapter recovers the edge margin
+  from rev A and recomputes both pitches. Its comments carry correct
+  intermediate values that the code then uses (arithmetic checked by hand
+  on six L4 answers), mixed with repetition and a few slips. The one offset
+  pass (L1 `rep-0038`) is an arithmetic slip of 0.5 mm, not an exploit. A
+  sample cannot exclude exploitation elsewhere.
 - **A nearly untrained adapter is not available as a route control.** The
   5-step smoke adapter already scores 52.5% on L4 in training against 32.3%
   at step 1, so it is not a stand-in for the base model.
