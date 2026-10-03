@@ -223,7 +223,53 @@ Other rules:
 
 ## Amendments
 
-None.
+### Amendment 1 (3 October 2026): the base run was interrupted by the operator; rerun to a new file
+
+Written and merged before the rerun, before the adapter run and before any
+analysis.
+
+**What happened.** On 2 October 2026 the base run of section 4 was started
+at about 23:32 UTC, right after the wallet reading B0 (23:31:42 UTC, balance
+$14.7334), and stopped by the operator with Ctrl+C about one minute later.
+The reason was scheduling: the full protocol needs about 45 minutes in one
+sitting and it was postponed to the next day. The runner closed the file
+with its end record:
+
+`{"status": "interrupted", "written": 1, "planned": 240, "spent_usd": 0.00032}`
+
+The adapter was not deployed (`prime deployments list` showed `NOT_DEPLOYED`
+and `prime deployments delete` answered "Model is not deployed"). The
+analysis was not run. Nothing was decided on the basis of any answer.
+
+**What the plan said.** Section 7 allows a rerun to a new file after a
+technical failure. An interruption by the operator is not in that list, so
+it is recorded here instead of being treated as covered.
+
+**What changes.**
+
+- The interrupted file `results/training/replication1/eval/base-rep.jsonl`
+  is kept unchanged and committed with the results. Its one answer is **not
+  used** in the analysis.
+- The base run is made again with the command of section 4 unchanged except
+  for the output path, `results/training/replication1/eval/base-rep-run2.jsonl`.
+  It regenerates all 240 answers, including the task already answered once.
+  The analysis reads `base-rep-run2.jsonl`.
+- Whether the two answers to that one task are identical is reported with
+  the result, as a small free observation on greedy reproducibility.
+- The base rerun and the adapter run are made in one sitting on the same
+  day, with a new wallet reading before the rerun. The readings of 2 October
+  stay in the log.
+
+**What does not change.** The split, the models, the protocol, the
+hypotheses, the thresholds, the analysis script, the $0.35 and $0.15 runner
+budgets and the $1.00 ceiling. The $0.00032 already spent counts against the
+ceiling.
+
+**Exposure.** The runner's progress line displays the reward of each answer,
+so the outcome of that single base answer may have been seen. It cannot
+select anything: the rerun is the registered command and covers every task.
+
+Any further interruption or rerun needs its own dated amendment.
 
 ## Result
 
