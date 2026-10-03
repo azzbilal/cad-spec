@@ -5,6 +5,25 @@ Scores are only comparable within one scorer version
 
 ## Unreleased
 
+### Replication 1: result (3 October 2026)
+- **R1 REPLICATED:** L2 + L4 60.0% to 99.2%, +39.2 points [+31.7, +46.7] on
+  the 60-spec replication split. **R3 CONSISTENT** with the original +40.0
+  (difference -0.8 [-11.7, +10.0]). R4: 119 of 120 specs pooled, lower bound
+  95.4%. No regression on L1 or L3.
+- Three adapter failures: two L3 answers cut at 2,048 tokens on tasks the
+  base passes (the first worsened pairs), and one L4 two-change order
+  (width and edge margin) solved wrongly.
+- Billed $0.1271 of the $1.00 ceiling. Deployment fee measured: none. One
+  failed deployment attempt, retried, at no cost.
+- Checks after the result: verdict reproduces on Linux; replay 0 mismatches
+  over 481 answers (now in CI); independent geometry check
+  (`audit/replication1_geometry_check.py`) with 0 unexplained disagreements
+  over 960 answers; six passes inside the scorer's 0.5 mm position
+  tolerance but outside the stricter one, verdicts unchanged without them
+  (+40.8 and +41.7).
+- Greedy decoding on the base route is not reproducible across days (one
+  task answered twice, different text, both pass).
+
 ### Replication 1: Amendment 1 (3 October 2026)
 - The base run was interrupted by the operator after 1 of 240 answers
   ($0.00032) for scheduling, before the adapter was deployed and before any

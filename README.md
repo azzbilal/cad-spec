@@ -291,15 +291,26 @@ model without training, both with the cheat-sheet:
   check, and perturbed answers fail
   ([audit](audit/README.md), report `audit/run1-result-integrity.md`).
 - **Limits:** one run, one model, one plate family, a ceiling at 100%
-  (lower bound about 94%), base and adapter on different serving routes.
+  on this split (lower bound about 94%), base and adapter on different
+  serving routes.
   A free bridge check narrows the last one: with untrained weights the
   training stack scores no higher than the base route on L4 (28.4% against
   42.9%, inside the registered interval), so a stack that serves the same
   weights better is not supported as the explanation. The adapter route
   itself is still not attested (`results/training/run1/bridge-check.md`).
-- **Replication:** pre-registered, not run yet. The same frozen adapter on
-  60 fresh specs, same protocol
-  ([plan](docs/experiments/replication-1.md)).
+- **Replicated (3 October 2026):** the same frozen adapter on 60 fresh,
+  disjoint specs, same protocol, pre-registered
+  ([plan and result](docs/experiments/replication-1.md)). L2 + L4: 60.0% to
+  99.2%, **+39.2 points [+31.7, +46.7]**, consistent in size with the
+  original (+40.0). Pooled over both splits the adapter passes both tiers
+  on 119 of 120 specs (lower bound 95.4%).
+- **What the replication also showed:** the adapter is not perfect. Two L3
+  answers ran past the 2,048-token limit on tasks the base model passes (it
+  reasons at length in code comments), and one L4 change order that alters
+  the width and the edge margin together was solved wrongly. A stricter
+  independent geometry check agrees with the scorer on all 960 answers
+  except six passes that the scorer's 0.5 mm position tolerance accepts
+  and the stricter check does not; neither verdict depends on them.
 - **Cost:** the run cost $13.87, of which about $7 paid for answers the
   filter discarded once most prompts were solved
   ([cost audit](audit/README.md), report `audit/run1-cost-report.md`).

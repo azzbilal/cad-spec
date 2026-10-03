@@ -1,0 +1,182 @@
+{
+  "status": "analysed",
+  "base_model": "Qwen/Qwen3.5-9B",
+  "adapter_model": "Qwen/Qwen3.5-9B:xfisiyo5vlhn0ys65sf4uad7",
+  "per_tier": {
+    "L1": {
+      "tiers": [
+        "L1"
+      ],
+      "base_all_pass": 0.7,
+      "adapter_all_pass": 1.0,
+      "difference": 0.3,
+      "ci95": [
+        0.18333333333333332,
+        0.4166666666666667
+      ],
+      "pairs": 60
+    },
+    "L2": {
+      "tiers": [
+        "L2"
+      ],
+      "base_all_pass": 0.8333333333333334,
+      "adapter_all_pass": 1.0,
+      "difference": 0.16666666666666666,
+      "ci95": [
+        0.08333333333333333,
+        0.26666666666666666
+      ],
+      "pairs": 60
+    },
+    "L3": {
+      "tiers": [
+        "L3"
+      ],
+      "base_all_pass": 0.7833333333333333,
+      "adapter_all_pass": 0.9666666666666667,
+      "difference": 0.18333333333333332,
+      "ci95": [
+        0.06666666666666667,
+        0.3
+      ],
+      "pairs": 60
+    },
+    "L4": {
+      "tiers": [
+        "L4"
+      ],
+      "base_all_pass": 0.36666666666666664,
+      "adapter_all_pass": 0.9833333333333333,
+      "difference": 0.6166666666666667,
+      "ci95": [
+        0.5,
+        0.7333333333333333
+      ],
+      "pairs": 60
+    }
+  },
+  "R1": {
+    "tiers": [
+      "L2",
+      "L4"
+    ],
+    "base_all_pass": 0.6,
+    "adapter_all_pass": 0.9916666666666667,
+    "difference": 0.39166666666666666,
+    "ci95": [
+      0.31666666666666665,
+      0.4666666666666667
+    ],
+    "pairs": 120,
+    "verdict": "replicated"
+  },
+  "R2": {
+    "tiers": [
+      "L4"
+    ],
+    "base_all_pass": 0.36666666666666664,
+    "adapter_all_pass": 0.9833333333333333,
+    "difference": 0.6166666666666667,
+    "ci95": [
+      0.5,
+      0.7333333333333333
+    ],
+    "pairs": 60,
+    "verdict": "gain"
+  },
+  "R3": {
+    "original_gain": 0.4,
+    "replication_gain": 0.39166666666666666,
+    "difference": -0.00833333333333336,
+    "ci95": [
+      -0.11666666666666664,
+      0.10000000000000003
+    ],
+    "verdict": "consistent"
+  },
+  "R4": {
+    "replication": {
+      "pass": 59,
+      "specs": 60,
+      "lower95": 0.910600949942513
+    },
+    "original": {
+      "pass": 60,
+      "specs": 60,
+      "lower95": 0.940370507713833
+    },
+    "pooled": {
+      "pass": 119,
+      "specs": 120,
+      "lower95": 0.9544444867664069
+    }
+  },
+  "regression": {
+    "L1": {
+      "tiers": [
+        "L1"
+      ],
+      "base_all_pass": 0.7,
+      "adapter_all_pass": 1.0,
+      "difference": 0.3,
+      "ci95": [
+        0.18333333333333332,
+        0.4166666666666667
+      ],
+      "pairs": 60,
+      "regression": false
+    },
+    "L3": {
+      "tiers": [
+        "L3"
+      ],
+      "base_all_pass": 0.7833333333333333,
+      "adapter_all_pass": 0.9666666666666667,
+      "difference": 0.18333333333333332,
+      "ci95": [
+        0.06666666666666667,
+        0.3
+      ],
+      "pairs": 60,
+      "regression": false
+    }
+  },
+  "adapter_failures": [
+    {
+      "tier": "L3",
+      "spec_id": "rep-0014",
+      "base_also_fails": false,
+      "failed_checks": [],
+      "finish_reason": "length"
+    },
+    {
+      "tier": "L3",
+      "spec_id": "rep-0056",
+      "base_also_fails": false,
+      "failed_checks": [],
+      "finish_reason": "length"
+    },
+    {
+      "tier": "L4",
+      "spec_id": "rep-0020",
+      "base_also_fails": true,
+      "failed_checks": [
+        "R5:hole_pattern",
+        "R7:edge_margin"
+      ],
+      "finish_reason": "stop"
+    }
+  ],
+  "pairs": {
+    "improved": 78,
+    "worsened": 2
+  },
+  "thresholds": {
+    "min_worthwhile": 0.1,
+    "regression_drop": 0.1,
+    "bootstrap": 10000,
+    "seed": 20261001,
+    "consistency_seed": 20261004
+  }
+}

@@ -1,0 +1,108 @@
+{
+  "method": "bounding box, volume and point membership; scorer not imported",
+  "position_tolerance_mm": {
+    "this_check": 0.25,
+    "scorer_inclusive": 0.5
+  },
+  "splits": {
+    "replication": {
+      "files": [
+        {
+          "file": "results/training/replication1/eval/base-rep-run2.jsonl",
+          "answers": 240,
+          "both_pass": 158,
+          "both_fail": 79,
+          "boundary_pass": [
+            {
+              "task": "L1 rep-0037",
+              "hole_centre_deviation_mm": 0.5
+            },
+            {
+              "task": "L4 rep-0005",
+              "hole_centre_deviation_mm": 0.5
+            },
+            {
+              "task": "L4 rep-0034",
+              "hole_centre_deviation_mm": 0.5
+            }
+          ],
+          "scorer_pass_check_fail_other": [],
+          "scorer_fail_check_pass": []
+        },
+        {
+          "file": "results/training/replication1/eval/adapter-rep.jsonl",
+          "answers": 240,
+          "both_pass": 236,
+          "both_fail": 3,
+          "boundary_pass": [
+            {
+              "task": "L1 rep-0038",
+              "hole_centre_deviation_mm": 0.5
+            }
+          ],
+          "scorer_pass_check_fail_other": [],
+          "scorer_fail_check_pass": []
+        }
+      ],
+      "l2_l4_with_boundary_passes_as_failures": {
+        "tiers": [
+          "L2",
+          "L4"
+        ],
+        "base_all_pass": 0.5833333333333334,
+        "adapter_all_pass": 0.9916666666666667,
+        "difference": 0.4083333333333333,
+        "ci95": [
+          0.3333333333333333,
+          0.48333333333333334
+        ],
+        "pairs": 120
+      }
+    },
+    "original": {
+      "files": [
+        {
+          "file": "results/training/run1/eval/base-test.jsonl",
+          "answers": 240,
+          "both_pass": 167,
+          "both_fail": 71,
+          "boundary_pass": [
+            {
+              "task": "L4 test-0007",
+              "hole_centre_deviation_mm": 0.25
+            },
+            {
+              "task": "L4 test-0043",
+              "hole_centre_deviation_mm": 0.5
+            }
+          ],
+          "scorer_pass_check_fail_other": [],
+          "scorer_fail_check_pass": []
+        },
+        {
+          "file": "results/training/run1/eval/adapter-test.jsonl",
+          "answers": 240,
+          "both_pass": 239,
+          "both_fail": 1,
+          "boundary_pass": [],
+          "scorer_pass_check_fail_other": [],
+          "scorer_fail_check_pass": []
+        }
+      ],
+      "l2_l4_with_boundary_passes_as_failures": {
+        "tiers": [
+          "L2",
+          "L4"
+        ],
+        "base_all_pass": 0.5833333333333334,
+        "adapter_all_pass": 1.0,
+        "difference": 0.4166666666666667,
+        "ci95": [
+          0.3416666666666667,
+          0.49166666666666664
+        ],
+        "pairs": 120
+      }
+    }
+  }
+}
