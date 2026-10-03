@@ -5,6 +5,13 @@ Scores are only comparable within one scorer version
 
 ## Unreleased
 
+### Replication 1: Amendment 1 (3 October 2026)
+- The base run was interrupted by the operator after 1 of 240 answers
+  ($0.00032) for scheduling, before the adapter was deployed and before any
+  analysis. The partial file is kept and not used; the base run is made
+  again to `base-rep-run2.jsonl` with the registered command. Nothing else
+  changes.
+
 ### Replication 1: pre-registration (no model answer yet)
 - `docs/experiments/replication-1.md`: registered plan to evaluate the frozen
   run 1 adapter and the base model on 60 fresh specs, same protocol. R1
