@@ -1,8 +1,9 @@
 {
-  "method": "bounding box, volume and point membership; scorer not imported",
-  "position_tolerance_mm": {
-    "this_check": 0.25,
-    "scorer_inclusive": 0.5
+  "method": "comparison with the independently built ideal part, plus a sparse point test; scorer not imported",
+  "nominal_tolerance_mm3": 0.001,
+  "point_test_mm": {
+    "ring_offset": 0.25,
+    "scorer_position_tolerance_inclusive": 0.5
   },
   "splits": {
     "replication": {
@@ -10,41 +11,71 @@
         {
           "file": "results/training/replication1/eval/base-rep-run2.jsonl",
           "answers": 240,
-          "both_pass": 158,
-          "both_fail": 79,
-          "boundary_pass": [
+          "scorer_pass": 161,
+          "scorer_pass_nominal": 158,
+          "scorer_pass_not_nominal": [
             {
               "task": "L1 rep-0037",
+              "symmetric_difference_mm3": 251.708,
               "hole_centre_deviation_mm": 0.5
             },
             {
               "task": "L4 rep-0005",
+              "symmetric_difference_mm3": 119.7997,
               "hole_centre_deviation_mm": 0.5
             },
             {
               "task": "L4 rep-0034",
+              "symmetric_difference_mm3": 209.8213,
               "hole_centre_deviation_mm": 0.5
             }
           ],
-          "scorer_pass_check_fail_other": [],
-          "scorer_fail_check_pass": []
+          "scorer_fail": 79,
+          "scorer_fail_but_nominal": [],
+          "point_test_agrees": 237,
+          "point_test_disagrees": [
+            {
+              "task": "L1 rep-0037",
+              "scorer": true,
+              "why": "holes"
+            },
+            {
+              "task": "L4 rep-0005",
+              "scorer": true,
+              "why": "holes"
+            },
+            {
+              "task": "L4 rep-0034",
+              "scorer": true,
+              "why": "holes"
+            }
+          ]
         },
         {
           "file": "results/training/replication1/eval/adapter-rep.jsonl",
           "answers": 240,
-          "both_pass": 236,
-          "both_fail": 3,
-          "boundary_pass": [
+          "scorer_pass": 237,
+          "scorer_pass_nominal": 236,
+          "scorer_pass_not_nominal": [
             {
               "task": "L1 rep-0038",
+              "symmetric_difference_mm3": 377.6783,
               "hole_centre_deviation_mm": 0.5
             }
           ],
-          "scorer_pass_check_fail_other": [],
-          "scorer_fail_check_pass": []
+          "scorer_fail": 3,
+          "scorer_fail_but_nominal": [],
+          "point_test_agrees": 239,
+          "point_test_disagrees": [
+            {
+              "task": "L1 rep-0038",
+              "scorer": true,
+              "why": "holes"
+            }
+          ]
         }
       ],
-      "l2_l4_with_boundary_passes_as_failures": {
+      "l2_l4_counting_only_nominal_passes": {
         "tiers": [
           "L2",
           "L4"
@@ -64,32 +95,49 @@
         {
           "file": "results/training/run1/eval/base-test.jsonl",
           "answers": 240,
-          "both_pass": 167,
-          "both_fail": 71,
-          "boundary_pass": [
+          "scorer_pass": 169,
+          "scorer_pass_nominal": 167,
+          "scorer_pass_not_nominal": [
             {
               "task": "L4 test-0007",
+              "symmetric_difference_mm3": 104.464,
               "hole_centre_deviation_mm": 0.25
             },
             {
               "task": "L4 test-0043",
+              "symmetric_difference_mm3": 127.6659,
               "hole_centre_deviation_mm": 0.5
             }
           ],
-          "scorer_pass_check_fail_other": [],
-          "scorer_fail_check_pass": []
+          "scorer_fail": 71,
+          "scorer_fail_but_nominal": [],
+          "point_test_agrees": 238,
+          "point_test_disagrees": [
+            {
+              "task": "L4 test-0007",
+              "scorer": true,
+              "why": "holes"
+            },
+            {
+              "task": "L4 test-0043",
+              "scorer": true,
+              "why": "holes"
+            }
+          ]
         },
         {
           "file": "results/training/run1/eval/adapter-test.jsonl",
           "answers": 240,
-          "both_pass": 239,
-          "both_fail": 1,
-          "boundary_pass": [],
-          "scorer_pass_check_fail_other": [],
-          "scorer_fail_check_pass": []
+          "scorer_pass": 239,
+          "scorer_pass_nominal": 239,
+          "scorer_pass_not_nominal": [],
+          "scorer_fail": 1,
+          "scorer_fail_but_nominal": [],
+          "point_test_agrees": 240,
+          "point_test_disagrees": []
         }
       ],
-      "l2_l4_with_boundary_passes_as_failures": {
+      "l2_l4_counting_only_nominal_passes": {
         "tiers": [
           "L2",
           "L4"

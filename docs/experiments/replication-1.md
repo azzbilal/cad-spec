@@ -426,3 +426,91 @@ family or harder change orders, and the equivalence of the two serving
 routes (both evaluations used the same routes). New: the adapter is not at a
 true 100%, it can lose a task to its own verbosity, and its one L4 miss is
 on a two-change order.
+
+### Corrections after the external audit (3 October 2026, before merge)
+
+An external audit reviewed this Result section before it was merged
+(`audit/state-and-roadmap-audit.md`). It reproduced every number of the
+verdict with its own code and found no error in R1 to R4. It did find wrong
+or overstated sentences. The text above is left as written; **where the two
+differ, the corrections below are the valid statement.** Each one was checked
+again by the project before being accepted.
+
+1. **File hashes (wrong label).** The three digests under "Execution" are
+   the digests of the files as written on Windows (CRLF), not LF. Correct
+   values (also in `linux-replay.json`):
+
+   | File | SHA-256, LF (as stored in the repository) | SHA-256, CRLF (as written by the run) |
+   |---|---|---|
+   | `base-rep-run2.jsonl` | `d240c458...6d2f1180` | `210f900f...78c8e5fe` |
+   | `adapter-rep.jsonl` | `c132e4d8...481e7a9c` | `790aab62...75f3814c` |
+   | `base-rep.jsonl` | `0866ddde...28ef8864` | `8e14eb8b...63d6db1d` |
+
+2. **The geometry check is not "stricter than the scorer".** It is a second
+   implementation that tests some things the scorer does not and misses
+   others the scorer catches (a membrane in a bore, a second solid, a
+   diameter 0.4 mm too large); its 0.25 mm rings are not an exact bound on
+   hole-centre error. The check was rebuilt around a stronger test, the one
+   the audit used: each answer is compared with the independently built
+   ideal part. Result, identical in the audit's implementation and in
+   `audit/replication1_geometry_check.py`: **of the 806 passing answers of
+   the two evaluations, 800 are the nominal part within 0.001 mm3**; the
+   six others are the offset passes already listed; no failing answer is
+   nominal. Adapter: 239 of 239 nominal on the original split, 236 of 237
+   here. Counting only nominal passes gives +40.8 [+33.3, +48.3] here and
+   +41.7 [+34.2, +49.2] on the original split, as stated above.
+3. **"The two estimates agree" means the registered rule only.** R3 is a
+   non-rejection rule with an interval about 22 points wide, not an
+   equivalence test. Sensitivity (not registered): the 90% interval of the
+   difference is [-10.0, +8.3], so equivalence is not shown within 5 points,
+   is borderline within 10, and holds within 12.
+4. **Deployment fee: none observed**, at the four-decimal precision of the
+   wallet, from deployment to ten minutes after the unload. That is an
+   observation over this window, not a guarantee.
+5. **Billing.** The sentence "about 3% higher, as in run 1" is replaced by
+   its explanation: the service bills each response rounded to the nearest
+   $0.0001, and that reproduces all 481 recorded charges ($0.0764, $0.0497
+   and $0.0003, plus $0.0002 for the probe, whose file is not archived).
+   The remaining $0.0005 of wallet movement on 2 October is unexplained and
+   is not attributed to anything.
+6. **Deviation 4 is a breach of the registered rule.** Section 7 says "No
+   peeking between the runs"; the runner's progress line showed base
+   outcomes before the adapter run. The runs should have used `--quiet`.
+   That nothing was decided in between is the operator's statement, which
+   the archive cannot prove.
+7. **"The hardest class"** is a description made after seeing one failure,
+   not a measured ranking. The neutral statement: the one L4 miss is an
+   order that changes the edge margin together with a plate dimension (10 of
+   11 such orders pass here, 4 of 4 on the original split).
+8. **Medians.** The base medians are 92.5 output tokens on L4 and 337.5 on
+   L2 (written as 92 and 337 above).
+9. **Code hygiene** means: a static scan of the programs that parse found
+   only `cadquery` imports and none of a list of dangerous names. The two
+   truncated adapter answers do not parse. This does not prove the absence
+   of every exploit; geometry can be gamed with plain CadQuery.
+
+Scope added by the audit (new information, verified by the project unless
+noted):
+
+- **L4 is a small closed grammar.** The audit wrote a short deterministic
+  parser for the change orders, froze it after train and dev, and it passes
+  60 of 60 L4 tasks on each evaluation split (audit result, not yet
+  reproduced in this repository). What the adapter learned is a reliable
+  dependency-update routine inside this grammar. Every change-field
+  combination of this split also occurs in training (14 of 14), so the
+  splits are disjoint in their instances, not in their structure.
+- **Scorer 0.4.0 can give full credit to a part with extra cuts.** A saved
+  development answer (`results/training/screening/qwen3.5-9b-t0.7-x8-2k.jsonl`,
+  L3 `gen-0021`, first sample) drills a 4 x 4 grid: the four correct holes
+  plus four notches through the long edges. It removes 1.6% of the material,
+  inside the 3% tolerance of R6, and scores 1.0. None of the 806 passing
+  evaluation answers has such a defect (correction 2), so the verdicts are
+  not affected, but "reward 1" does not guarantee the requested part.
+- **Execution mode.** The evaluation ran on Windows in `reuse` mode, where
+  the solid is measured in the process that ran the model's code. The Linux
+  replay runs in `fork` mode, with a separate trusted worker, and reproduces
+  every check of every answer.
+- **A nearly untrained adapter is not available as a route control.** The
+  5-step smoke adapter already scores 52.5% on L4 in training against 32.3%
+  at step 1, so it is not a stand-in for the base model.
+

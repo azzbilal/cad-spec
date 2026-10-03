@@ -243,8 +243,8 @@ def _is_local(args: argparse.Namespace) -> bool:
 
 def _priced(args: argparse.Namespace, cost: Any, tokens_in: Any, tokens_out: Any) -> tuple[Any, str | None]:
     """(cost, source). Given prices win: tokens x --price-in/--price-out, because
-    a provider's figure can be rounded (Prime Inference reports cost rounded up
-    to $0.0001, 14x the true cost of a short answer). Without prices, the
+    a provider's figure can be rounded (Prime Inference reports cost rounded to
+    the nearest $0.0001, a large relative error on a short answer). Without prices, the
     provider's own figure (OpenRouter's is exact). The raw reported figure
     always stays in the row's usage record."""
     price_in, price_out = getattr(args, "price_in", None), getattr(args, "price_out", None)

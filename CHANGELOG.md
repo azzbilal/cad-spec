@@ -5,7 +5,27 @@ Scores are only comparable within one scorer version
 
 ## Unreleased
 
-### Replication 1: result (3 October 2026)
+### Replication 1: corrections after an external audit (3 October 2026)
+- `audit/state-and-roadmap-audit.md` reproduced R1 to R4 with its own code
+  and found no numerical error. Corrections appended to the Result section
+  (original text kept): hash labels (the quoted digests were CRLF, not LF),
+  the geometry check is a second implementation and not a stricter scorer,
+  "the estimates agree" means the registered rule only, deployment fee
+  "none observed", billing explained by rounding to the nearest $0.0001 per
+  response, the visible progress line was a breach of the no-peeking rule.
+- The three answer files are stored with LF like every other result file
+  (they had been committed as written on Windows).
+- `audit/replication1_geometry_check.py` now compares each answer with the
+  ideal part: 800 of 806 passing answers are nominal within 0.001 mm3; the
+  six others are the offset passes; no failing answer is nominal.
+- **Known scorer limit recorded:** scorer 0.4.0 gives full credit to a saved
+  development answer with four extra edge cuts (1.6% of material missing,
+  under the 3% tolerance of R6). No passing evaluation answer is affected.
+- README: stale "no training run is published" row fixed, exact-geometry
+  and consistency statements scoped, execution modes named, L4 parser
+  result of the audit cited. ROADMAP: status and the order of work accepted
+  from the audit.
+
 - **R1 REPLICATED:** L2 + L4 60.0% to 99.2%, +39.2 points [+31.7, +46.7] on
   the 60-spec replication split. **R3 CONSISTENT** with the original +40.0
   (difference -0.8 [-11.7, +10.0]). R4: 119 of 120 specs pooled, lower bound
@@ -16,11 +36,10 @@ Scores are only comparable within one scorer version
 - Billed $0.1271 of the $1.00 ceiling. Deployment fee measured: none. One
   failed deployment attempt, retried, at no cost.
 - Checks after the result: verdict reproduces on Linux; replay 0 mismatches
-  over 481 answers (now in CI); independent geometry check
-  (`audit/replication1_geometry_check.py`) with 0 unexplained disagreements
-  over 960 answers; six passes inside the scorer's 0.5 mm position
-  tolerance but outside the stricter one, verdicts unchanged without them
-  (+40.8 and +41.7).
+  over 481 answers (now in CI); second-implementation geometry check
+  (`audit/replication1_geometry_check.py`) over 960 answers; six passes
+  with a hole centre off by 0.25 or 0.5 mm, verdicts unchanged without
+  them (+40.8 and +41.7).
 - Greedy decoding on the base route is not reproducible across days (one
   task answered twice, different text, both pass).
 

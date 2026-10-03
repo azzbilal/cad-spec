@@ -1,31 +1,37 @@
-"""Independent geometry check of the replication answers (post hoc, not registered).
+"""Second-implementation geometry check of the evaluation answers (post hoc, not registered).
 
     python audit/replication1_geometry_check.py --out results/training/replication1/independent-geometry.json
 
 It does not import the scorer (cad_spec.measure, cad_spec.rubric). Each saved
-answer is executed again and the solid is tested directly with CadQuery:
+answer of the replication and of the original evaluation is executed again
+and the solid is tested in two ways:
 
-- bounding box equal to length x width x thickness and centred on the origin
-  (0.5 mm);
-- volume equal to the plate minus four through bores (3%);
-- point membership: at each of the four expected hole centres, at mid
-  thickness, points just inside the nominal radius are empty and points just
-  outside are material (0.25 mm either side, 8 directions), and the centre of
-  the plate is material.
+1. **Comparison with the ideal part.** The nominal plate (box minus four
+   through bores at the spec's hole centres) is built independently and the
+   volume of the symmetric difference with the answer is measured. An answer
+   is NOMINAL when that volume is at most 0.001 mm3: it is the requested
+   part, with no extra or missing feature.
+2. **Sparse point test.** Bounding box and centring (0.5 mm), volume (3%),
+   and point membership at mid thickness around each expected hole centre:
+   points 0.25 mm inside the nominal radius must be empty and points 0.25 mm
+   outside must be material, in 8 directions.
 
-The expected hole centres come from the spec (edge margin from the two nearest
-edges). The verdict of this check is then compared with the recorded all-pass
-of every answer, in both directions.
+What this is not. It is a second implementation, not a stricter scorer: it
+shares CadQuery and the OpenCascade kernel with the scorer, it takes the
+target from the same spec, the point test alone misses things the scorer
+catches (a thin membrane in a bore, a second solid, a diameter 0.4 mm too
+large) and its 0.25 mm rings are not an exact bound on hole-centre error.
+The comparison with the ideal part is the strong test; it says whether a
+part is nominal, not whether a non-nominal part should pass. Code is
+executed with normal process privileges, so only run it on saved answers
+that the project sandbox has already executed.
 
-The check is deliberately STRICTER than the scorer on hole position (0.25 mm
-against the scorer's inclusive 0.5 mm). For every answer it also measures the
-largest distance between an expected hole centre and the nearest cylindrical
-face axis, so a disagreement can be read: an answer the scorer passes with a
-deviation between 0.25 and 0.5 mm is a "boundary pass", accepted by the
-registered tolerance and rejected here. The last section recomputes the
-registered L2 + L4 comparison with boundary passes counted as failures, for
-the replication split and for the original test split. That is a sensitivity
-analysis, not a verdict.
+An answer the scorer passes that is not nominal is listed with its
+symmetric-difference volume and its largest hole-centre deviation (distance
+from an expected centre to the nearest cylindrical face centre, which is a
+face centroid and only equals the axis for a complete bore). The last
+section recomputes the registered L2 + L4 comparison counting only nominal
+passes, for both splits. That is a sensitivity analysis, not a verdict.
 """
 
 from __future__ import annotations
@@ -49,6 +55,7 @@ PAIRS = {
                  "results/training/run1/eval/adapter-test.jsonl"),
 }
 BOX_TOL, VOL_TOL, RING = 0.5, 0.03, 0.25
+NOMINAL_MM3 = 0.001
 
 
 def code_of(completion: str) -> str:
@@ -69,7 +76,7 @@ def check(job: tuple[str, dict]) -> dict:
             solid = result.findSolid()
         bb = solid.BoundingBox()
     except BaseException as exc:
-        return {"ok": False, "why": f"no solid: {type(exc).__name__}"}
+        return {"ok": False, "why": f"no solid: {type(exc).__name__}", "nominal": False}
     length, width, thick, dia, margin = s["length"], s["width"], s["thickness"], s["hole_diameter"], s["edge_margin"]
     why = []
     if max(abs(bb.xlen - length), abs(bb.ylen - width), abs(bb.zlen - thick)) > BOX_TOL:
@@ -99,7 +106,16 @@ def check(job: tuple[str, dict]) -> dict:
         min((math.dist((sx * hx, sy * hy), a) for a in axes), default=float("inf"))
          for sx in (-1, 1) for sy in (-1, 1)
     )
-    return {"ok": not why, "why": ", ".join(why), "deviation": round(deviation, 4)}
+    ideal = (
+        cq.Workplane("XY").box(length, width, thick).faces(">Z").workplane()
+        .pushPoints([(sx * hx, sy * hy) for sx in (-1, 1) for sy in (-1, 1)]).hole(dia).val()
+    )
+    try:
+        sym = solid.cut(ideal).Volume() + ideal.cut(solid).Volume()
+    except BaseException:
+        sym = float("inf")
+    return {"ok": not why, "why": ", ".join(why), "deviation": round(deviation, 4),
+            "nominal": sym <= NOMINAL_MM3, "symmetric_difference_mm3": round(sym, 4)}
 
 
 def main() -> int:
@@ -111,11 +127,15 @@ def main() -> int:
     from replication_split import make_replication_split
 
     specs = {s.id: s for s in make_replication_split() + make_test_split()}
-    report = {"method": "bounding box, volume and point membership; scorer not imported",
-              "position_tolerance_mm": {"this_check": RING, "scorer_inclusive": 0.5}, "splits": {}}
+    report = {
+        "method": "comparison with the independently built ideal part, plus a sparse point test; scorer not imported",
+        "nominal_tolerance_mm3": NOMINAL_MM3,
+        "point_test_mm": {"ring_offset": RING, "scorer_position_tolerance_inclusive": 0.5},
+        "splits": {},
+    }
     with mp.get_context("fork").Pool(4, maxtasksperchild=40) as pool:
         for split, names in PAIRS.items():
-            strict: dict[str, dict] = {}
+            nominal_only: dict[str, dict] = {}
             files = []
             for role, name in zip(("base", "adapter"), names, strict=True):
                 rows = [r for r in map(json.loads, (ROOT / name).open(encoding="utf-8")) if "tier" in r]
@@ -123,28 +143,36 @@ def main() -> int:
                                            ("length", "width", "thickness", "hole_diameter", "edge_margin")})
                         for r in rows]
                 verdicts = pool.map(check, jobs, chunksize=4)
-                table = {"both_pass": 0, "both_fail": 0, "boundary_pass": [], "scorer_pass_check_fail_other": [],
-                         "scorer_fail_check_pass": []}
-                strict[role] = {}
+                table = {"scorer_pass": 0, "scorer_pass_nominal": 0, "scorer_pass_not_nominal": [],
+                         "scorer_fail": 0, "scorer_fail_but_nominal": [],
+                         "point_test_agrees": 0, "point_test_disagrees": []}
+                nominal_only[role] = {}
                 for r, v in zip(rows, verdicts, strict=True):
                     scorer = r["reward"] == 1.0
                     key = f"{r['tier']} {r['spec_id']}"
-                    strict[role][(r["tier"], r["spec_id"])] = int(scorer and v["ok"])
-                    if scorer and v["ok"]:
-                        table["both_pass"] += 1
-                    elif not scorer and not v["ok"]:
-                        table["both_fail"] += 1
-                    elif scorer and v["why"] == "holes" and RING <= v["deviation"] <= 0.5 + 1e-6:
-                        table["boundary_pass"].append({"task": key, "hole_centre_deviation_mm": v["deviation"]})
-                    elif scorer:
-                        table["scorer_pass_check_fail_other"].append({"task": key, **v})
+                    nominal_only[role][(r["tier"], r["spec_id"])] = int(scorer and v["nominal"])
+                    if scorer:
+                        table["scorer_pass"] += 1
+                        if v["nominal"]:
+                            table["scorer_pass_nominal"] += 1
+                        else:
+                            table["scorer_pass_not_nominal"].append({
+                                "task": key, "symmetric_difference_mm3": v.get("symmetric_difference_mm3"),
+                                "hole_centre_deviation_mm": v.get("deviation")})
                     else:
-                        table["scorer_fail_check_pass"].append({"task": key})
+                        table["scorer_fail"] += 1
+                        if v["nominal"]:
+                            table["scorer_fail_but_nominal"].append({"task": key})
+                    if scorer == v["ok"]:
+                        table["point_test_agrees"] += 1
+                    else:
+                        table["point_test_disagrees"].append({"task": key, "scorer": scorer, "why": v["why"]})
                 files.append({"file": name, "answers": len(rows), **table})
                 print(split, role, {k: (v if isinstance(v, int) else len(v)) for k, v in table.items()})
-            sens = ct.paired(strict["base"], strict["adapter"], ct.PRIMARY)
-            report["splits"][split] = {"files": files, "l2_l4_with_boundary_passes_as_failures": sens}
-            print(split, "L2+L4 strict:", round(100 * sens["difference"], 1), [round(100 * x, 1) for x in sens["ci95"]])
+            sens = ct.paired(nominal_only["base"], nominal_only["adapter"], ct.PRIMARY)
+            report["splits"][split] = {"files": files, "l2_l4_counting_only_nominal_passes": sens}
+            print(split, "L2+L4 nominal only:", round(100 * sens["difference"], 1),
+                  [round(100 * x, 1) for x in sens["ci95"]])
     args.out.parent.mkdir(parents=True, exist_ok=True)
     with args.out.open("w", encoding="utf-8", newline="\n") as fh:
         fh.write(json.dumps(report, indent=2) + "\n")
