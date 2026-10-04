@@ -17,9 +17,9 @@ piece for RL-environment and evaluation work.
 - `main` at `35a87c4`. Package cad-spec 0.4.5, scorer 0.4.0.
 - Training run 1 (Qwen3.5-9B LoRA) and its replication are done, registered
   and audited: +40.0 and +39.2 points on L2 + L4.
-- Next work, in order, is in `ROADMAP.md`, section "After the external audit
-  of 3 October 2026". Item 2 (L4 parser baseline) and item 1 (scorer 0.5)
-  come first. Both are free.
+- Next work is in `ROADMAP.md`, section "After the external audit of
+  3 October 2026". The release plan is: L4 parser baseline, then scorer 0.5,
+  then the 0.5.0 release. All three are free.
 
 ## Rules that are never broken
 
@@ -92,13 +92,19 @@ gets a `CHANGELOG.md` entry under "Unreleased".
 
 ## Working with Bilal
 
-- He uses the VibeWise plugin to learn while building. Ask for his approach
-  before proposing a design, and do not write code before he confirms an
-  implementation step.
-- He is an expert in CAD geometry, tolerances and engineering drawings, and
-  is learning Python tooling, testing and ML evaluation. Lean on the first,
-  explain the second in plain words.
-- When a task is finished, give the pull-request title and description each
-  in its own code block, then the commands he must run to push.
+- **Fast mode.** Work autonomously inside the rules above. Start each task
+  with a plan of at most ten lines, then build without waiting, unless the
+  prompt says to stop for a decision. Do not ask questions you can answer by
+  reading the repository.
+- Stop and ask only when: a rule above would be broken, money would be
+  spent, a registered file would have to change, or the task's "Done when"
+  list cannot be met.
+- He is an expert in CAD geometry, tolerances and engineering drawings.
+  Decisions about what a correct part is belong to him.
+- Small commits with clear messages. When the task is finished, report in
+  this order: what changed (five lines at most), the checks you ran and
+  their results, anything that is not done, then the pull-request title and
+  description each in its own code block, then the commands he must run to
+  push.
 - If a request conflicts with a rule above, stop and say so. Do not look for
   a way around the rule.
