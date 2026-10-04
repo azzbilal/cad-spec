@@ -68,6 +68,9 @@ jobs:
       - name: Screening analysis self-test (learning signal, truncation split)
         working-directory: .
         run: python scripts/test_screening.py
+      - name: L4 edit parser self-test (parser-edit provider, refusals, fallback)
+        working-directory: .
+        run: python scripts/test_parser_edit.py
       - name: Scoring gate with the system GL libraries (reference, L4 failure, full rollout, 64 at once)
         working-directory: .
         run: python scripts/gl_fallback_check.py --expect system --system-gl-note present --out /tmp/gl/system-gl
