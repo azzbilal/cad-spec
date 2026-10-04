@@ -23,6 +23,18 @@ Design notes:
     against nominal holes scored 1.0; before 0.4.0 Z was unchecked.
   * Rotations are not normalised: the prompt fixes the axes, so a part
     turned 90 degrees is a different part and loses the checks it breaks.
+  * Scorer 0.5.0 states a strict contract: the part is one rectangular plate
+    with exactly four through holes and NOTHING ELSE. 0.4.0 gave full credit
+    to a saved answer with four extra notches through its edges (external
+    audit, 3 October 2026), because R6 tolerates 3% of missing material. R9
+    compares the part with its own ideal plate-with-bores and fails on any
+    extra or missing material. Tolerances drop from 0.5 mm to 0.1 mm: specs
+    sit on a 0.5 mm grid and hole centres on a 0.25 mm grid, so 0.5 mm
+    accepted an error of a whole grid step. The hole pattern is matched one
+    to one.
+  * Versions live side by side. `score(..., version="0.4.0")` reproduces every
+    result recorded under 0.4.0 exactly; recorded verdicts are never rescored
+    under a newer scorer.
 """
 
 from __future__ import annotations
@@ -30,26 +42,49 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 
-from .measure import BuildError, Hole, Measurements, build_and_measure
+from .measure import SHAPE_BAND_MM, BuildError, Hole, Measurements, build_and_measure
 from .tasks import Spec
 
-LINEAR_TOL = 0.5      # mm, on overall dimensions
-HOLE_TOL = 0.2        # mm, on hole diameter
-POSITION_TOL = 0.5    # mm, on hole centres
+
+@dataclass(frozen=True)
+class Tolerances:
+    linear: float     # mm, on overall dimensions (R1 to R3)
+    hole: float       # mm, on hole diameter (R4b)
+    position: float   # mm, on hole centres (R5)
+    margin: float     # mm, hole centre to nearest edge (R7)
+    datum: float      # mm, plate mid-plane to Z = 0 (R8)
+
+
+# One entry per scorer version that can still be asked for. An entry is never
+# edited: a change that can move a score is a new version.
+TOLERANCES: dict[str, Tolerances] = {
+    "0.4.0": Tolerances(linear=0.5, hole=0.2, position=0.5, margin=0.5, datum=0.5),
+    "0.5.0": Tolerances(linear=0.1, hole=0.1, position=0.1, margin=0.1, datum=0.1),
+}
+
+# Bump on ANY change that can move a score. Recorded in every results file so
+# numbers from different scorer revisions are never silently compared.
+SCORER_VERSION = "0.5.0"
+SUPPORTED_VERSIONS = tuple(TOLERANCES)
+
+# The current version's tolerances, under their historical names.
+LINEAR_TOL = TOLERANCES[SCORER_VERSION].linear
+HOLE_TOL = TOLERANCES[SCORER_VERSION].hole
+POSITION_TOL = TOLERANCES[SCORER_VERSION].position
+MARGIN_TOL = TOLERANCES[SCORER_VERSION].margin
+DATUM_TOL = TOLERANCES[SCORER_VERSION].datum
 GATE_VOLUME_BAND = 0.12  # identity band: measured vs bbox-predicted volume
 MATERIAL_TOL = 0.03   # fraction, R6: material vs envelope-minus-nominal-bores
 DEPTH_TOL = 0.01      # mm, hole depth vs stock thickness
-MARGIN_TOL = 0.5      # mm, hole centre to nearest edge (R7); same class as POSITION_TOL
-DATUM_TOL = 0.5       # mm, plate mid-plane to Z = 0 (R8); same class as POSITION_TOL
+# R9 (0.5.0): largest volume of extra or of missing material, measured outside
+# a band of SHAPE_BAND_MM around the ideal part. A true plate-with-bores gives
+# exactly 0; the smallest defect in the validation suite gives about 0.1 mm3.
+SHAPE_VOLUME_TOL = 1e-3  # mm3
 # Numerical slack on every tolerance comparison. Tolerances are INCLUSIVE:
 # 6.7 is inside 6.5 +/- 0.2, but abs(6.7 - 6.5) is 0.20000000000000018 in
 # binary floating point, and 0.3.x failed it. 1e-6 mm is far below any
 # engineering meaning and far above float noise at these magnitudes.
 NUM_EPS = 1e-6
-
-# Bump on ANY change that can move a score. Recorded in every results file so
-# numbers from different scorer revisions are never silently compared.
-SCORER_VERSION = "0.4.0"
 
 
 @dataclass
@@ -155,13 +190,29 @@ def _gates(m: Measurements, spec: Spec) -> list[Check]:
     ]
 
 
-def _requirements(m: Measurements, spec: Spec) -> list[Check]:
+def _one_to_one(expected: list[tuple[float, float]], holes: list[Hole], tol: float) -> int:
+    """Largest number of expected positions matched to DISTINCT holes within tol."""
+    near = [[i for i, h in enumerate(holes) if math.dist((h.x, h.y), e) <= tol + NUM_EPS] for e in expected]
+
+    def best(k: int, used: frozenset[int]) -> int:
+        if k == len(near):
+            return 0
+        skip = best(k + 1, used)
+        take = max((1 + best(k + 1, used | {i}) for i in near[k] if i not in used), default=0)
+        return max(skip, take)
+
+    return best(0, frozenset())
+
+
+def _requirements(m: Measurements, spec: Spec, version: str) -> list[Check]:
+    tol = TOLERANCES[version]
+    strict = version != "0.4.0"
     checks = [
-        Check("R1:length", _close(m.length, spec.length, LINEAR_TOL),
+        Check("R1:length", _close(m.length, spec.length, tol.linear),
               f"{m.length} vs {spec.length} mm"),
-        Check("R2:width", _close(m.width, spec.width, LINEAR_TOL),
+        Check("R2:width", _close(m.width, spec.width, tol.linear),
               f"{m.width} vs {spec.width} mm"),
-        Check("R3:thickness", _close(m.thickness, spec.thickness, LINEAR_TOL),
+        Check("R3:thickness", _close(m.thickness, spec.thickness, tol.linear),
               f"{m.thickness} vs {spec.thickness} mm"),
         Check("R4a:hole_count", m.hole_count == spec.hole_count,
               f"{m.hole_count} vs {spec.hole_count}"),
@@ -170,7 +221,7 @@ def _requirements(m: Measurements, spec: Spec) -> list[Check]:
     diameters = [h.diameter for h in m.holes]
     checks.append(Check(
         "R4b:hole_diameter",
-        bool(diameters) and all(_close(d, spec.hole_diameter, HOLE_TOL) for d in diameters),
+        bool(diameters) and all(_close(d, spec.hole_diameter, tol.hole) for d in diameters),
         f"{sorted(set(round(d, 2) for d in diameters))} vs {spec.hole_diameter} mm",
     ))
 
@@ -178,10 +229,13 @@ def _requirements(m: Measurements, spec: Spec) -> list[Check]:
         (round(sx * spec.pitch_x / 2, 2), round(sy * spec.pitch_y / 2, 2))
         for sx in (-1, 1) for sy in (-1, 1)
     }
-    matched = 0
-    for hx, hy in expected:
-        if any(math.dist((h.x, h.y), (hx, hy)) <= POSITION_TOL + NUM_EPS for h in m.holes):
-            matched += 1
+    if strict:  # each measured hole may satisfy one expected position only
+        matched = _one_to_one(sorted(expected), m.holes, tol.position)
+    else:
+        matched = 0
+        for hx, hy in expected:
+            if any(math.dist((h.x, h.y), (hx, hy)) <= tol.position + NUM_EPS for h in m.holes):
+                matched += 1
     checks.append(Check(
         "R5:hole_pattern",
         matched == len(expected),
@@ -209,7 +263,7 @@ def _requirements(m: Measurements, spec: Spec) -> list[Check]:
         worst = max(worst, abs(dx - spec.edge_margin), abs(dy - spec.edge_margin))
     checks.append(Check(
         "R7:edge_margin",
-        bool(m.holes) and worst <= MARGIN_TOL + NUM_EPS,
+        bool(m.holes) and worst <= tol.margin + NUM_EPS,
         f"worst deviation {worst:.2f} mm from {spec.edge_margin} mm margin"
         if m.holes else "no bores to measure",
     ))
@@ -220,21 +274,42 @@ def _requirements(m: Measurements, spec: Spec) -> list[Check]:
     z_mid = (m.z_min + m.z_max) / 2
     checks.append(Check(
         "R8:z_datum",
-        abs(z_mid) <= DATUM_TOL + NUM_EPS,
+        abs(z_mid) <= tol.datum + NUM_EPS,
         f"mid-plane at Z = {z_mid:.3f} mm (nominal 0)",
     ))
+
+    if strict:
+        # R9: the strict contract. Anything that is not the plate or one of its
+        # bores is extra or missing material against the part's own ideal
+        # shape: a notch, slot, pocket, cross-bore, chamfer, fillet, a lug in a
+        # bore. Dimension errors do not show here (the ideal is built from the
+        # measured envelope and bores), so R9 fails for one reason only.
+        extra, missing = m.extra_volume, m.missing_volume
+        if extra is None or missing is None:  # could not compare: a failed check, never a pass
+            checks.append(Check("R9:no_other_features", False,
+                                "the part could not be compared with its ideal shape"))
+        else:
+            checks.append(Check(
+                "R9:no_other_features",
+                extra <= SHAPE_VOLUME_TOL and missing <= SHAPE_VOLUME_TOL,
+                f"{extra:.3f} mm3 extra, {missing:.3f} mm3 missing outside a "
+                f"{SHAPE_BAND_MM} mm band around the ideal plate with bores",
+            ))
 
     return checks
 
 
-def score(completion: str, spec: Spec) -> Report:
+def score(completion: str, spec: Spec, version: str = SCORER_VERSION) -> Report:
+    """Score one answer. `version` selects a recorded scorer; the default is the current one."""
+    if version not in TOLERANCES:
+        raise ValueError(f"unknown scorer version {version!r}; supported: {', '.join(SUPPORTED_VERSIONS)}")
     try:
         m = build_and_measure(completion)
     except BuildError as exc:
         return Report(reward=0.0, checks=[], error=str(exc), parsed=False)
 
     gates = _gates(m, spec)
-    reqs = _requirements(m, spec)
+    reqs = _requirements(m, spec, version)
     checks = gates + reqs
 
     if not all(g.passed for g in gates):

@@ -21,14 +21,14 @@ What it records (JSON and Markdown under --out):
    process (what `load_environment` now pays at startup).
 3. Scoring through verifiers (`env.init_state`, `env.rubric.score_rollout`):
    the reference answer (binary 1.0), the known L4 failure (new plate, old
-   pitch: binary 0.0, continuous 7/9), and a complete `env.rollout` with a
+   pitch: binary 0.0, continuous 8/10), and a complete `env.rollout` with a
    stand-in model.
 4. Concurrency: saved screening answers scored at once, 1, 8, 32 and 64 at a
    time, with wall time, per-call latency, and the binary reward compared with
    the reward recorded in the screening file.
 
 Gate (exit 0 only if all hold): GL source as --expect; reference 1.0; L4
-failure 0.0 binary and 7/9 continuous; full rollout 1.0 without error; every
+failure 0.0 binary and 8/10 continuous; full rollout 1.0 without error; every
 concurrency level matches the screening rewards exactly; 64 at once within
 120 s.
 """
@@ -152,7 +152,10 @@ def concurrency(levels=LEVELS) -> list[dict[str, Any]]:
     rows = [json.loads(x) for x in SCREENING.read_text(encoding="utf-8").splitlines() if '"tier"' in x]
     rows = [r for r in rows if r.get("finish_reason") != "length"]
     random.Random(7).shuffle(rows)
-    envs = {t: load_environment(tier=[t], hints=True, reward="binary") for t in ("L1", "L2", "L3", "L4")}
+    # The saved screening answers were recorded under scorer 0.4.0; this check
+    # compares against those recorded rewards, so it scores with that version.
+    envs = {t: load_environment(tier=[t], hints=True, reward="binary", scorer_version="0.4.0")
+            for t in ("L1", "L2", "L3", "L4")}
 
     async def one(r):
         row = {"prompt": [{"role": "user", "content": "x"}], "answer": r["spec_id"],
@@ -182,8 +185,8 @@ def gate(report: dict[str, Any], expect: str) -> list[str]:
         fails.append(f"GL source {s.get('gl_source')!r}, expected {expect!r} ({s.get('error')})")
     if sc["reference_binary"] != 1.0:
         fails.append("reference answer did not score 1.0")
-    if sc["l4_failure_binary"] != 0.0 or abs(sc["l4_failure_continuous"] - 7 / 9) > 1e-3:
-        fails.append("known L4 failure did not score 0 binary / 7/9 continuous")
+    if sc["l4_failure_binary"] != 0.0 or abs(sc["l4_failure_continuous"] - 8 / 10) > 1e-3:
+        fails.append("known L4 failure did not score 0 binary / 8/10 continuous")
     if sc["full_rollout_reward"] != 1.0 or sc["full_rollout_error"]:
         fails.append("full rollout did not score 1.0 without error")
     for level in c:

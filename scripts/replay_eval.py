@@ -25,17 +25,25 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "environments" / "c
 
 import cad_spec
 from cad_spec.measure import _sandbox_mode
-from cad_spec.rubric import SCORER_VERSION, score
+from cad_spec.rubric import SCORER_VERSION, SUPPORTED_VERSIONS, score
 from cad_spec.tasks import make_test_split
 from replication_split import make_replication_split
 
 
 def replay(path: Path, specs: dict) -> dict:
     raw = path.read_bytes()
-    rows = [json.loads(x) for x in raw.decode("utf-8").splitlines() if '"tier"' in x]
+    records = [json.loads(x) for x in raw.decode("utf-8").splitlines() if x.strip()]
+    rows = [r for r in records if "tier" in r]
+    # Each file is replayed under the scorer version it was recorded with: a
+    # replay asks "does that scorer still give that answer", never "what would
+    # a newer scorer say".
+    version = next((r["meta"].get("scorer_version") for r in records if "meta" in r), None)
+    if version not in SUPPORTED_VERSIONS:
+        raise SystemExit(f"{path}: recorded scorer {version!r} cannot be replayed (supported: "
+                         f"{', '.join(SUPPORTED_VERSIONS)})")
     mismatches, passes = [], 0
     for r in rows:
-        rep = score(r["completion"], specs[r["spec_id"]])
+        rep = score(r["completion"], specs[r["spec_id"]], version)
         checks = {c.name: c.passed for c in rep.checks}
         passes += rep.reward == 1.0
         if rep.reward != r["reward"] or checks != r["checks"]:
@@ -44,7 +52,8 @@ def replay(path: Path, specs: dict) -> dict:
                                "checks": {k: [r["checks"].get(k), v] for k, v in checks.items()
                                           if r["checks"].get(k) != v}})
     lf = raw.replace(b"\r\n", b"\n")
-    return {"file": path.as_posix(), "rows": len(rows), "all_pass": passes, "mismatches": mismatches,
+    return {"file": path.as_posix(), "scorer": version, "rows": len(rows), "all_pass": passes,
+            "mismatches": mismatches,
             "sha256_lf": hashlib.sha256(lf).hexdigest(),
             "sha256_crlf": hashlib.sha256(lf.replace(b"\n", b"\r\n")).hexdigest()}
 
@@ -58,7 +67,7 @@ def main(argv: list[str] | None = None) -> int:
     specs = {s.id: s for s in make_test_split() + make_replication_split()}
     t0 = time.time()
     result = {"platform": platform.platform(), "python": platform.python_version(),
-              "sandbox_mode": _sandbox_mode(), "cad_spec": cad_spec.__version__, "scorer": SCORER_VERSION,
+              "sandbox_mode": _sandbox_mode(), "cad_spec": cad_spec.__version__, "current_scorer": SCORER_VERSION,
               "files": [replay(f, specs) for f in args.files]}
     result["seconds"] = round(time.time() - t0, 1)
     total = sum(len(f["mismatches"]) for f in result["files"])

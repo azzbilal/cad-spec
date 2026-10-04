@@ -17,7 +17,7 @@ from datasets import Dataset
 
 from .measure import require_cadquery
 from .prompts import SYSTEM_PROMPT, system_prompt
-from .rubric import Report, score
+from .rubric import SCORER_VERSION, SUPPORTED_VERSIONS, Report, score
 from .tasks import TIERS, Spec, make_splits, prompt_for
 
 TRAIN_SPECS, EVAL_SPECS = make_splits()
@@ -101,6 +101,9 @@ def _build_eval_dataset(tiers: Sequence[str] = ("L0",)) -> Dataset:
 
 
 _STATE_KEY = "_cad_spec_report"
+# Scorer version used by every reward function of this process. Set by
+# load_environment(scorer_version=...); the default is the current scorer.
+_scorer_version = SCORER_VERSION
 
 
 def _report(text: str, spec_id: str, state: Any = None) -> Report:
@@ -117,7 +120,7 @@ def _report(text: str, spec_id: str, state: Any = None) -> Report:
         cached = state.get(_STATE_KEY)
         if cached is not None and cached[0] == key:
             return cached[1]
-    report = score(text, SPECS[spec_id])
+    report = score(text, SPECS[spec_id], _scorer_version)
     if isinstance(state, dict):
         state[_STATE_KEY] = (key, report)
     return report
@@ -126,10 +129,11 @@ def _report(text: str, spec_id: str, state: Any = None) -> Report:
 def spec_reward(completion, answer="", info=None, **kwargs) -> float:
     """Single reward on a clean [0, 1] scale.
 
-    reward = max(fraction of the 9 requirements met, PARSE_FLOOR if a solid was built)
+    reward = max(fraction of the requirements met, PARSE_FLOOR if a solid was built)
 
-    1.0    all nine requirements met (R1-R3, R4a, R4b, R5, R6, R7, R8)
-    k/9    partial compliance (gates permitting)
+    1.0    every requirement met (ten under scorer 0.5.0: R1-R3, R4a, R4b, R5
+           to R9; nine under 0.4.0, which has no R9)
+    k/n    partial compliance (gates permitting)
     0.05   code that builds a solid but satisfies nothing or fails a gate
            (the floor also reaches gated-out cheats - they DID build)
     0.0    code that does not execute, times out, builds no solid (e.g. only
@@ -144,7 +148,7 @@ def spec_reward(completion, answer="", info=None, **kwargs) -> float:
 
 
 def all_pass_reward(completion, answer="", info=None, **kwargs) -> float:
-    """Binary reward: 1.0 when all nine requirements are met (gates passed),
+    """Binary reward: 1.0 when every requirement is met (gates passed),
     else 0.0. Same build and same checks as spec_reward, no partial credit.
 
     For training (0.4.2): with plain group-mean advantages, the typical L4
@@ -195,7 +199,7 @@ def gates_passed(completion, answer="", info=None, **kwargs) -> float:
 CHECK_NAMES = (
     "R1:length", "R2:width", "R3:thickness", "R4a:hole_count",
     "R4b:hole_diameter", "R5:hole_pattern", "R6:material", "R7:edge_margin",
-    "R8:z_datum",
+    "R8:z_datum", "R9:no_other_features",
 )
 
 
@@ -205,6 +209,7 @@ def load_environment(
     metrics: bool = True,
     hints: bool = False,
     reward: str = "continuous",
+    scorer_version: str | None = None,
     **kwargs,
 ) -> vf.Environment:
     """Build the environment.
@@ -221,13 +226,22 @@ def load_environment(
                hint arm of the registered experiment, byte for byte: API facts
                only, no spec numbers, so the reward still measures the design.
     reward     "continuous" (default, every published result): partial credit
-               k/9 with the build floor, spec_reward. "binary": all_pass_reward,
-               1.0 only when all nine requirements are met. The scorer is the
+               k/n with the build floor, spec_reward. "binary": all_pass_reward,
+               1.0 only when every requirement is met. The scorer is the
                same either way; with metrics on, the other one is logged at
                zero weight, so both stay visible.
+    scorer_version  which scorer judges the rollouts. Default: the current
+               one (0.5.0, strict contract). "0.4.0" reproduces the scorer
+               every result published before 0.5.0 was recorded under. The
+               setting is process-wide: all environments loaded in one
+               process share it, and the last call decides.
     """
+    global _scorer_version
     if reward not in REWARDS:
         raise ValueError(f"reward must be one of {REWARDS}, got {reward!r}")
+    if scorer_version is not None and scorer_version not in SUPPORTED_VERSIONS:
+        raise ValueError(f"scorer_version must be one of {SUPPORTED_VERSIONS}, got {scorer_version!r}")
+    _scorer_version = scorer_version or SCORER_VERSION
     # Fail fast (0.4.5): if the scorer cannot run, the environment must not
     # load. Hosted Training's verifiers catches reward-function exceptions and
     # substitutes 0.0, so a missing CadQuery otherwise scores every rollout 0

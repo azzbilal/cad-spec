@@ -109,6 +109,17 @@ INTERVAL_MERGE_TOL = 1e-4
 # (mm3) of material. A 0.00001 mm membrane on a 6.5 mm bore leaves ~8e-5 mm3.
 OPEN_PROBE_RADIUS_FRACTION = 0.5
 OPEN_VOLUME_TOL = 1e-6
+# Shape residual (0.5.0): the part is compared with the IDEAL part, which is
+# the measured envelope with the measured bores cut through it. To stay robust
+# to the rounding of those measurements and to kernel noise, two ideals are
+# built: one grown by this band (larger box, smaller bores) and one shrunk by
+# it. Material outside the grown ideal is "extra"; grown-in material of the
+# shrunk ideal that the part lacks is "missing". A part that IS a plate with
+# bores gives exactly zero for both; a chamfer, fillet, notch, slot, pocket,
+# cross-bore or lug deeper than the band gives a positive volume. 5 microns is
+# 20 times below the 0.1 mm tolerances and 10 times above the coarsest
+# rounding in this module (hole centres, COAXIAL_DP).
+SHAPE_BAND_MM = 0.005
 # Largest BREP a rollout may hand back (bytes). The plates here are 5-50 kB.
 MAX_BREP_BYTES = 8 << 20
 
@@ -270,6 +281,11 @@ class Measurements:
     # these earn nothing; counting them lets failure analysis tell "no holes"
     # from "holes drilled along the wrong axis" (label check, seed 20260928).
     off_axis_bores: int = 0
+    # Shape residual (0.5.0), see SHAPE_BAND_MM. Added fields: scorer 0.4.0
+    # does not read them. None means the comparison could not be made, which
+    # scorer 0.5.0 treats as a failed check, never as a pass.
+    extra_volume: float | None = None     # mm^3 of material outside the ideal part
+    missing_volume: float | None = None   # mm^3 of the ideal part that is absent
 
     @property
     def hole_count(self) -> int:
@@ -626,6 +642,55 @@ def _bore_is_open(solid: Any, hole: Hole, z_min: float, z_max: float) -> bool:
     return abs(props.Mass()) < OPEN_VOLUME_TOL
 
 
+def _shape_residual(solid: Any, bb: Any, holes: list[Hole]) -> tuple[float | None, float | None]:
+    """(extra, missing) volume of the part against its own ideal plate-with-bores.
+
+    The ideal is built from what was MEASURED (envelope, bore axes and
+    diameters), not from the spec, so a part with a wrong dimension but no
+    other feature has zero residual: dimension errors stay with R1 to R8 and
+    this measures only "is there anything here besides a plate and bores".
+    """
+    from OCP.BRepAlgoAPI import BRepAlgoAPI_Cut
+    from OCP.BRepGProp import BRepGProp
+    from OCP.BRepPrimAPI import BRepPrimAPI_MakeBox, BRepPrimAPI_MakeCylinder
+    from OCP.gp import gp_Ax2, gp_Dir, gp_Pnt
+    from OCP.GProp import GProp_GProps
+
+    def cut(a: Any, b: Any) -> Any:
+        op = BRepAlgoAPI_Cut(a, b)
+        op.Build()
+        if not op.IsDone():
+            raise RuntimeError("boolean cut failed")
+        return op.Shape()
+
+    def volume(shape: Any) -> float:
+        props = GProp_GProps()
+        BRepGProp.VolumeProperties_s(shape, props)
+        return abs(props.Mass())
+
+    def ideal(grow: float) -> Any:
+        if min(bb.xlen, bb.ylen, bb.zlen) + 2 * grow <= 0:
+            raise RuntimeError("envelope thinner than the band")
+        shape = BRepPrimAPI_MakeBox(
+            gp_Pnt(bb.xmin - grow, bb.ymin - grow, bb.zmin - grow),
+            gp_Pnt(bb.xmax + grow, bb.ymax + grow, bb.zmax + grow),
+        ).Shape()
+        for h in holes:
+            radius = h.diameter / 2 - grow
+            if radius <= 0:
+                continue
+            axis = gp_Ax2(gp_Pnt(h.x, h.y, bb.zmin - 1.0), gp_Dir(0, 0, 1))
+            shape = cut(shape, BRepPrimAPI_MakeCylinder(axis, radius, bb.zlen + 2.0).Shape())
+        return shape
+
+    try:
+        extra = volume(cut(solid.wrapped, ideal(SHAPE_BAND_MM)))
+        missing = volume(cut(ideal(-SHAPE_BAND_MM), solid.wrapped))
+    except Exception:  # "could not compare" is a result, reported as None
+        return None, None
+    return round(extra, 6), round(missing, 6)
+
+
 def measure(solid: Any) -> Measurements:
     """Extract features from a trusted shape (see load_brep)."""
     from OCP.BRepCheck import BRepCheck_Analyzer
@@ -653,6 +718,7 @@ def measure(solid: Any) -> Measurements:
     holes, partial = _classify_cylinders(solid)
     for h in holes:
         h.open = _bore_is_open(solid, h, bb.zmin, bb.zmax)
+    extra_volume, missing_volume = _shape_residual(solid, bb, holes)
     return Measurements(
         length=round(bb.xlen, 4),
         width=round(bb.ylen, 4),
@@ -671,6 +737,8 @@ def measure(solid: Any) -> Measurements:
         loose_count=loose,
         valid=bool(BRepCheck_Analyzer(topo).IsValid()),
         off_axis_bores=_off_axis_bore_count(solid),
+        extra_volume=extra_volume,
+        missing_volume=missing_volume,
     )
 
 

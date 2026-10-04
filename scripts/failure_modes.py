@@ -440,11 +440,15 @@ def main() -> int:
     labelled = []
     api_kinds: dict[str, Counter] = defaultdict(Counter)
     arm_of: dict[str, str] = {}
+    # The labels describe checks recorded in the files, so the report carries
+    # THEIR scorer version, not the version of the scorer installed today.
+    versions: set[str] = set()
     metas, groups, ends = load(args.paths)
     for (model, tier), run in sorted(select_runs(metas, groups, ends).items()):
         if tier not in args.tiers:
             continue
         arm_of[model] = run_arm(run["meta"])
+        versions.add(run["meta"].get("scorer_version") or SCORER_VERSION)
         max_tokens = run["meta"].get("max_tokens")
         for row in run["rows"]:
             if row.get("spec_id") not in specs:
@@ -468,9 +472,12 @@ def main() -> int:
 
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
-    stem = out / f"failure-modes-{SCORER_VERSION}"
+    if len(versions) > 1:
+        raise SystemExit(f"cad-spec: the files mix scorer versions {sorted(versions)}; analyse one version at a time")
+    version = versions.pop() if versions else SCORER_VERSION
+    stem = out / f"failure-modes-{version}"
     Path(f"{stem}.json").write_text(json.dumps({
-        "scorer_version": SCORER_VERSION, "tiers": args.tiers, "order": list(ORDER),
+        "scorer_version": version, "tiers": args.tiers, "order": list(ORDER),
         "totals": totals, "per_model": per_model,
         "per_model_tier": {m: dict(t) for m, t in per_model_tier.items()},
         "api_error_kinds": {k: dict(v) for k, v in api_kinds.items()}, "rows": labelled,
@@ -496,7 +503,7 @@ def main() -> int:
     models = [m for m in per_model if m in first_shot and m not in DETERMINISTIC]
     refs = [m for m in per_model if m in DETERMINISTIC]
     arms = [m for m in per_model if m not in first_shot]
-    md = [f"# Failure modes, cad-spec {SCORER_VERSION}", "",
+    md = [f"# Failure modes, cad-spec {version}", "",
           f"Tiers {', '.join(args.tiers)}. Each failed answer gets one label (first match, in column order). "
           "Cells are the share of ALL the model's answers; the last column is the all-pass rate.", "",
           "## Models", "", *header, *table_rows(models)]

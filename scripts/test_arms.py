@@ -183,7 +183,9 @@ def _arm_file(d: Path, name: str, arm: str, api_errors: int, specs: list[str] | 
                          "error": ("execution failed [raised in model code]: AttributeError: "
                                    "'Workplane' object has no attribute 'holes'") if fail else None,
                          "api_error": None, "finish_reason": "stop", "completion": "code"})
+    # The registered experiment was recorded under scorer 0.4.0; the failure report is named after it.
     meta = {"run_id": name, "model": "google/gemma-3-27b-it", "arm": arm, "split": "eval", "temperature": 0.0,
+            "scorer_version": "0.4.0",
             "max_tokens": 1024, "feedback_retries": 1 if arm == "feedback" else 0,
             "system_prompt": system_prompt or ca.registered_system_prompt(arm),
             "planned": {"tiers": ["L1", "L2", "L3", "L4"], "spec_ids": ids, "rollouts": 1, "total": 4 * len(ids)}}

@@ -144,9 +144,9 @@ def test_metrics_share_one_build_per_rollout(monkeypatch):
     calls = []
     real_score = envmod.score
 
-    def counting_score(text, spec):
+    def counting_score(text, spec, *args):
         calls.append(spec.id)
-        return real_score(text, spec)
+        return real_score(text, spec, *args)
 
     monkeypatch.setattr(envmod, "score", counting_score)
     spec = EVAL_SPECS[0]
@@ -156,7 +156,7 @@ def test_metrics_share_one_build_per_rollout(monkeypatch):
     weights = env.rubric._get_reward_weights()
     ours = [f for f, n in zip(env.rubric._get_reward_funcs(), names, strict=True)
             if n in ("spec_reward", "built", "gates_passed") or n.startswith("m_R")]
-    assert len(ours) == 2 + len(CHECK_NAMES) + 1 == 12
+    assert len(ours) == 2 + len(CHECK_NAMES) + 1 == 13
     assert weights[names.index("spec_reward")] == 1.0
     assert all(weights[names.index(n)] == 0.0 for n in names if n.startswith("m_R"))
 

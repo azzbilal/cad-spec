@@ -1,4 +1,9 @@
-"""Prove the reward function works, with no model in the loop.
+"""Prove the reward function works, with no model in the loop (scorer 0.4.0).
+
+These 37 cases pin scorer 0.4.0, the version every result published before
+0.5.0 was recorded under. It must keep giving exactly these scores: that is
+what lets old result files be replayed. The cases for the current scorer,
+with its strict contract, are in scripts/test_rubric_050.py.
 
 Every entry below is a hand-written answer with a known correct score AND a
 known set of failing checks. Pinning the failing checks, not just the total,
@@ -39,6 +44,7 @@ def _f(*names: str) -> frozenset[str]:
 
 
 SPEC = TASKS[0]  # 80 x 60 x 6, four 6.5 mm holes, 10 mm margin
+VERSION = "0.4.0"
 
 ALL_REQS = ("R1:length", "R2:width", "R3:thickness", "R4a:hole_count",
             "R4b:hole_diameter", "R5:hole_pattern", "R6:material", "R7:edge_margin",
@@ -336,7 +342,7 @@ def failed_checks(report) -> frozenset[str]:
 
 
 def check_case(name: str, case: Case) -> tuple[bool, str]:
-    report = score(case.code, SPEC)
+    report = score(case.code, SPEC, VERSION)
     expected = parse_expectation(case.expected)
     got = failed_checks(report)
     ok = abs(report.reward - expected) < 1e-3 and got == case.fails

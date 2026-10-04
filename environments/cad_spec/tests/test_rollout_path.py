@@ -44,7 +44,7 @@ def test_reference_answer_scores_one_through_verifiers(reward):
 
 
 def test_l4_failure_is_zero_binary_through_verifiers(monkeypatch):
-    """New plate, old pitch: 7/9 continuous (logged), 0 binary (trained on)."""
+    """New plate, old pitch: 8/10 continuous (logged), 0 binary (trained on)."""
     import cad_spec.environment as env_mod
 
     base = EVAL_SPECS[0]
@@ -58,7 +58,7 @@ def test_l4_failure_is_zero_binary_through_verifiers(monkeypatch):
     row["info"] = {"spec_id": target.id, "tier": "L4"}
     state = _rollout(env, row, code)
     assert state["reward"] == 0.0
-    assert state["metrics"]["spec_reward"] == pytest.approx(7 / 9, abs=1e-4)
+    assert state["metrics"]["spec_reward"] == pytest.approx(8 / 10, abs=1e-4)
 
 
 def test_full_rollout_with_a_stand_in_model():
