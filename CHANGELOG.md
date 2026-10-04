@@ -5,6 +5,21 @@ Scores are only comparable within one scorer version
 
 ## Unreleased
 
+### L4 change-order parser baseline (4 October 2026)
+- New deterministic provider `parser-edit` (`scripts/run_baseline.py`):
+  reads rev A's box, hole rectangle and diameter from the prompt's code,
+  recovers the edge margin on both axes, applies the listed changes in
+  order and recomputes both pitches. It reads the prompt only, never the
+  spec. A prompt it cannot read exactly gets a prose answer with no code;
+  non-L4 prompts get the parser-derive fallback.
+- Developed on train and dev, frozen at b339d45, then run once on each
+  split. L4 all-pass: train 200/200, dev 30/30, test 60/60, replication
+  60/60. Appended to `results/baselines-deterministic.md` (the existing
+  table is unchanged); run files in `results/runs/`.
+- `scripts/test_parser_edit.py` (synthetic one- and two-change orders,
+  refusals, fallback) runs in CI.
+- README L4 caveat states these numbers; ROADMAP item 2 marked done.
+
 ### Replication 1: corrections after an external audit (3 October 2026)
 - `audit/state-and-roadmap-audit.md` reproduced R1 to R4 with its own code
   and found no numerical error. Corrections appended to the Result section

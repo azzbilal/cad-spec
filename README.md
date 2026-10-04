@@ -18,7 +18,7 @@ What this is, and what it is not:
 | Scores a CadQuery part against 9 measurable requirements with partial credit | yes, one part family (4-hole mounting plate) |
 | Measures the real geometry, not what the model's objects claim | yes since 0.4.0: model code hands over BREP geometry; a separate trusted process measures it on POSIX (`fork` mode). On Windows the default `reuse` mode measures in the process that ran the code, for trusted answers only ([SECURITY.md](SECURITY.md)) |
 | Scorer validated against labelled mutants | yes: 1,230 mutants, 0 false full credit on 600 wrong parts, 0 false rejection on 600 correct parts ([results](results/scorer-validation-0.4.0.md)) |
-| Separates "copying numbers" from "reading a spec" | partly: five prompt tiers, reported separately; L0 to L2 are solved by simple parsers, and L3 by a parser that knows its wording templates ([baselines](results/baselines-deterministic.md)) |
+| Separates "copying numbers" from "reading a spec" | partly: five prompt tiers, reported separately; L0 to L2 are solved by simple parsers, L3 by a parser that knows its wording templates, and L4 by a change-order parser ([baselines](results/baselines-deterministic.md)) |
 | Runs untrusted model code safely | per-rollout sandbox on POSIX, container for untrusted scale ([SECURITY.md](SECURITY.md)) |
 | Ranks real models and shows *how* each one fails | yes: 16 models (15 hosted, 1 local), about $0.27 of API calls; failure labels checked by AI-assisted review of three fresh random samples: 28/30, 28/30, 27/30 ([leaderboard](#leaderboard)) |
 | Separates knowledge failures from reasoning failures | yes: a pre-registered experiment ([below](#knowledge-or-reasoning-a-pre-registered-experiment)); a 7-line CadQuery cheat-sheet lifts four models by 42 to 56 points, while reasoning failures do not move |
@@ -92,10 +92,16 @@ full passes, because most requirements did not change. Partial credit is a
 training signal; for L4 the headline metric is the all-requirements pass rate.
 Every change order moves at least one value clearly outside its tolerance, so
 an unedited model can never pass (checked on all 230 specs).
-L4 is still a small closed grammar: an external audit wrote a short
-deterministic parser for the change orders that passes all 60 L4 tasks of
-both evaluation splits (`audit/state-and-roadmap-audit.md`). A built-in
-version of that baseline is on the [roadmap](ROADMAP.md).
+L4 is still a small closed grammar. The `parser-edit` baseline reads rev A's
+box, hole rectangle and diameter from the code in the prompt, recovers the
+edge margin, applies the listed changes in order and recomputes both pitches,
+with no model and without seeing the spec. It passes every L4 task: train
+200/200, dev 30/30, test 60/60, replication 60/60, frozen on train and dev
+before the two used splits were run
+([results](results/baselines-deterministic.md)). An external audit found the
+same with its own parser (`audit/state-and-roadmap-audit.md`). A pass on L4
+therefore shows that a model can carry out this edit grammar, not that it
+can handle change orders in general.
 
 ## Scoring
 
@@ -338,7 +344,7 @@ model without training, both with the cheat-sheet:
 | [`results/scorer-validation-0.4.0.md`](results/scorer-validation-0.4.0.md) | 1,230 one-change mutants over the 30 held-out specs (600 wrong parts, 600 correct, 30 documented-limitation cases excluded); ground truth from geometry parameters; 0 false full credit, 0 false rejection, 100% per-check agreement |
 | [`results/scorer-validation-0.3.0-under-suite-0.4.0.md`](results/scorer-validation-0.3.0-under-suite-0.4.0.md) | the 0.4.0 suite on the previous scorer: 15.0% false full credit (Z shift, membranes, cavities), 4.7% false rejection (exact-limit diameters). Shows the suite detects the defects the second audit found |
 | [`results/scorer-validation-0.2.0.md`](results/scorer-validation-0.2.0.md) | the original suite on 0.2.0: 5.9% false full credit, 12.5% false rejection |
-| [`results/baselines-deterministic.md`](results/baselines-deterministic.md) | reference, regex copier, copier + derivation, template-aware parser, and "ignore the change order" baselines per tier |
+| [`results/baselines-deterministic.md`](results/baselines-deterministic.md) | reference, regex copier, copier + derivation, template-aware parser, and "ignore the change order" baselines per tier; the L4 change-order parser on all four splits |
 | [`docs/audit-2026-09.md`](docs/audit-2026-09.md), [`docs/audit-2026-09-reference.md`](docs/audit-2026-09-reference.md) | the two external audits this release responds to |
 | `results/runs/*.jsonl` | every rollout behind those tables, with scorer version, git revision and sandbox mode |
 | [`results/leaderboard/`](results/leaderboard/leaderboard.md) | the 16-model board: table, ranking chart, tier heatmap, failure fingerprints |
