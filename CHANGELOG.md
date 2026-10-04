@@ -5,6 +5,38 @@ Scores are only comparable within one scorer version
 
 ## Unreleased
 
+### Scorer 0.5.0: a strict part contract (package 0.5.0)
+- **Contract:** a correct part is one rectangular plate with exactly four
+  through holes and nothing else. Tolerances are 0.1 mm on every dimension,
+  position, margin, datum and diameter (0.5 mm and 0.2 mm before): specs sit
+  on a 0.5 mm grid and hole centres on a 0.25 mm grid, so 0.5 mm accepted an
+  error of one grid step.
+- **New check R9, no other features.** The part is compared with its own
+  ideal plate-with-bores, built from the measured envelope and bores; any
+  extra or missing material outside a 0.005 mm band fails it. Notches, slots,
+  pockets, cross-bores, chamfers, fillets and a lug in a bore are rejected.
+  The hole pattern is matched one hole per position. Ten requirements.
+- **Why:** the external audit of 3 October 2026 found a saved development
+  answer with four notches through its edges that 0.4.0 scored 1.0. It is
+  now a pinned case (`scripts/test_rubric_050.py`).
+- **Order of work:** the defect suite was committed first
+  (`scripts/validate_scorer.py`, suite 0.5.0, stating the contract itself),
+  and run against the unchanged scorer: 0.4.0 gives full credit to 1,320 of
+  the 1,646 parts that are wrong under the strict contract. Scorer 0.5.0
+  then: 0 false full credit, 0 false rejection on 720 correct parts.
+- **Nothing recorded changes.** Scorer 0.4.0 stays selectable
+  (`score(..., version="0.4.0")`, `load_environment(scorer_version="0.4.0")`)
+  and replay scores each file under the version it records: the 961 saved
+  evaluation answers replay with 0 mismatches and the verdict files are
+  byte-identical. Measurement changes are additive.
+- **Sensitivity, descriptive only:** both evaluations re-scored under 0.5.0
+  after the scorer was frozen. Six verdicts change (five base, one adapter,
+  hole centres off by 0.25 or 0.5 mm); L2 + L4 gain +41.7 and +40.8 points.
+- The leaderboard, the hint experiment and both training evaluations remain
+  scorer 0.4.0 results. The Prime Hub copy is still 0.4.5.
+- Corner fillets and a shallow pocket, which 0.4.0 accepted on purpose, now
+  fail R9: nobody asked for them.
+
 ### L4 change-order parser baseline (4 October 2026)
 - New deterministic provider `parser-edit` (`scripts/run_baseline.py`):
   reads rev A's box, hole rectangle and diameter from the prompt's code,

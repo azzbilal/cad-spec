@@ -28,7 +28,8 @@ requirements; measuring the gap between copying numbers (L0/L1), deriving one
 (L2), reading prose (L3) and editing an existing model (L4).
 
 ## Out of scope
-Other part families, tolerances tighter than the published ones, GD&T, fits,
+Other part families, tolerances tighter than the published ones (0.1 mm
+since scorer 0.5.0, 0.5 mm before), GD&T, fits,
 material selection, strength, manufacturability, assemblies. "R6 material" is
 a volume-consistency check.
 

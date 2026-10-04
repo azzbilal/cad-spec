@@ -20,7 +20,10 @@ the evidence that meets it.
 numbers and found the weak points below. Accepted order of work, free items
 first. Both evaluation splits are used and are never a selection set.
 
-1. **Scorer 0.5, a stated contract (free).** Decide what the part family
+1. **Scorer 0.5, a stated contract (free). Done** (4 October 2026, scorer
+   0.5.0: suite frozen first, 0 false full credit on 1,646 wrong parts, 0
+   false rejection on 720 correct parts; 0.4.0 kept selectable; recorded
+   verdicts untouched). The original item: Decide what the part family
    allows (no extra cuts, fillets or pockets unless requested), then reject
    what 0.4.0 accepts: extra edge cuts, slots, cross-bores, clipped corners,
    wall obstructions in a bore. Tolerances below the grid step (hole centres
