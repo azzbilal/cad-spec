@@ -27,8 +27,11 @@ first. Both evaluation splits are used and are never a selection set.
    sit on a 0.25 mm grid, so 0.1 mm is the starting proposal), comparisons
    on unrounded measurements. A defect suite is frozen before the
    implementation; 0.4.0 and every recorded verdict stay as they are.
-2. **A built-in edit-capable L4 parser baseline (free).** The audit's parser
-   passes every L4 task; the board should show it next to the weak parsers.
+2. **A built-in edit-capable L4 parser baseline (free). Done** (4 October
+   2026): `parser-edit` in `scripts/run_baseline.py`, self-test
+   `scripts/test_parser_edit.py`. Frozen on train and dev, then run once:
+   L4 all-pass train 200/200, dev 30/30, test 60/60, replication 60/60
+   (`results/baselines-deterministic.md`).
 3. **A harder tier on fresh specs (free to build).** Three or four coupled
    edits, several forms of rev A code, two-stage change orders; references
    and an "unedited rev A fails" check for every task; sealed evaluation set.

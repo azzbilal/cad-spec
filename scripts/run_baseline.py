@@ -15,7 +15,13 @@ Providers
                  "shortcut instead of reading" strategy on L3: a model that
                  has only seen the train wordings cannot do this, but it
                  shows L3 is template-structured, not free text.
-  rev-a          L4 only meaningfully: returns the rev A code unchanged
+  parser-edit    L4 only: reads rev A's box, hole rectangle and diameter
+                 from the code in the prompt, recovers the edge margin,
+                 applies the listed changes in order and recomputes both
+                 pitches. Prompt text only, never the Spec. Unreadable
+                 change order: a prose answer, no guess. Other tiers: the
+                 parser-derive fallback.
+  rev-a         L4 only meaningfully: returns the rev A code unchanged
                  (the "ignore the change order" baseline).
   reference      the known-correct answer (upper bound, sanity check).
   openai         any OpenAI-compatible /chat/completions server: Ollama,
@@ -171,6 +177,76 @@ def parser_template_answer(prompt: str) -> str:
         return "```python\n" + _TEMPLATE.format(L=f"{length:g}", W=f"{width:g}", T=f"{thick:g}",
                                                 PX=f"{px:g}", PY=f"{py:g}", D=f"{dia:g}") + "```"
     return parser_answer(prompt, derive=True)
+
+
+_NUM = r"(\d+(?:\.\d+)?)"
+_ECO_HEADER = "ENGINEERING CHANGE ORDER, rev A -> rev B:"
+_ECO_FOOTER = "Every other characteristic stays exactly as in rev A"
+_ECO_FIELDS = {
+    "overall length (X)": "L",
+    "overall width (Y)": "W",
+    "plate thickness (Z)": "T",
+    "hole diameter": "D",
+    "edge margin (hole centre to nearest edges)": "M",
+}
+_ECO_LINE = re.compile(
+    r"  - change (" + "|".join(re.escape(label) for label in _ECO_FIELDS) + r") from " + _NUM + r" mm to "
+    + _NUM + r" mm"
+)
+_REV_A_CALLS = {
+    "box": re.compile(r"\.box\(\s*" + _NUM + r"\s*,\s*" + _NUM + r"\s*,\s*" + _NUM + r"\s*\)"),
+    "rect": re.compile(r"\.rect\(\s*" + _NUM + r"\s*,\s*" + _NUM + r"\s*,\s*forConstruction=True\s*\)"),
+    "hole": re.compile(r"\.hole\(\s*" + _NUM + r"\s*\)"),
+}
+
+
+def _edit_failure(reason: str) -> str:
+    return f"I could not apply the change order: {reason}."
+
+
+def parser_edit_answer(prompt: str) -> str:
+    """Solve an L4 change order from the prompt text alone; fall back to the
+    table parser on any other prompt.
+
+    Reads rev A's box, hole rectangle and hole diameter from the code block,
+    recovers the edge margin on both axes (they must agree), applies the
+    listed changes in order (each "from" must equal the current value), then
+    recomputes both pitches from the final size and margin. Anything it cannot
+    read exactly gives a prose answer with no code, never a guess.
+    """
+    if _ECO_HEADER not in prompt:
+        return parser_answer(prompt, derive=True)
+    code = re.search(r"```python\n(.*?)```", prompt, re.DOTALL)
+    if not code:
+        return _edit_failure("no rev A code block")
+    found: dict[str, tuple[float, ...]] = {}
+    for name, regex in _REV_A_CALLS.items():
+        hits = regex.findall(code.group(1))
+        if len(hits) != 1:
+            return _edit_failure(f"expected one .{name}() call in rev A, found {len(hits)}")
+        found[name] = tuple(float(x) for x in (hits[0] if isinstance(hits[0], tuple) else (hits[0],)))
+    (length, width, thick), (px, py), (dia,) = found["box"], found["rect"], found["hole"]
+    margin_x, margin_y = (length - px) / 2, (width - py) / 2
+    if abs(margin_x - margin_y) > 1e-6:
+        return _edit_failure(f"rev A edge margin differs between X ({margin_x:g}) and Y ({margin_y:g})")
+    vals = {"L": length, "W": width, "T": thick, "D": dia, "M": margin_x}
+    block = prompt.split(_ECO_HEADER, 1)[1].split(_ECO_FOOTER, 1)
+    if len(block) != 2:
+        return _edit_failure("the change order has no end")
+    lines = [ln for ln in block[0].split("\n") if ln.strip()]
+    if not lines:
+        return _edit_failure("the change order lists no change")
+    for ln in lines:
+        m = _ECO_LINE.fullmatch(ln)
+        if not m:
+            return _edit_failure(f"unrecognised change line {ln.strip()!r}")
+        key, old, new = _ECO_FIELDS[m.group(1)], float(m.group(2)), float(m.group(3))
+        if abs(vals[key] - old) > 1e-6:
+            return _edit_failure(f"{m.group(1)} is {vals[key]:g} mm before this change, not {old:g} mm")
+        vals[key] = new
+    px, py = vals["L"] - 2 * vals["M"], vals["W"] - 2 * vals["M"]
+    return "```python\n" + _TEMPLATE.format(L=f"{vals['L']:g}", W=f"{vals['W']:g}", T=f"{vals['T']:g}",
+                                            PX=f"{px:g}", PY=f"{py:g}", D=f"{vals['D']:g}") + "```"
 
 
 # Transient provider failures are retried with exponential backoff, honouring
@@ -346,6 +422,8 @@ def answer(args: argparse.Namespace, spec: Spec, tier: str, prompt: str, seed: i
         return parser_answer(prompt, derive=True), local
     if args.provider == "parser-template":
         return parser_template_answer(prompt), local
+    if args.provider == "parser-edit":
+        return parser_edit_answer(prompt), local
     if args.provider == "reference":
         return reference_solution(spec), local
     if args.provider == "rev-a":
@@ -392,7 +470,7 @@ def runtime_versions() -> dict[str, Any]:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--provider", required=True,
-                    choices=["parser-copy", "parser-derive", "parser-template", "rev-a", "reference",
+                    choices=["parser-copy", "parser-derive", "parser-template", "parser-edit", "rev-a", "reference",
                              "openai", "anthropic"])
     ap.add_argument("--model", default="")
     ap.add_argument("--base-url", default="http://localhost:11434/v1")
