@@ -3,6 +3,30 @@
 Scores are only comparable within one scorer version
 (`cad_spec.rubric.SCORER_VERSION`).
 
+## Unreleased
+
+### L5 v1, milestone M1: observation map (no scoring change)
+- **Governing design** for the next tier, region-graded change orders:
+  `docs/design/L5-region-graded-change-orders-v1.0.md`, with the kickoff
+  amendments and the milestone record in `docs/design/L5-amendments.md`.
+- **`cad_spec.l5.observation`**: maps a strictly measured solid to the
+  contract variables L, W, T, n, D, mx, my, px, py and the booleans
+  rectangular, centered, symmetric, with one of four verdicts: `ok`,
+  `form_violation`, `out_of_scope`, `not_single_solid`. Measurable does not
+  mean acceptable: a filleted plate is measured and fails the form. A
+  variable that would be a guess (stepped hole, tilted hole, two diameters)
+  is refused, not approximated.
+- **One form check.** R9 of scorer 0.5.0 is now the function
+  `rubric.form_verdict`, used by the scorer and by the map. No verdict
+  changes: frozen suite 0 of 1,646 and 0 of 720, 81 and 37 hand-labelled
+  cases, 961 saved answers replayed.
+- **Strict measurement** gains `off_axis_concave` (concave cylindrical faces
+  not along Z). The legacy measurement is untouched.
+- **Gate:** `scripts/test_l5_observation.py`, 27 hand-built cases, in CI
+  (`results/l5/m1-observation-suite.md`).
+- One deviation from the design note, recorded for approval: an extra pocket
+  or slot is a `form_violation`, not `out_of_scope`.
+
 ## 0.5.0 (2026-10-05)
 
 Release `v0.5.0`. It contains scorer 0.5.0 and everything recorded since

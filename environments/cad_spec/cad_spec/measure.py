@@ -299,6 +299,7 @@ class Measurements:
     # never as a pass, and `shape_error` says what went wrong.
     surface_conformance: bool | None = None  # every face on an envelope plane or a recognised bore
     boundary_consistent: bool | None = None  # still a valid solid with all tolerances at FORM_LINEAR_TOL
+    off_axis_concave: int | None = None   # concave cylindrical faces not along Z (tilted or cross holes)
     extra_volume: float | None = None     # mm^3 of material outside the ideal part
     missing_volume: float | None = None   # mm^3 of the ideal part that is absent
     shape_error: str | None = None
@@ -530,6 +531,44 @@ def _surface_conformance(solid: Any, bb: Any, holes: list[Hole]) -> bool:
         else:
             return False
     return True
+
+
+def _off_axis_concave_faces(solid: Any) -> int:
+    """Cylindrical faces not along Z with no material just inside them.
+
+    That is a tilted hole or a cross hole, whole or partial. `off_axis_bores`
+    (0.4.0, diagnostics) only counts bores that close into a full cylinder
+    over their axial extent, and a tilted hole through a thin plate does not:
+    its ends are cut obliquely. The L5 observation map needs to know about
+    any such face, because it makes "the holes" something it cannot measure.
+    Strict measurement only.
+    """
+    from OCP.BRepAdaptor import BRepAdaptor_Surface
+    from OCP.BRepClass3d import BRepClass3d_SolidClassifier
+    from OCP.GeomAbs import GeomAbs_SurfaceType
+    from OCP.gp import gp_Pnt
+    from OCP.TopAbs import TopAbs_State
+
+    classifier = BRepClass3d_SolidClassifier(solid.wrapped)
+    count = 0
+    for face in solid.Faces():
+        adaptor = BRepAdaptor_Surface(face.wrapped)
+        if adaptor.GetType() != GeomAbs_SurfaceType.GeomAbs_Cylinder:
+            continue
+        cylinder = adaptor.Cylinder()
+        d, loc, r = cylinder.Axis().Direction(), cylinder.Axis().Location(), cylinder.Radius()
+        if abs(d.X()) <= AXIS_TOL and abs(d.Y()) <= AXIS_TOL:
+            continue  # along Z: measured as a hole or judged by the form check
+        p = adaptor.Value((adaptor.FirstUParameter() + adaptor.LastUParameter()) / 2,
+                          (adaptor.FirstVParameter() + adaptor.LastVParameter()) / 2)
+        t = (p.X() - loc.X()) * d.X() + (p.Y() - loc.Y()) * d.Y() + (p.Z() - loc.Z()) * d.Z()
+        foot = (loc.X() + t * d.X(), loc.Y() + t * d.Y(), loc.Z() + t * d.Z())
+        k = max(r * PROBE_INSET_FRACTION, PROBE_INSET_MIN_MM) / r
+        classifier.Perform(gp_Pnt(p.X() + (foot[0] - p.X()) * k, p.Y() + (foot[1] - p.Y()) * k,
+                                  p.Z() + (foot[2] - p.Z()) * k), 1e-6)
+        if classifier.State() != TopAbs_State.TopAbs_IN:
+            count += 1  # no material just inward: a concave face, so part of a hole
+    return count
 
 
 def _boundary_consistent(topo: Any) -> bool:
@@ -846,12 +885,14 @@ def measure(solid: Any, *, strict: bool = False) -> Measurements:
         h.open = _bore_is_open(solid, h, bb.zmin, bb.zmax)
     conformance: bool | None = None
     boundary: bool | None = None
+    off_axis_concave: int | None = None
     extra_volume = missing_volume = None
     shape_error: str | None = None
     if strict:
         try:
             conformance = _surface_conformance(solid, bb, holes)
             boundary = _boundary_consistent(topo)
+            off_axis_concave = _off_axis_concave_faces(solid)
         except Exception as exc:
             shape_error = f"form check failed: {type(exc).__name__}: {exc}"[:200]
         extra_volume, missing_volume, residual_error = _shape_residual(solid, bb, holes)
@@ -880,6 +921,7 @@ def measure(solid: Any, *, strict: bool = False) -> Measurements:
         off_axis_bores=_off_axis_bore_count(solid),
         surface_conformance=conformance,
         boundary_consistent=boundary,
+        off_axis_concave=off_axis_concave,
         extra_volume=extra_volume,
         missing_volume=missing_volume,
         shape_error=shape_error,

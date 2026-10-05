@@ -219,6 +219,28 @@ def _one_to_one(expected: list[tuple[float, float]], holes: list[Hole], tol: flo
     return sum(augment(k, set()) for k in range(len(near)))
 
 
+def form_verdict(m: Measurements) -> tuple[bool, str]:
+    """The strict form check of scorer 0.5.0, as (passed, why). This IS R9.
+
+    It lives in one function so that anything else that needs to know whether
+    a part has only the allowed faces (the L5 observation map) asks the same
+    question and gets the same answer. It needs a strict measurement.
+    """
+    extra, missing = m.extra_volume, m.missing_volume
+    if m.surface_conformance is None or m.boundary_consistent is None or extra is None or missing is None:
+        # could not check: never a pass
+        return False, f"the form of the part could not be checked ({m.shape_error or 'no detail'})"
+    residual_ok = extra <= SHAPE_VOLUME_TOL and missing <= SHAPE_VOLUME_TOL
+    if not m.surface_conformance:
+        form = "a face is neither a plane of the envelope nor a recognised bore"
+    elif not m.boundary_consistent:
+        form = "the edges do not lie on the faces at the form tolerance"
+    else:
+        form = "every face is a plane of the envelope or a bore"
+    return (m.surface_conformance and m.boundary_consistent and residual_ok,
+            f"{form}; {extra:.3f} mm3 extra, {missing:.3f} mm3 missing outside a {SHAPE_BAND_MM} mm band")
+
+
 def _requirements(m: Measurements, spec: Spec, version: str) -> list[Check]:
     tol = TOLERANCES[version]
     strict = version != "0.4.0"
@@ -306,23 +328,7 @@ def _requirements(m: Measurements, spec: Spec, version: str) -> list[Check]:
         # MEASURED ones, a wrong dimension does not fail R9: it fails for one
         # reason only. The volume residual is a cruder second look at the
         # same question and can only add a failure, never remove one.
-        extra, missing = m.extra_volume, m.missing_volume
-        if m.surface_conformance is None or m.boundary_consistent is None or extra is None or missing is None:
-            checks.append(Check("R9:no_other_features", False,  # could not check: never a pass
-                                f"the form of the part could not be checked ({m.shape_error or 'no detail'})"))
-        else:
-            residual_ok = extra <= SHAPE_VOLUME_TOL and missing <= SHAPE_VOLUME_TOL
-            if not m.surface_conformance:
-                form = "a face is neither a plane of the envelope nor a recognised bore"
-            elif not m.boundary_consistent:
-                form = "the edges do not lie on the faces at the form tolerance"
-            else:
-                form = "every face is a plane of the envelope or a bore"
-            checks.append(Check(
-                "R9:no_other_features",
-                m.surface_conformance and m.boundary_consistent and residual_ok,
-                f"{form}; {extra:.3f} mm3 extra, {missing:.3f} mm3 missing outside a {SHAPE_BAND_MM} mm band",
-            ))
+        checks.append(Check("R9:no_other_features", *form_verdict(m)))
 
     return checks
 
