@@ -2,7 +2,9 @@
 
 **Descriptive, not a verdict.** The registered results were recorded under scorer 0.4.0 and are
 unchanged. Here the same saved answers are re-scored under 0.5.0 (strict contract, 0.1 mm
-tolerances). Run once, after 0.5.0 was frozen; nothing in the scorer was changed afterwards.
+tolerances). Run on the final scorer 0.5.0 (5 October 2026). A first run on the earlier draft
+(4 October) changed the same verdicts; the scorer was reworked in between because of synthetic
+counterexamples from an external audit, not because of these answers.
 
 ## Original test split
 

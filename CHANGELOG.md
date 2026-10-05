@@ -11,11 +11,20 @@ Scores are only comparable within one scorer version
   position, margin, datum and diameter (0.5 mm and 0.2 mm before): specs sit
   on a 0.5 mm grid and hole centres on a 0.25 mm grid, so 0.5 mm accepted an
   error of one grid step.
-- **New check R9, no other features.** The part is compared with its own
-  ideal plate-with-bores, built from the measured envelope and bores; any
-  extra or missing material outside a 0.005 mm band fails it. Notches, slots,
-  pockets, cross-bores, chamfers, fillets and a lug in a bore are rejected.
+- **New check R9, no other features.** Every face of the part must lie on
+  one of the six planes of its own envelope or on one of its recognised
+  bores (1e-6 mm, 1e-9 rad). A volume comparison with the ideal part runs as
+  a second look and can only add a failure. Values are compared unrounded.
   The hole pattern is matched one hole per position. Ten requirements.
+- **A second external audit broke the first draft** (5 October 2026,
+  `audit/scorer-0.5-audit.md`). That draft judged R9 by a volume inside a
+  0.005 mm band: a 5 micron pocket over 50 x 50 mm, a boss absorbed by the
+  envelope, a 13 micron through slot and a 10 micron chamfer all scored 1.0;
+  rounding let 0.100049 mm pass a 0.1 mm tolerance; two environments in one
+  process shared a scorer version; the legacy scorer paid for the new work;
+  a correct plate stored as splines scored 0. All fixed before merge, and
+  pinned as the `AUDIT_` cases of `scripts/test_rubric_050.py`. Scorer 0.5.0
+  had not recorded any result.
 - **Why:** the external audit of 3 October 2026 found a saved development
   answer with four notches through its edges that 0.4.0 scored 1.0. It is
   now a pinned case (`scripts/test_rubric_050.py`).
@@ -23,19 +32,26 @@ Scores are only comparable within one scorer version
   (`scripts/validate_scorer.py`, suite 0.5.0, stating the contract itself),
   and run against the unchanged scorer: 0.4.0 gives full credit to 1,320 of
   the 1,646 parts that are wrong under the strict contract. Scorer 0.5.0
-  then: 0 false full credit, 0 false rejection on 720 correct parts.
+  then, in its final form: 0 false full credit, 0 false rejection on 720
+  correct parts. These are counts on the suite's cases, not a proof that no
+  wrong part can pass.
 - **Nothing recorded changes.** Scorer 0.4.0 stays selectable
   (`score(..., version="0.4.0")`, `load_environment(scorer_version="0.4.0")`)
   and replay scores each file under the version it records: the 961 saved
   evaluation answers replay with 0 mismatches and the verdict files are
-  byte-identical. Measurement changes are additive.
-- **Sensitivity, descriptive only:** both evaluations re-scored under 0.5.0
-  after the scorer was frozen. Six verdicts change (five base, one adapter,
+  byte-identical. The legacy scorer uses the legacy measurement, with none
+  of the new work.
+- **Sensitivity, descriptive only:** both evaluations re-scored under 0.5.0,
+  once on the first draft and once on the final scorer, with the same
+  outcome. Six verdicts change (five base, one adapter,
   hole centres off by 0.25 or 0.5 mm); L2 + L4 gain +41.7 and +40.8 points.
 - The leaderboard, the hint experiment and both training evaluations remain
   scorer 0.4.0 results. The Prime Hub copy is still 0.4.5.
 - Corner fillets and a shallow pocket, which 0.4.0 accepted on purpose, now
-  fail R9: nobody asked for them.
+  fail R9 at any size: nobody asked for them. A correct plate converted to
+  NURBS surfaces, which 0.4.0 scored 0, now passes.
+- Analysis scripts (`replay_eval`, `failure_modes`, `label_check`,
+  `verify_hub`) require the scorer version recorded in each file.
 
 ### L4 change-order parser baseline (4 October 2026)
 - New deterministic provider `parser-edit` (`scripts/run_baseline.py`):

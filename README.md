@@ -33,7 +33,7 @@ What this is, and what it is not:
 ```bash
 git clone https://github.com/azzbilal/cad-spec && cd cad-spec
 pip install "cadquery==2.8.0"
-python scripts/test_rubric_050.py          # 55 hand-labelled cases, scorer 0.5.0
+python scripts/test_rubric_050.py          # 72 hand-labelled cases, scorer 0.5.0
 python scripts/test_rubric.py              # 37 cases pinning scorer 0.4.0 (kept for replay)
 ```
 
@@ -142,24 +142,35 @@ has no R9):
 | R6 material | 3% | 3% | measured envelope minus nominal bores (volume only) |
 | R7 edge margin | 0.1 mm | 0.5 mm | the part's own **edges** |
 | R8 Z datum | 0.1 mm | 0.5 mm | plate mid-plane to **Z = 0** |
-| R9 no other features | 0.001 mm3 outside a 0.005 mm band | not checked | the part's own ideal plate with bores |
+| R9 no other features | every face on the envelope or on a bore | not checked | the part's own envelope planes and bore cylinders |
 
 Why 0.1 mm: specs sit on a 0.5 mm grid and hole centres on a 0.25 mm grid,
 so a 0.5 mm tolerance accepted an arithmetic slip of a whole grid step.
 
-R9 builds the ideal part from what was measured (the envelope and the
-bores) and measures the material the answer has in excess and the material
-it lacks. A plate with bores gives exactly zero; a notch, slot, pocket,
-cross-bore, chamfer, fillet or a lug in a bore does not. Because the ideal
-comes from the measurement and not from the spec, a wrong dimension does not
-fail R9: each check still fails for one reason. The case that motivated it
-is a saved model answer with four notches through its edges that 0.4.0
-scored 1.0 (`SAVED_dev_answer_gen_0021` in `scripts/test_rubric_050.py`).
+R9 checks the form of the part. A plate with bores is bounded only by the
+six planes of its own envelope and by the cylinders of its recognised bores,
+so every face must lie on one of them (within 1e-6 mm and 1e-9 rad, which is
+kernel noise, not a feature allowance). A notch, slot, pocket, boss,
+cross-bore, chamfer, fillet, draft, a lug in a bore or a plate turned off
+its axes each adds a face that lies on none of them, whatever its size. The
+envelope and the bores are the measured ones, not the spec's, so a wrong
+dimension does not fail R9: each check still fails for one reason. A volume
+comparison with the ideal part runs as a cruder second look and can only add
+a failure.
+
+Two external audits shaped it. The first found a saved model answer with
+four notches through its edges that 0.4.0 scored 1.0
+(`SAVED_dev_answer_gen_0021` in `scripts/test_rubric_050.py`). The second
+broke the first draft of 0.5.0, which judged R9 by volume alone: a 5 micron
+pocket over 50 x 50 mm, a 13 micron slot through the plate and a 10 micron
+chamfer all scored 1.0. Those are pinned as the `AUDIT_` cases of the same
+file. What the validation shows is that the scorer handles the cases it was
+given, not that no wrong part can pass.
 
 Tolerances are inclusive: 6.6 mm is inside 6.5 +/- 0.1 (comparisons carry a
-1e-6 mm numerical slack; 0.3.x failed it on floating-point rounding).
-Measurements are rounded to 0.0001 mm (hole centres to 0.001 mm) before
-they are compared.
+1e-6 mm numerical slack; 0.3.x failed it on floating-point rounding). Scorer
+0.5.0 compares unrounded measurements, so 6.600049 mm is outside; 0.4.0
+rounds to 0.0001 mm first, as it always did.
 
 Datums on purpose: a plate slid under its holes fails R7 only, a part moved
 in X or Y fails R5 only, a part moved in Z fails R8 only. Before 0.3.0 only
@@ -192,9 +203,11 @@ A second one: the bore detector probes each cylinder on its +X side, so a
 lug placed exactly there hides the bore; the part is still rejected (count,
 pattern and R9), but for more reasons than an inspector would give.
 
-**Known limitation:** bores are recognised only as analytic cylinders. The
-same correct part converted to NURBS surfaces (`toNURBS()`) scores 0. Models
-do not produce this unprompted. Pinned as `LIMIT_nurbs_surfaces`.
+**Known limitation of 0.4.0, lifted in 0.5.0:** 0.4.0 recognises bores only
+as analytic cylinders, so the same correct part converted to NURBS surfaces
+(`toNURBS()`) scores 0 under it. Scorer 0.5.0 asks the kernel for the
+analytic form of each face and passes that part. Pinned as
+`LIMIT_nurbs_surfaces`.
 
 ## Leaderboard
 
@@ -511,7 +524,7 @@ environments/cad_spec/cad_spec/
   environment.py  the only file that imports verifiers
   __main__.py     the cad-spec CLI
 scripts/
-  test_rubric_050.py  55 hand-labelled cases for scorer 0.5.0, needs only cadquery
+  test_rubric_050.py  72 hand-labelled cases for scorer 0.5.0, needs only cadquery
   test_rubric.py      37 hand-labelled cases pinning scorer 0.4.0
   validate_scorer.py  mutation suite -> results/scorer-validation-*.md
   rescore.py          replay saved answers through the current scorer
