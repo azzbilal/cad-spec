@@ -12,16 +12,18 @@ Tiers L1 to L4 (L4 is an engineering change order). The owner, Bilal Azzouzi,
 is an aerospace structures and CAD engineer building this as a portfolio
 piece for RL-environment and evaluation work.
 
-## State on 4 October 2026
+## State on 5 October 2026
 
-- Package cad-spec 0.5.0, scorer 0.5.0 (strict contract). Scorer 0.4.0 is
+- Released as `v0.5.0`. Package cad-spec 0.5.0, scorer 0.5.0 (strict
+  contract, reviewed in four external rounds before merge). Scorer 0.4.0 is
   kept selectable: everything published before 4 October 2026 was scored
   under it. The Prime Hub copy is still 0.4.5.
 - Training run 1 (Qwen3.5-9B LoRA) and its replication are done, registered
   and audited: +40.0 and +39.2 points on L2 + L4, under scorer 0.4.0.
+- The story in one document: `docs/REPORT.md`.
 - Next work is in `ROADMAP.md`, section "After the external audit of
   3 October 2026". Items 1 (scorer 0.5) and 2 (L4 parser baseline) are done.
-  Next: the 0.5.0 release notes and README top, then item 3.
+  Next: item 3, a harder edit tier on fresh specs.
 
 ## Rules that are never broken
 

@@ -3,28 +3,30 @@
 [![ci](https://github.com/azzbilal/cad-spec/actions/workflows/ci.yml/badge.svg)](https://github.com/azzbilal/cad-spec/actions/workflows/ci.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-**An open, inspection-style RL reward environment for dimensioned parametric parts.**
+**An open RL reward environment that inspects a CAD part the way a metrology report does.**
 
-A model reads a mechanical specification and writes CadQuery. The code is
-executed in a sandbox, the resulting solid is measured from its exact
-boundary representation, and each written requirement is checked against the
-measurement the way an inspection report checks a machined part. The reward
-is the fraction of requirements met, behind gates that zero known cheats.
+A model reads a mechanical specification and writes CadQuery. The code runs
+in a sandbox, the resulting solid is measured from its exact boundary
+representation, and each written requirement is checked against the
+measurement. The reward is the fraction of requirements met, behind gates
+that zero known cheats.
 
-What this is, and what it is not:
+## Results in one minute
 
-| Claim | Status |
+| Question | Answer |
 |---|---|
-| Scores a CadQuery part against 10 measurable requirements with partial credit | yes, one part family (4-hole mounting plate). Scorer 0.5.0: a correct part is the plate and its four holes, nothing else, within 0.1 mm |
-| Measures the real geometry, not what the model's objects claim | yes since 0.4.0: model code hands over BREP geometry; a separate trusted process measures it on POSIX (`fork` mode). On Windows the default `reuse` mode measures in the process that ran the code, for trusted answers only ([SECURITY.md](SECURITY.md)) |
-| Scorer validated against labelled mutants | yes: 2,366 mutants, 0 false full credit on 1,646 wrong parts, 0 false rejection on 720 correct parts ([results](results/scorer-validation-0.5.0.md)). The suite was frozen before the scorer was changed; the previous scorer gives full credit to 1,320 of those wrong parts ([before](results/scorer-validation-0.4.0-under-suite-0.5.0.md)) |
-| Separates "copying numbers" from "reading a spec" | partly: five prompt tiers, reported separately; L0 to L2 are solved by simple parsers, L3 by a parser that knows its wording templates, and L4 by a change-order parser ([baselines](results/baselines-deterministic.md)) |
-| Runs untrusted model code safely | per-rollout sandbox on POSIX, container for untrusted scale ([SECURITY.md](SECURITY.md)) |
-| Ranks real models and shows *how* each one fails | yes: 16 models (15 hosted, 1 local), about $0.27 of API calls; failure labels checked by AI-assisted review of three fresh random samples: 28/30, 28/30, 27/30 ([leaderboard](#leaderboard)) |
-| Separates knowledge failures from reasoning failures | yes: a pre-registered experiment ([below](#knowledge-or-reasoning-a-pre-registered-experiment)); a 7-line CadQuery cheat-sheet lifts four models by 42 to 56 points, while reasoning failures do not move |
-| Shows that RL training improves a model | **on this task, with caveats**: one LoRA run on Qwen3.5-9B, +40.0 points on L2 + L4, replicated on a second split (+39.2). One adapter, one part family, serving routes not attested ([below](#can-training-fix-the-reasoning-a-pre-registered-rl-run)) |
-| Broad text-to-CAD benchmark, new part families | **no**: one family; see [ROADMAP.md](ROADMAP.md) |
-| "Material" means alloy, strength, fit, manufacturability | **no**: R6 is volume consistency only |
+| Can current models do the task? | Not reliably. The best of 16 scores 78%; a regex that knows the wording templates scores 75% ([leaderboard](#leaderboard)) |
+| Why do they fail? | Mostly missing CadQuery knowledge: seven lines of general facts lift four models by 42 to 56 points. Reasoning failures do not move ([experiment](#knowledge-or-reasoning-a-pre-registered-experiment)) |
+| Does training on this reward fix the reasoning? | On this task, yes: one LoRA run on Qwen3.5-9B took the two reasoning tiers from 60% to 100% (+40.0 points), replicated on fresh specs (+39.2) ([training](#can-training-fix-the-reasoning-a-pre-registered-rl-run)) |
+| Can the reward be trusted? | Scorer 0.5.0 gives full credit to 0 of 1,646 wrong parts and rejects 0 of 720 correct parts, on a suite frozen before the scorer was changed. Four external review rounds broke three drafts before it was merged ([scoring](#scoring)) |
+| What did it cost? | About $14.45 of API calls and compute for everything above |
+
+**What it is not.** One part family (a 4-hole mounting plate), one trained
+adapter, serving routes bridged but not attested, and an edit tier that a
+short parser solves completely. Both experiments and the replication were
+pre-registered; the limits are listed with the results, not after them.
+
+**The whole story in one document:** [`docs/REPORT.md`](docs/REPORT.md).
 
 ## Quick start
 
@@ -56,6 +58,23 @@ cad-spec prompt gen-0001 --tier L3 --split eval   # print a task
 cad-spec score  gen-0001 answer.py                # PASS/FAIL per requirement
 cad-spec sandbox                                  # what isolation applies here
 ```
+
+## Claims and their status
+
+What this is, and what it is not:
+
+| Claim | Status |
+|---|---|
+| Scores a CadQuery part against 10 measurable requirements with partial credit | yes, one part family (4-hole mounting plate). Scorer 0.5.0: a correct part is the plate and its four holes, nothing else, within 0.1 mm |
+| Measures the real geometry, not what the model's objects claim | yes since 0.4.0: model code hands over BREP geometry; a separate trusted process measures it on POSIX (`fork` mode). On Windows the default `reuse` mode measures in the process that ran the code, for trusted answers only ([SECURITY.md](SECURITY.md)) |
+| Scorer validated against labelled mutants | yes: 2,366 mutants, 0 false full credit on 1,646 wrong parts, 0 false rejection on 720 correct parts ([results](results/scorer-validation-0.5.0.md)). The suite was frozen before the scorer was changed; the previous scorer gives full credit to 1,320 of those wrong parts ([before](results/scorer-validation-0.4.0-under-suite-0.5.0.md)) |
+| Separates "copying numbers" from "reading a spec" | partly: five prompt tiers, reported separately; L0 to L2 are solved by simple parsers, L3 by a parser that knows its wording templates, and L4 by a change-order parser ([baselines](results/baselines-deterministic.md)) |
+| Runs untrusted model code safely | per-rollout sandbox on POSIX, container for untrusted scale ([SECURITY.md](SECURITY.md)) |
+| Ranks real models and shows *how* each one fails | yes: 16 models (15 hosted, 1 local), about $0.27 of API calls; failure labels checked by AI-assisted review of three fresh random samples: 28/30, 28/30, 27/30 ([leaderboard](#leaderboard)) |
+| Separates knowledge failures from reasoning failures | yes: a pre-registered experiment ([below](#knowledge-or-reasoning-a-pre-registered-experiment)); a 7-line CadQuery cheat-sheet lifts four models by 42 to 56 points, while reasoning failures do not move |
+| Shows that RL training improves a model | **on this task, with caveats**: one LoRA run on Qwen3.5-9B, +40.0 points on L2 + L4, replicated on a second split (+39.2). One adapter, one part family, serving routes not attested ([below](#can-training-fix-the-reasoning-a-pre-registered-rl-run)) |
+| Broad text-to-CAD benchmark, new part families | **no**: one family; see [ROADMAP.md](ROADMAP.md) |
+| "Material" means alloy, strength, fit, manufacturability | **no**: R6 is volume consistency only |
 
 ## The task
 
@@ -421,6 +440,7 @@ model without training, both with the cheat-sheet:
 
 | File | What it shows |
 |---|---|
+| [`docs/REPORT.md`](docs/REPORT.md) | the whole project in one document: environment, baselines, leaderboard, both experiments, the scorer reviews, limits |
 | [`results/scorer-validation-0.5.0.md`](results/scorer-validation-0.5.0.md) | the current scorer against the 0.5.0 suite: 2,366 mutants over the 30 held-out specs, 0 false full credit on 1,646 wrong parts, 0 false rejection on 720 correct parts |
 | [`results/scorer-validation-0.4.0-under-suite-0.5.0.md`](results/scorer-validation-0.4.0-under-suite-0.5.0.md) | the same suite on the previous scorer, run before any scorer change: full credit to 1,320 of the 1,646 parts that are wrong under the strict contract |
 | [`results/training/scorer-0.5-sensitivity.md`](results/training/scorer-0.5-sensitivity.md) | both training evaluations re-scored under 0.5.0, descriptive only |

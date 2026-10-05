@@ -3,7 +3,19 @@
 Scores are only comparable within one scorer version
 (`cad_spec.rubric.SCORER_VERSION`).
 
-## Unreleased
+## 0.5.0 (2026-10-05)
+
+Release `v0.5.0`. It contains scorer 0.5.0 and everything recorded since
+0.4.5: training run 1, its replication, the bridge check, the L4 parser
+baseline and the external audits. The story in one document:
+[`docs/REPORT.md`](docs/REPORT.md).
+
+### Release
+- `docs/REPORT.md`: what was built, what was measured, what it showed and
+  what it does not show, with every number linked to its evidence.
+- README: a one-minute results table at the top; the claims table moved
+  under its own heading, unchanged.
+- No code change in the release commit. The Prime Hub copy is still 0.4.5.
 
 ### Scorer 0.5.0: a strict part contract (package 0.5.0)
 - **Contract:** a correct part is one rectangular plate with exactly four
