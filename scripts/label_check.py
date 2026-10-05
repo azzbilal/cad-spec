@@ -30,7 +30,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "environments" / "cad_spec"))
 
-from cad_spec.rubric import SCORER_VERSION
+from cad_spec.rubric import SUPPORTED_VERSIONS
 from cad_spec.tasks import TASKS, edit_source, make_splits, prompt_for
 from summarize_results import load
 
@@ -53,11 +53,16 @@ def main() -> int:
     args = ap.parse_args()
 
     metas, _, _ = load(args.paths)
-    recorded = {m.get("scorer_version") for m in metas.values()} - {None}
-    version = recorded.pop() if len(recorded) == 1 else SCORER_VERSION
+    recorded = {m.get("scorer_version") for m in metas.values()}
+    if len(recorded) != 1 or not recorded <= set(SUPPORTED_VERSIONS):
+        raise SystemExit("cad-spec: every run file must record the same known scorer version "
+                         f"(found {sorted(map(str, recorded))})")
+    version = next(iter(recorded))
     failures_path = Path(args.failures) if args.failures else ROOT / "results" / f"failure-modes-{version}.json"
     failures = json.loads(failures_path.read_text())
-    version = failures.get("scorer_version", version)
+    if failures.get("scorer_version") != version:
+        raise SystemExit(f"cad-spec: the failure labels are for scorer {failures.get('scorer_version')!r}, "
+                         f"the run files for {version!r}")
     pool = [r for r in failures["rows"] if r["label"] not in MECHANICAL and r["model"] not in DETERMINISTIC]
     if "run_id" not in (pool[0] if pool else {"run_id": 1}):
         raise SystemExit("this failure file predates run ids; rerun scripts/failure_modes.py first")

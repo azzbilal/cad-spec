@@ -37,7 +37,10 @@ def replay(path: Path, specs: dict) -> dict:
     # Each file is replayed under the scorer version it was recorded with: a
     # replay asks "does that scorer still give that answer", never "what would
     # a newer scorer say".
-    version = next((r["meta"].get("scorer_version") for r in records if "meta" in r), None)
+    versions = {r["meta"].get("scorer_version") for r in records if "meta" in r}
+    if len(versions) != 1:
+        raise SystemExit(f"{path}: exactly one recorded scorer version is required, found {sorted(map(str, versions))}")
+    version = next(iter(versions))
     if version not in SUPPORTED_VERSIONS:
         raise SystemExit(f"{path}: recorded scorer {version!r} cannot be replayed (supported: "
                          f"{', '.join(SUPPORTED_VERSIONS)})")

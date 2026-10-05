@@ -109,16 +109,19 @@ INTERVAL_MERGE_TOL = 1e-4
 # (mm3) of material. A 0.00001 mm membrane on a 6.5 mm bore leaves ~8e-5 mm3.
 OPEN_PROBE_RADIUS_FRACTION = 0.5
 OPEN_VOLUME_TOL = 1e-6
-# Shape residual (0.5.0): the part is compared with the IDEAL part, which is
-# the measured envelope with the measured bores cut through it. To stay robust
-# to the rounding of those measurements and to kernel noise, two ideals are
-# built: one grown by this band (larger box, smaller bores) and one shrunk by
-# it. Material outside the grown ideal is "extra"; grown-in material of the
-# shrunk ideal that the part lacks is "missing". A part that IS a plate with
-# bores gives exactly zero for both; a chamfer, fillet, notch, slot, pocket,
-# cross-bore or lug deeper than the band gives a positive volume. 5 microns is
-# 20 times below the 0.1 mm tolerances and 10 times above the coarsest
-# rounding in this module (hole centres, COAXIAL_DP).
+# Strict form (0.5.0). A part that is a plate with bores is bounded ONLY by
+# the six planes of its own envelope and by the cylinders of its recognised
+# bores. `_surface_conformance` checks exactly that, face by face, at these
+# numerical tolerances: they describe kernel noise, not a feature allowance
+# (a 0.001 mm pocket is rejected). This is what decides R9.
+FORM_LINEAR_TOL = 1e-6    # mm: a face against its envelope plane or bore surface
+FORM_ANGULAR_TOL = 1e-9   # rad: a plane normal or bore axis against its axis
+# Shape residual (0.5.0), a second and cruder look at the same question: the
+# volume of material outside, and missing from, the ideal plate-with-bores
+# built from the measured envelope and bores. To be robust to kernel noise on
+# coincident faces, the ideal is grown (for "extra") and shrunk (for
+# "missing") by this band. The band is blind to thin features, which is why it
+# does not decide R9 alone: the form check above does.
 SHAPE_BAND_MM = 0.005
 # Largest BREP a rollout may hand back (bytes). The plates here are 5-50 kB.
 MAX_BREP_BYTES = 8 << 20
@@ -281,11 +284,14 @@ class Measurements:
     # these earn nothing; counting them lets failure analysis tell "no holes"
     # from "holes drilled along the wrong axis" (label check, seed 20260928).
     off_axis_bores: int = 0
-    # Shape residual (0.5.0), see SHAPE_BAND_MM. Added fields: scorer 0.4.0
-    # does not read them. None means the comparison could not be made, which
-    # scorer 0.5.0 treats as a failed check, never as a pass.
+    # Strict measurements (0.5.0), filled only when measure(strict=True): the
+    # legacy scorer neither computes nor reads them. None means "not measured"
+    # or "could not be measured"; scorer 0.5.0 treats None as a failed check,
+    # never as a pass, and `shape_error` says what went wrong.
+    surface_conformance: bool | None = None  # every face on an envelope plane or a recognised bore
     extra_volume: float | None = None     # mm^3 of material outside the ideal part
     missing_volume: float | None = None   # mm^3 of the ideal part that is absent
+    shape_error: str | None = None
 
     @property
     def hole_count(self) -> int:
@@ -450,15 +456,82 @@ def build(code: str) -> Any:
     return load_brep(build_brep(code))
 
 
-def _z_aligned_cylinders(solid: Any) -> list[tuple[float, float, float, Any]]:
+def _analytic_adaptor(face: Any) -> Any:
+    """The face's surface as a plane or a cylinder, however it is stored.
+
+    A plane or cylinder stored as a spline (after a NURBS conversion) is still
+    a plane or a cylinder: the kernel is asked to recover the analytic form at
+    its own precision. Anything that is not exactly one of the two gives None.
+    """
+    from OCP.BRep import BRep_Tool
+    from OCP.BRepAdaptor import BRepAdaptor_Surface
+    from OCP.GeomAbs import GeomAbs_SurfaceType
+    from OCP.GeomAdaptor import GeomAdaptor_Surface
+    from OCP.GeomConvert import GeomConvert_SurfToAnaSurf
+    from OCP.Precision import Precision
+
+    wanted = (GeomAbs_SurfaceType.GeomAbs_Plane, GeomAbs_SurfaceType.GeomAbs_Cylinder)
+    adaptor = BRepAdaptor_Surface(face.wrapped)
+    if adaptor.GetType() in wanted:
+        return adaptor
+    try:
+        analytical = GeomConvert_SurfToAnaSurf(BRep_Tool.Surface_s(face.wrapped)).ConvertToAnalytical(
+            Precision.Confusion_s())
+    except Exception:
+        return None
+    if analytical is None:
+        return None
+    recovered = GeomAdaptor_Surface(analytical)
+    return recovered if recovered.GetType() in wanted else None
+
+
+def _surface_conformance(solid: Any, bb: Any, holes: list[Hole]) -> bool:
+    """Is every face on one of the six envelope planes or on a recognised bore?
+
+    A valid single solid bounded only by those surfaces is the plate with its
+    bores: a pocket, boss, notch, slot, chamfer, fillet, draft, a lug in a
+    bore or a plate turned by a fraction of a degree each adds a face that
+    lies on none of them, whatever its size.
+    """
+    from OCP.GeomAbs import GeomAbs_SurfaceType
+
+    limits = ((bb.xmin, bb.xmax), (bb.ymin, bb.ymax), (bb.zmin, bb.zmax))
+    for face in solid.Faces():
+        adaptor = _analytic_adaptor(face)
+        if adaptor is None:
+            return False
+        if adaptor.GetType() == GeomAbs_SurfaceType.GeomAbs_Plane:
+            plane = adaptor.Plane()
+            normal, origin = plane.Axis().Direction(), plane.Location()
+            n = (normal.X(), normal.Y(), normal.Z())
+            p = (origin.X(), origin.Y(), origin.Z())
+            axis = max(range(3), key=lambda k: abs(n[k]))
+            if any(abs(n[k]) > FORM_ANGULAR_TOL for k in range(3) if k != axis):
+                return False
+            if min(abs(p[axis] - edge) for edge in limits[axis]) > FORM_LINEAR_TOL:
+                return False
+        else:
+            cylinder = adaptor.Cylinder()
+            direction, origin = cylinder.Axis().Direction(), cylinder.Axis().Location()
+            if abs(direction.X()) > FORM_ANGULAR_TOL or abs(direction.Y()) > FORM_ANGULAR_TOL:
+                return False
+            if not any(abs(origin.X() - h.x) <= FORM_LINEAR_TOL
+                       and abs(origin.Y() - h.y) <= FORM_LINEAR_TOL
+                       and abs(2 * cylinder.Radius() - h.diameter) <= FORM_LINEAR_TOL
+                       for h in holes):
+                return False
+    return True
+
+
+def _z_aligned_cylinders(solid: Any, *, strict: bool = False) -> list[tuple[float, float, float, Any]]:
     """Exact kernel geometry for every Z-parallel cylindrical face."""
     from OCP.BRepAdaptor import BRepAdaptor_Surface
     from OCP.GeomAbs import GeomAbs_SurfaceType
 
     out: list[tuple[float, float, float, Any]] = []
     for face in solid.Faces():
-        adaptor = BRepAdaptor_Surface(face.wrapped)
-        if adaptor.GetType() != GeomAbs_SurfaceType.GeomAbs_Cylinder:
+        adaptor = _analytic_adaptor(face) if strict else BRepAdaptor_Surface(face.wrapped)
+        if adaptor is None or adaptor.GetType() != GeomAbs_SurfaceType.GeomAbs_Cylinder:
             continue
         cylinder = adaptor.Cylinder()
         direction = cylinder.Axis().Direction()
@@ -538,7 +611,7 @@ def _merge_intervals(intervals: list[tuple[float, float]]) -> list[tuple[float, 
     return [(lo, hi) for lo, hi in merged]
 
 
-def _classify_cylinders(solid: Any) -> tuple[list[Hole], list[PartialBore]]:
+def _classify_cylinders(solid: Any, *, strict: bool = False) -> tuple[list[Hole], list[PartialBore]]:
     """Closed internal bores, plus rejected concave groups as diagnostics.
 
     Two independent discriminators, because hollow geometry defeats either
@@ -566,7 +639,10 @@ def _classify_cylinders(solid: Any) -> tuple[list[Hole], list[PartialBore]]:
 
     # position -> diameter -> (summed face area mm^2, [Z intervals])
     features: dict[tuple[float, float], dict[float, tuple[list[float], list[tuple[float, float]]]]] = {}
-    for radius, cx, cy, face in _z_aligned_cylinders(solid):
+    # Unrounded axis and diameter of each group (its first face), for the
+    # strict scorer: a tolerance must not be widened by display rounding.
+    raw: dict[tuple[tuple[float, float], float], tuple[float, float, float]] = {}
+    for radius, cx, cy, face in _z_aligned_cylinders(solid, strict=strict):
         fbb = face.BoundingBox()
         if fbb.zlen <= 0:
             continue
@@ -577,6 +653,7 @@ def _classify_cylinders(solid: Any) -> tuple[list[Hole], list[PartialBore]]:
             continue  # material immediately inward => convex round/fillet/boss/wall
         key = (round(cx, COAXIAL_DP), round(cy, COAXIAL_DP))
         diameter = round(2 * radius, 4)
+        raw.setdefault((key, diameter), (2 * radius, cx, cy))
         area_acc, intervals = features.setdefault(key, {}).setdefault(diameter, ([0.0], []))
         area_acc[0] += face.Area()
         intervals.append((fbb.zmin, fbb.zmax))
@@ -594,13 +671,14 @@ def _classify_cylinders(solid: Any) -> tuple[list[Hole], list[PartialBore]]:
                 if coverage >= PARTIAL_REPORT_MIN:
                     partial.append(PartialBore(diameter, round(x, 4), round(y, 4), round(coverage, 4)))
                 continue  # partial arc (fillet, breakout), not a closed bore
+            raw_d, raw_x, raw_y = raw[((x, y), diameter)]
             holes.append(Hole(
-                diameter=diameter,
-                x=round(x, 4),
-                y=round(y, 4),
-                depth=round(covered, 4),
-                z_min=round(spans[0][0], 4),
-                z_max=round(spans[-1][1], 4),
+                diameter=raw_d if strict else diameter,
+                x=raw_x if strict else round(x, 4),
+                y=raw_y if strict else round(y, 4),
+                depth=covered if strict else round(covered, 4),
+                z_min=spans[0][0] if strict else round(spans[0][0], 4),
+                z_max=spans[-1][1] if strict else round(spans[-1][1], 4),
                 segments=len(spans),
             ))
     return holes, partial
@@ -642,7 +720,7 @@ def _bore_is_open(solid: Any, hole: Hole, z_min: float, z_max: float) -> bool:
     return abs(props.Mass()) < OPEN_VOLUME_TOL
 
 
-def _shape_residual(solid: Any, bb: Any, holes: list[Hole]) -> tuple[float | None, float | None]:
+def _shape_residual(solid: Any, bb: Any, holes: list[Hole]) -> tuple[float | None, float | None, str | None]:
     """(extra, missing) volume of the part against its own ideal plate-with-bores.
 
     The ideal is built from what was MEASURED (envelope, bore axes and
@@ -686,13 +764,20 @@ def _shape_residual(solid: Any, bb: Any, holes: list[Hole]) -> tuple[float | Non
     try:
         extra = volume(cut(solid.wrapped, ideal(SHAPE_BAND_MM)))
         missing = volume(cut(ideal(-SHAPE_BAND_MM), solid.wrapped))
-    except Exception:  # "could not compare" is a result, reported as None
-        return None, None
-    return round(extra, 6), round(missing, 6)
+    except Exception as exc:  # "could not compare" is a result: None, with the reason kept
+        return None, None, f"{type(exc).__name__}: {exc}"[:200]
+    return extra, missing, None
 
 
-def measure(solid: Any) -> Measurements:
-    """Extract features from a trusted shape (see load_brep)."""
+def measure(solid: Any, *, strict: bool = False) -> Measurements:
+    """Extract features from a trusted shape (see load_brep).
+
+    strict=False is the measurement scorer 0.4.0 was recorded with: values
+    rounded as they always were, and none of the 0.5.0 work is done, so its
+    results and its running time are unchanged. strict=True (scorer 0.5.0)
+    keeps unrounded values, recovers analytic surfaces stored as splines, and
+    adds the form check and the shape residual.
+    """
     from OCP.BRepCheck import BRepCheck_Analyzer
     from OCP.TopAbs import TopAbs_EDGE, TopAbs_FACE, TopAbs_SHELL, TopAbs_SOLID, TopAbs_VERTEX
 
@@ -715,36 +800,51 @@ def measure(solid: Any) -> Measurements:
         + _count(topo, TopAbs_EDGE, TopAbs_FACE)
         + _count(topo, TopAbs_VERTEX, TopAbs_EDGE)
     )
-    holes, partial = _classify_cylinders(solid)
+    holes, partial = _classify_cylinders(solid, strict=strict)
     for h in holes:
         h.open = _bore_is_open(solid, h, bb.zmin, bb.zmax)
-    extra_volume, missing_volume = _shape_residual(solid, bb, holes)
+    conformance: bool | None = None
+    extra_volume = missing_volume = None
+    shape_error: str | None = None
+    if strict:
+        try:
+            conformance = _surface_conformance(solid, bb, holes)
+        except Exception as exc:
+            shape_error = f"form check failed: {type(exc).__name__}: {exc}"[:200]
+        extra_volume, missing_volume, residual_error = _shape_residual(solid, bb, holes)
+        shape_error = shape_error or residual_error
+
+    def kept(value: float) -> float:
+        return value if strict else round(value, 4)
+
     return Measurements(
-        length=round(bb.xlen, 4),
-        width=round(bb.ylen, 4),
-        thickness=round(bb.zlen, 4),
-        volume=round(volume, 4),
+        length=kept(bb.xlen),
+        width=kept(bb.ylen),
+        thickness=kept(bb.zlen),
+        volume=kept(volume),
         solid_count=solid_count,
         holes=holes,
-        x_min=round(bb.xmin, 4),
-        x_max=round(bb.xmax, 4),
-        y_min=round(bb.ymin, 4),
-        y_max=round(bb.ymax, 4),
-        z_min=round(bb.zmin, 4),
-        z_max=round(bb.zmax, 4),
+        x_min=kept(bb.xmin),
+        x_max=kept(bb.xmax),
+        y_min=kept(bb.ymin),
+        y_max=kept(bb.ymax),
+        z_min=kept(bb.zmin),
+        z_max=kept(bb.zmax),
         partial_bores=partial,
         shell_count=_count(topo, TopAbs_SHELL),
         loose_count=loose,
         valid=bool(BRepCheck_Analyzer(topo).IsValid()),
         off_axis_bores=_off_axis_bore_count(solid),
+        surface_conformance=conformance,
         extra_volume=extra_volume,
         missing_volume=missing_volume,
+        shape_error=shape_error,
     )
 
 
-def _measure_code(code: str) -> Measurements:
+def _measure_code(code: str, *, strict: bool = False) -> Measurements:
     """Build and measure in THIS process (inproc and reuse modes)."""
-    return measure(load_brep(build_brep(code)))
+    return measure(load_brep(build_brep(code)), strict=strict)
 
 
 # --- isolated execution ------------------------------------------------------
@@ -897,7 +997,7 @@ def _kill_group(pid: int) -> None:
         os.killpg(pid, signal.SIGKILL)
 
 
-def _run_forked(code: str, budget: float, mem_mb: int) -> tuple[str, Any]:
+def _run_forked(code: str, budget: float, mem_mb: int, *, strict: bool = False) -> tuple[str, Any]:
     """Run one rollout in a disposable forked child. Returns (status, payload).
 
     The child replies with b"O" + BREP bytes or b"E" + UTF-8 error text. The
@@ -995,14 +1095,14 @@ def _run_forked(code: str, budget: float, mem_mb: int) -> tuple[str, Any]:
     if tag != b"O":
         return ("error", "rollout process returned a malformed result")
     try:
-        return ("ok", measure(load_brep(body)))
+        return ("ok", measure(load_brep(body), strict=strict))
     except BuildError as exc:
         return ("error", str(exc))
     except Exception as exc:
         return ("error", f"result geometry could not be measured: {type(exc).__name__}")
 
 
-def _run_reused(code: str, budget: float, mem_mb: int) -> tuple[str, Any]:
+def _run_reused(code: str, budget: float, mem_mb: int, *, strict: bool = False) -> tuple[str, Any]:
     """Run one rollout in this (persistent) process, in a fresh temp dir.
 
     `budget` is enforced by the parent, which kills this whole process;
@@ -1015,7 +1115,7 @@ def _run_reused(code: str, budget: float, mem_mb: int) -> tuple[str, Any]:
     previous = os.getcwd()
     try:
         os.chdir(workdir)
-        return ("ok", _measure_code(code))
+        return ("ok", _measure_code(code, strict=strict))
     except BuildError as exc:
         return ("error", _clean_error(str(exc)))
     except Exception as exc:
@@ -1042,9 +1142,9 @@ def _worker_main(conn: Any, mode: str) -> None:
         if kind == "stop":
             conn.send(("ok", None))
             return
-        code, budget, mem_mb = payload
+        code, budget, mem_mb, strict = payload
         try:
-            conn.send(run(code, budget, mem_mb))
+            conn.send(run(code, budget, mem_mb, strict=strict))
         except Exception as exc:  # report faults before dying
             conn.send(("error", f"worker fault: {type(exc).__name__}: {exc}"))
 
@@ -1078,9 +1178,9 @@ class _Worker:
     def alive(self) -> bool:
         return self.proc.is_alive()
 
-    def call(self, code: str) -> Measurements:
+    def call(self, code: str, *, strict: bool = False) -> Measurements:
         try:
-            self.conn.send(("measure", (code, _exec_timeout(), _mem_limit_mb())))
+            self.conn.send(("measure", (code, _exec_timeout(), _mem_limit_mb(), strict)))
         except (BrokenPipeError, OSError) as exc:
             raise BuildError(f"scorer pipe broke: {exc}") from exc
         # In fork mode the worker enforces the budget itself and survives;
@@ -1158,7 +1258,7 @@ def sandbox_info() -> dict[str, Any]:
     return info
 
 
-def build_and_measure(completion: str) -> Measurements:
+def build_and_measure(completion: str, *, strict: bool = False) -> Measurements:
     """Extract code, run it isolated, measure the result.
 
     Raises BuildError when the model's code does not yield a part (a model
@@ -1168,9 +1268,9 @@ def build_and_measure(completion: str) -> Measurements:
     code = extract_code(completion)
     if _inproc_requested():
         require_cadquery()
-        return _measure_code(code)
+        return _measure_code(code, strict=strict)
     try:
-        return _get_worker().call(code)
+        return _get_worker().call(code, strict=strict)
     except (BuildError, ScorerUnavailableError):
         raise
     except Exception as exc:  # anything else means the worker is unwell

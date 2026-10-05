@@ -151,7 +151,7 @@ def superseded_runs_are_not_counted() -> bool:
             row = {"run_id": run_id, "tier": "L1", "spec_id": s.id, "rollout": 0, "reward": rep_.reward,
                    "built": rep_.parsed, "error": rep_.error, "checks": {c.name: c.passed for c in rep_.checks},
                    "completion": stacked(s) if rep_ is bad else reference_solution(s)}
-            meta = {"meta": {"run_id": run_id, "model": "dup"}}
+            meta = {"meta": {"run_id": run_id, "model": "dup", "scorer_version": "0.5.0"}}
             (Path(tmp) / f"{run_id}.jsonl").write_text("\n".join(json.dumps(x) for x in [meta, row]) + "\n")
         proc = subprocess.run([sys.executable, str(ROOT / "scripts" / "failure_modes.py"),
                                *sorted(str(p) for p in Path(tmp).glob("*.jsonl")), "--out", tmp],
@@ -173,7 +173,7 @@ def main() -> int:
                      "truncated": extra.get("finish") == "length", "api_error": extra.get("api")})
         if label:
             want.append((len(rows) - 1, label))
-    meta = {"meta": {"run_id": "T", "model": "synthetic", "max_tokens": 1024}}
+    meta = {"meta": {"run_id": "T", "model": "synthetic", "max_tokens": 1024, "scorer_version": "0.5.0"}}
     with tempfile.TemporaryDirectory() as tmp:
         run = Path(tmp) / "run.jsonl"
         run.write_text("\n".join(json.dumps(r) for r in [meta, *rows]) + "\n")

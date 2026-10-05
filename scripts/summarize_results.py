@@ -24,7 +24,7 @@ from pathlib import Path
 from degenerate import is_degenerate
 
 CHECKS = ("R1:length", "R2:width", "R3:thickness", "R4a:hole_count", "R4b:hole_diameter",
-          "R5:hole_pattern", "R6:material", "R7:edge_margin", "R8:z_datum")
+          "R5:hole_pattern", "R6:material", "R7:edge_margin", "R8:z_datum", "R9:no_other_features")
 GATES = ("gate:single_solid", "gate:clean_solid", "gate:simple_through_holes", "gate:hole_count_sane",
          "gate:is_plate")
 

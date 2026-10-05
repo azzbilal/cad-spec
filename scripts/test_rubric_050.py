@@ -64,6 +64,10 @@ CHANGED = {
     # A hole breaking out through the side wall removes material that is not
     # a bore. 0.4.0 only saw the missing hole.
     "LIMIT_hole_breakout": _f("R4a:hole_count", "R5:hole_pattern", R9),
+    # The correct plate with every surface stored as a spline. 0.4.0 could not
+    # see its bores (a documented limit); 0.5.0 asks the kernel for the
+    # analytic form, finds six planes and four cylinders, and passes it.
+    "LIMIT_nurbs_surfaces": _f(),
 }
 CASES: dict[str, Case] = {
     name: Case(case.code, CHANGED.get(name, case.fails)) for name, case in legacy.CASES.items()
@@ -118,6 +122,46 @@ CASES["lug_in_bore_at_probe"] = Case(
 CASES["extra_fifth_hole"] = Case(
     REF + 'result = result.faces(">Z").workplane().hole(6.5)\n', _f("R4a:hole_count", "R7:edge_margin"))
 
+
+# --- group 2b: the counterexamples of the second external audit (5 October 2026)
+# The first 0.5.0 draft judged R9 by a volume inside a 0.005 mm band. The audit
+# showed what that accepts; every one of these scored 1.0 under that draft.
+# They are why R9 now checks the form of the part, face by face.
+CASES["AUDIT_pocket_5_microns_deep"] = Case(  # 50 x 50 mm, 12 mm3 removed
+    REF + 'result = result.cut(cq.Workplane("XY").box(50, 50, 0.0049).translate((0, 0, 2.99755)))\n', _f(R9))
+CASES["AUDIT_boss_5_microns_high"] = Case(  # raises the envelope, which absorbed it
+    REF + 'result = result.union(cq.Workplane("XY").box(20, 20, 0.0059).translate((0, 0, 3.00195)))\n', _f(R9))
+CASES["AUDIT_slot_13_microns_wide"] = Case(  # through the whole plate, under 0.001 mm3
+    REF + 'result = result.cut(cq.Workplane("XY").box(0.0128, 0.0128, 8))\n', _f(R9))
+CASES["AUDIT_side_tab_5_microns"] = Case(
+    REF + 'result = result.union(cq.Workplane("XY").box(0.0059, 20, 6).translate((40.00195, 0, 0)))\n', _f(R9))
+CASES["AUDIT_chamfer_10_microns"] = Case(REF + 'result = result.faces(">Z").edges().chamfer(0.01)\n', _f(R9))
+CASES["AUDIT_fillet_30_microns"] = Case(REF + 'result = result.edges("|Z").fillet(0.03)\n', _f(R9))
+CASES["AUDIT_lug_50_microns_in_bore"] = Case(
+    REF + 'result = result.union(cq.Workplane("XY").box(0.051, 0.02, 0.02).translate((33.2255, 20, 0)))\n', _f(R9))
+CASES["AUDIT_countersink_10_microns"] = Case(
+    REF + "for x, y in [(-30, -20), (-30, 20), (30, -20), (30, 20)]:\n"
+          "    result = result.cut(cq.Solid.makeCone(3.25, 3.26, 0.01, cq.Vector(x, y, 2.99)))\n", _f(R9))
+CASES["AUDIT_second_cut_offset_0.4_micron"] = Case(  # a bore that is no longer one cylinder
+    REF + 'result = result.cut(cq.Workplane("XY").center(30.0004, 20).circle(3.25).extrude(10, both=True))\n',
+    _f(R9))
+CASES["AUDIT_turned_0.001_degree_about_Z"] = Case(REF + "result = result.rotate((0, 0, 0), (0, 0, 1), 0.001)\n", _f(R9))
+CASES["AUDIT_draft_0.01_degree"] = Case("""
+import cadquery as cq
+result = cq.Workplane("XY").rect(80, 60).extrude(6, taper=0.01).translate((0, 0, -3))
+result = result.faces(">Z").workplane().pushPoints([(-30, -20), (-30, 20), (30, -20), (30, 20)]).hole(6.5)
+""", _f(R9))
+# Rounding used to widen the 0.1 mm tolerance; values are now compared unrounded.
+CASES["AUDIT_diameter_0.100049_over"] = Case(plate(d=6.600049), _f("R4b:hole_diameter"))
+CASES["AUDIT_length_0.100049_over"] = Case(
+    BOX.format(L=80.100049, W=60, T=6)
+    + '          .faces(">Z").workplane().rect(60.100049, 40, forConstruction=True).vertices().hole(6.5))\n',
+    _f("R1:length"))
+CASES["AUDIT_part_moved_0.1007_diagonally"] = Case(  # rounds to (0.060, 0.080), norm 0.1
+    REF + "result = result.translate((0.060499, 0.080499, 0))\n", _f("R5:hole_pattern"))
+CASES["AUDIT_z_datum_0.10004"] = Case(REF + "result = result.translate((0, 0, 0.10004))\n", _f("R8:z_datum"))
+CASES["AUDIT_at_the_limit_still_passes"] = Case(REF + "result = result.translate((0.1, 0, 0.1))\n", _f())
+CASES["AUDIT_plate_thinner_than_the_band"] = Case(plate(thick=0.009), _f("R3:thickness", R9))
 
 # --- group 3: the saved answer that 0.4.0 scored 1.0 ----------------------------
 def saved_gen_0021() -> Case:

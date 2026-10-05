@@ -10,6 +10,7 @@ which are plain Python and testable without verifiers, a model, or an account.
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
+from functools import wraps
 from typing import Any
 
 import verifiers as vf
@@ -101,12 +102,9 @@ def _build_eval_dataset(tiers: Sequence[str] = ("L0",)) -> Dataset:
 
 
 _STATE_KEY = "_cad_spec_report"
-# Scorer version used by every reward function of this process. Set by
-# load_environment(scorer_version=...); the default is the current scorer.
-_scorer_version = SCORER_VERSION
 
 
-def _report(text: str, spec_id: str, state: Any = None) -> Report:
+def _report(text: str, spec_id: str, state: Any = None, version: str = SCORER_VERSION) -> Report:
     """One build per rollout, however many reward/metric functions read it.
 
     The report is shared through the rollout's own `state` dict, which
@@ -114,16 +112,24 @@ def _report(text: str, spec_id: str, state: Any = None) -> Report:
     a process-wide cache keyed on (text, spec) was used, so two rollouts that
     produced identical code shared one execution; each rollout is now judged
     on its own build. Without a state dict (direct calls) nothing is cached.
+
+    The scorer version is part of the cache key: a report made by one scorer
+    is never handed to an environment that asked for another.
     """
-    key = (text, spec_id)
+    key = (text, spec_id, version)
     if isinstance(state, dict):
         cached = state.get(_STATE_KEY)
         if cached is not None and cached[0] == key:
             return cached[1]
-    report = score(text, SPECS[spec_id], _scorer_version)
+    report = score(text, SPECS[spec_id], version)
     if isinstance(state, dict):
         state[_STATE_KEY] = (key, report)
     return report
+
+
+def _version(kwargs: dict[str, Any]) -> str:
+    """The scorer version an environment bound to this call (default: the current one)."""
+    return kwargs.get("scorer_version") or SCORER_VERSION
 
 
 def spec_reward(completion, answer="", info=None, **kwargs) -> float:
@@ -143,7 +149,7 @@ def spec_reward(completion, answer="", info=None, **kwargs) -> float:
     if spec is None:
         return 0.0
 
-    report = _report(_completion_text(completion), spec.id, kwargs.get("state"))
+    report = _report(_completion_text(completion), spec.id, kwargs.get("state"), _version(kwargs))
     return max(report.reward, PARSE_FLOOR) if report.parsed else 0.0
 
 
@@ -159,7 +165,7 @@ def all_pass_reward(completion, answer="", info=None, **kwargs) -> float:
     spec = _spec_for(answer, info)
     if spec is None:
         return 0.0
-    report = _report(_completion_text(completion), spec.id, kwargs.get("state"))
+    report = _report(_completion_text(completion), spec.id, kwargs.get("state"), _version(kwargs))
     return 1.0 if report.parsed and report.reward == 1.0 else 0.0
 
 
@@ -173,7 +179,7 @@ def _check_metric(check_name: str) -> Callable[..., float]:
         spec = _spec_for(answer, info)
         if spec is None:
             return 0.0
-        report = _report(_completion_text(completion), spec.id, kwargs.get("state"))
+        report = _report(_completion_text(completion), spec.id, kwargs.get("state"), _version(kwargs))
         return float(any(c.name == check_name and c.passed for c in report.checks))
 
     metric.__name__ = "m_" + check_name.replace(":", "_")
@@ -183,7 +189,9 @@ def _check_metric(check_name: str) -> Callable[..., float]:
 def built(completion, answer="", info=None, **kwargs) -> float:
     """Zero-weight diagnostic: 1.0 if the code executed and produced a solid."""
     spec = _spec_for(answer, info)
-    return float(spec is not None and _report(_completion_text(completion), spec.id, kwargs.get("state")).parsed)
+    if spec is None:
+        return 0.0
+    return float(_report(_completion_text(completion), spec.id, kwargs.get("state"), _version(kwargs)).parsed)
 
 
 def gates_passed(completion, answer="", info=None, **kwargs) -> float:
@@ -191,7 +199,7 @@ def gates_passed(completion, answer="", info=None, **kwargs) -> float:
     spec = _spec_for(answer, info)
     if spec is None:
         return 0.0
-    report = _report(_completion_text(completion), spec.id, kwargs.get("state"))
+    report = _report(_completion_text(completion), spec.id, kwargs.get("state"), _version(kwargs))
     gates = [c for c in report.checks if c.name.startswith("gate:")]
     return float(bool(gates) and all(c.passed for c in gates))
 
@@ -232,16 +240,17 @@ def load_environment(
                zero weight, so both stay visible.
     scorer_version  which scorer judges the rollouts. Default: the current
                one (0.5.0, strict contract). "0.4.0" reproduces the scorer
-               every result published before 0.5.0 was recorded under. The
-               setting is process-wide: all environments loaded in one
-               process share it, and the last call decides.
+               every result published before 0.5.0 was recorded under. Each
+               environment owns its version: the reward functions it
+               registers are bound to it, so environments with different
+               versions can live in one process. It is also exposed as
+               `env.scorer_version`.
     """
-    global _scorer_version
     if reward not in REWARDS:
         raise ValueError(f"reward must be one of {REWARDS}, got {reward!r}")
     if scorer_version is not None and scorer_version not in SUPPORTED_VERSIONS:
         raise ValueError(f"scorer_version must be one of {SUPPORTED_VERSIONS}, got {scorer_version!r}")
-    _scorer_version = scorer_version or SCORER_VERSION
+    version = scorer_version or SCORER_VERSION
     # Fail fast (0.4.5): if the scorer cannot run, the environment must not
     # load. Hosted Training's verifiers catches reward-function exceptions and
     # substitutes 0.0, so a missing CadQuery otherwise scores every rollout 0
@@ -259,11 +268,22 @@ def load_environment(
             extra = [other, *extra]  # continuous stays visible as a diagnostic
         funcs += extra
         weights += [0.0] * len(extra)
-    rubric = vf.Rubric(funcs=funcs, weights=weights)
+
+    def bind(func: Callable[..., float]) -> Callable[..., float]:
+        """The same function, name and signature, judged by this environment's scorer."""
+        @wraps(func)
+        def bound(*args: Any, **reward_kwargs: Any) -> float:
+            reward_kwargs["scorer_version"] = version
+            return func(*args, **reward_kwargs)
+        return bound
+
+    rubric = vf.Rubric(funcs=[bind(f) for f in funcs], weights=weights)
     kwargs.setdefault("eval_dataset", _build_eval_dataset(eval_tiers))
-    return vf.SingleTurnEnv(
+    environment = vf.SingleTurnEnv(
         dataset=_build_dataset(train_tiers),
         system_prompt=system_prompt(hints),
         rubric=rubric,
         **kwargs,
     )
+    environment.scorer_version = version
+    return environment

@@ -27,11 +27,15 @@ Design notes:
     with exactly four through holes and NOTHING ELSE. 0.4.0 gave full credit
     to a saved answer with four extra notches through its edges (external
     audit, 3 October 2026), because R6 tolerates 3% of missing material. R9
-    compares the part with its own ideal plate-with-bores and fails on any
-    extra or missing material. Tolerances drop from 0.5 mm to 0.1 mm: specs
-    sit on a 0.5 mm grid and hole centres on a 0.25 mm grid, so 0.5 mm
-    accepted an error of a whole grid step. The hole pattern is matched one
-    to one.
+    checks the FORM of the part: every face must lie on one of the six planes
+    of the part's own envelope or on one of its recognised bores. A second
+    audit (5 October 2026) showed that a volume comparison alone cannot do
+    this job: shallow pockets and bosses hide inside any band, and tiny
+    features under any volume threshold. The volume comparison stays as a
+    cruder second look. Tolerances drop from 0.5 mm to 0.1 mm, compared on
+    unrounded measurements: specs sit on a 0.5 mm grid and hole centres on a
+    0.25 mm grid, so 0.5 mm accepted an error of a whole grid step. The hole
+    pattern is matched one to one.
   * Versions live side by side. `score(..., version="0.4.0")` reproduces every
     result recorded under 0.4.0 exactly; recorded verdicts are never rescored
     under a newer scorer.
@@ -76,9 +80,10 @@ DATUM_TOL = TOLERANCES[SCORER_VERSION].datum
 GATE_VOLUME_BAND = 0.12  # identity band: measured vs bbox-predicted volume
 MATERIAL_TOL = 0.03   # fraction, R6: material vs envelope-minus-nominal-bores
 DEPTH_TOL = 0.01      # mm, hole depth vs stock thickness
-# R9 (0.5.0): largest volume of extra or of missing material, measured outside
-# a band of SHAPE_BAND_MM around the ideal part. A true plate-with-bores gives
-# exactly 0; the smallest defect in the validation suite gives about 0.1 mm3.
+# R9 (0.5.0), second look only: largest volume of extra or of missing material
+# outside a band of SHAPE_BAND_MM around the ideal part. The form check
+# (measure._surface_conformance) is what decides R9; this bound alone would
+# accept thin or tiny features, which is why it is never used alone.
 SHAPE_VOLUME_TOL = 1e-3  # mm3
 # Numerical slack on every tolerance comparison. Tolerances are INCLUSIVE:
 # 6.7 is inside 6.5 +/- 0.2, but abs(6.7 - 6.5) is 0.20000000000000018 in
@@ -193,15 +198,20 @@ def _gates(m: Measurements, spec: Spec) -> list[Check]:
 def _one_to_one(expected: list[tuple[float, float]], holes: list[Hole], tol: float) -> int:
     """Largest number of expected positions matched to DISTINCT holes within tol."""
     near = [[i for i, h in enumerate(holes) if math.dist((h.x, h.y), e) <= tol + NUM_EPS] for e in expected]
+    owner: dict[int, int] = {}  # hole index -> expected position it is matched to
 
-    def best(k: int, used: frozenset[int]) -> int:
-        if k == len(near):
-            return 0
-        skip = best(k + 1, used)
-        take = max((1 + best(k + 1, used | {i}) for i in near[k] if i not in used), default=0)
-        return max(skip, take)
+    def augment(k: int, seen: set[int]) -> bool:
+        """Give position k a hole, moving earlier positions to other holes if needed."""
+        for i in near[k]:
+            if i in seen:
+                continue
+            seen.add(i)
+            if i not in owner or augment(owner[i], seen):
+                owner[i] = k
+                return True
+        return False
 
-    return best(0, frozenset())
+    return sum(augment(k, set()) for k in range(len(near)))
 
 
 def _requirements(m: Measurements, spec: Spec, version: str) -> list[Check]:
@@ -279,21 +289,26 @@ def _requirements(m: Measurements, spec: Spec, version: str) -> list[Check]:
     ))
 
     if strict:
-        # R9: the strict contract. Anything that is not the plate or one of its
-        # bores is extra or missing material against the part's own ideal
-        # shape: a notch, slot, pocket, cross-bore, chamfer, fillet, a lug in a
-        # bore. Dimension errors do not show here (the ideal is built from the
-        # measured envelope and bores), so R9 fails for one reason only.
+        # R9: the strict contract. A plate with bores is bounded only by the
+        # six planes of its own envelope and by its recognised bores. Any
+        # other face is something nobody asked for: a notch, slot, pocket,
+        # boss, cross-bore, chamfer, fillet, draft, a lug in a bore, a plate
+        # turned off its axes. Because the envelope and the bores are the
+        # MEASURED ones, a wrong dimension does not fail R9: it fails for one
+        # reason only. The volume residual is a cruder second look at the
+        # same question and can only add a failure, never remove one.
         extra, missing = m.extra_volume, m.missing_volume
-        if extra is None or missing is None:  # could not compare: a failed check, never a pass
-            checks.append(Check("R9:no_other_features", False,
-                                "the part could not be compared with its ideal shape"))
+        if m.surface_conformance is None or extra is None or missing is None:
+            checks.append(Check("R9:no_other_features", False,  # could not check: never a pass
+                                f"the form of the part could not be checked ({m.shape_error or 'no detail'})"))
         else:
+            residual_ok = extra <= SHAPE_VOLUME_TOL and missing <= SHAPE_VOLUME_TOL
             checks.append(Check(
                 "R9:no_other_features",
-                extra <= SHAPE_VOLUME_TOL and missing <= SHAPE_VOLUME_TOL,
-                f"{extra:.3f} mm3 extra, {missing:.3f} mm3 missing outside a "
-                f"{SHAPE_BAND_MM} mm band around the ideal plate with bores",
+                m.surface_conformance and residual_ok,
+                ("every face lies on the envelope or on a bore" if m.surface_conformance
+                 else "a face lies neither on the envelope nor on a recognised bore")
+                + f"; {extra:.3f} mm3 extra, {missing:.3f} mm3 missing outside a {SHAPE_BAND_MM} mm band",
             ))
 
     return checks
@@ -304,7 +319,9 @@ def score(completion: str, spec: Spec, version: str = SCORER_VERSION) -> Report:
     if version not in TOLERANCES:
         raise ValueError(f"unknown scorer version {version!r}; supported: {', '.join(SUPPORTED_VERSIONS)}")
     try:
-        m = build_and_measure(completion)
+        # The legacy scorer gets the legacy measurement: nothing added, nothing
+        # slower, values rounded as they were when its results were recorded.
+        m = build_and_measure(completion, strict=version != "0.4.0")
     except BuildError as exc:
         return Report(reward=0.0, checks=[], error=str(exc), parsed=False)
 

@@ -54,14 +54,16 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "environments" / "cad_spec"))
 
 from cad_spec.measure import BuildError, ScorerUnavailableError, build_and_measure, extract_code, require_cadquery
-from cad_spec.rubric import SCORER_VERSION
+from cad_spec.rubric import TOLERANCES
 from cad_spec.tasks import TASKS, Spec, edit_source, make_splits
 
 DETERMINISTIC = {"reference", "parser-copy", "parser-derive", "parser-template", "rev-a"}
 from degenerate import is_degenerate
 from summarize_results import load, run_arm, select_runs
 
-TOL = 0.5  # mm, same class as the rubric's position tolerance
+# mm, the position tolerance of the scorer the analysed files were recorded
+# under. Set in main() from their metadata; 0.5 is scorer 0.4.0's.
+TOL = 0.5
 UNFINISHED = ("API error", "degenerate loop", "cut off")
 NOT_BUILT = ("syntax error", "CadQuery API error", "geometry kernel failure", "Python error in model code",
              "no part produced", "timeout", "build failed")
@@ -73,7 +75,7 @@ ORDER = UNFINISHED + NOT_BUILT + (
     "holes misplaced (other)",
     "gate: single_solid", "gate: clean_solid", "gate: simple_through_holes", "gate: hole_count_sane",
     "gate: is_plate", "wrong plate size", "off Z datum", "wrong hole diameter", "wrong hole count",
-    "material off", "edge margin off", "other",
+    "material off", "edge margin off", "unrequested feature", "other",
 )
 # Last: an answer the classifier itself could not read (never silently dropped).
 ORDER = (*ORDER, "classifier error")
@@ -371,7 +373,9 @@ def _checks_label(checks: dict[str, bool]) -> str:
     order = (("R1:length", "wrong plate size"), ("R2:width", "wrong plate size"), ("R3:thickness", "wrong plate size"),
              ("R8:z_datum", "off Z datum"), ("R4b:hole_diameter", "wrong hole diameter"),
              ("R4a:hole_count", "wrong hole count"), ("R6:material", "material off"),
-             ("R7:edge_margin", "edge margin off"))
+             ("R7:edge_margin", "edge margin off"),
+             ("R5:hole_pattern", "holes misplaced (other)"),
+             ("R9:no_other_features", "unrequested feature"))
     for name, label in order:
         if checks.get(name) is False:
             return label
@@ -441,14 +445,20 @@ def main() -> int:
     api_kinds: dict[str, Counter] = defaultdict(Counter)
     arm_of: dict[str, str] = {}
     # The labels describe checks recorded in the files, so the report carries
-    # THEIR scorer version, not the version of the scorer installed today.
-    versions: set[str] = set()
+    # THEIR scorer version, not the version of the scorer installed today. A
+    # file that does not say which scorer made it is refused, never guessed.
+    global TOL
     metas, groups, ends = load(args.paths)
+    recorded = {m.get("scorer_version") for m in metas.values()}
+    if len(recorded) != 1 or not recorded <= set(TOLERANCES):
+        raise SystemExit("cad-spec: every file must record the same known scorer version "
+                         f"(found {sorted(map(str, recorded))}; known: {', '.join(TOLERANCES)})")
+    version = next(iter(recorded))
+    TOL = TOLERANCES[version].position
     for (model, tier), run in sorted(select_runs(metas, groups, ends).items()):
         if tier not in args.tiers:
             continue
         arm_of[model] = run_arm(run["meta"])
-        versions.add(run["meta"].get("scorer_version") or SCORER_VERSION)
         max_tokens = run["meta"].get("max_tokens")
         for row in run["rows"]:
             if row.get("spec_id") not in specs:
@@ -472,9 +482,6 @@ def main() -> int:
 
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
-    if len(versions) > 1:
-        raise SystemExit(f"cad-spec: the files mix scorer versions {sorted(versions)}; analyse one version at a time")
-    version = versions.pop() if versions else SCORER_VERSION
     stem = out / f"failure-modes-{version}"
     Path(f"{stem}.json").write_text(json.dumps({
         "scorer_version": version, "tiers": args.tiers, "order": list(ORDER),
