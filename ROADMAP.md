@@ -12,7 +12,7 @@ the evidence that meets it.
 | 2 Contain generated code | **done on POSIX**, Windows documented as trusted-only | BREP trust boundary; `SECURITY.md` per mode; sandbox tests; Docker CI job |
 | 3 Learning value | **shown on this task, with caveats** | 16-model first-shot board; pre-registered hint/feedback experiment; one pre-registered LoRA run (+40.0 points on L2 + L4) and its pre-registered replication (+39.2); one adapter, serving routes not attested |
 | 4 Transfer | **partial** | tiers L1 to L4 incl. held-out wording; new part families not started |
-| 5 Research-grade release | **partial** | changelog, data card, protocol, license; release tag waits for Phase 3 numbers |
+| 5 Research-grade release | **released: v0.5.0** (5 October 2026) | changelog, data card, protocol, license, one-document report (`docs/REPORT.md`); scorer 0.5.0 reviewed externally before merge |
 
 ## After the external audit of 3 October 2026
 
