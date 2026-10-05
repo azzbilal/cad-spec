@@ -12,14 +12,16 @@ Tiers L1 to L4 (L4 is an engineering change order). The owner, Bilal Azzouzi,
 is an aerospace structures and CAD engineer building this as a portfolio
 piece for RL-environment and evaluation work.
 
-## State on 3 October 2026
+## State on 4 October 2026
 
-- `main` at `35a87c4`. Package cad-spec 0.4.5, scorer 0.4.0.
+- Package cad-spec 0.5.0, scorer 0.5.0 (strict contract). Scorer 0.4.0 is
+  kept selectable: everything published before 4 October 2026 was scored
+  under it. The Prime Hub copy is still 0.4.5.
 - Training run 1 (Qwen3.5-9B LoRA) and its replication are done, registered
-  and audited: +40.0 and +39.2 points on L2 + L4.
+  and audited: +40.0 and +39.2 points on L2 + L4, under scorer 0.4.0.
 - Next work is in `ROADMAP.md`, section "After the external audit of
-  3 October 2026". The release plan is: L4 parser baseline, then scorer 0.5,
-  then the 0.5.0 release. All three are free.
+  3 October 2026". Items 1 (scorer 0.5) and 2 (L4 parser baseline) are done.
+  Next: the 0.5.0 release notes and README top, then item 3.
 
 ## Rules that are never broken
 
@@ -39,11 +41,13 @@ piece for RL-environment and evaluation work.
    outcome it could influence.
 4. **Frozen code.** Do not edit `scripts/compare_training.py`,
    `scripts/compare_replication.py`, `scripts/bridge_check.py` or
-   `scripts/replication_split.py`. Scorer 0.4.0 verdicts are historical: a
-   new scorer gets a new version and never replaces a recorded verdict.
-5. **The package.** Anything under `environments/cad_spec/cad_spec/` is the
-   published 0.4.5 wheel. Do not change it unless the task is explicitly a
-   new release with a version bump. New evaluation logic goes in `scripts/`.
+   `scripts/replication_split.py`. Recorded verdicts are historical: a new
+   scorer gets a new version, the old one stays selectable in `rubric.py`,
+   and a recorded verdict is never replaced.
+5. **The package.** Do not change anything under
+   `environments/cad_spec/cad_spec/` unless the task is explicitly a new
+   release with a version bump. A scorer change starts with the defect suite
+   (`scripts/validate_scorer.py`), committed before the scorer. New evaluation logic goes in `scripts/`.
 6. **Git.** One branch per task, never commit on `main`, never push, merge,
    rebase or force anything. Bilal pushes and opens the pull request. Leave
    these untracked paths alone: `audit/scratch/run1-breps/`,

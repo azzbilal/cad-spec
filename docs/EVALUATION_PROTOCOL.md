@@ -28,8 +28,10 @@ or a CV. Written against scorer 0.4.0 (package 0.4.1).
 ## 2. Calibrate the scorer first
 
 `python scripts/validate_scorer.py` must report 0 false full credit and 0
-false rejection outside the `known_limitation` family. CI enforces this on 10
-specs; run all 30 before publishing. When adding a requirement, add mutants on
+false rejection. CI enforces this on 10 specs; run all 30 before publishing.
+The suite states the contract itself (it does not read tolerances from the
+scorer), and a change to the scorer starts with the suite: new defect
+families are committed first, the scorer is changed second. When adding a requirement, add mutants on
 both sides of its tolerance and a benign variant that must keep full credit.
 
 Disputed mutants (oracle and scorer disagree, and it is not obvious which is
@@ -87,8 +89,11 @@ template-aware shortcut goes.
 - Report paired per-tier all-pass changes with intervals, mean reward, build
   and gate rates, reasoning-failure rates and total spend, regressions
   included.
-- Ablation for any new reward design: the equal-weight k/9 reward is the
-  comparator.
+- Ablation for any new reward design: the equal-weight reward (k/10 under
+  scorer 0.5.0, k/9 under 0.4.0) is the comparator.
+- State the scorer version of every number. Results recorded under one
+  version are not rescored under another; a sensitivity table may be added
+  next to them, labelled as such.
 
 ## 6. What the numbers may be called
 

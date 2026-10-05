@@ -51,7 +51,7 @@ def test_reference_scores_one_in_both_modes():
     assert all_pass_reward(code, spec.id, {"spec_id": spec.id}) == 1.0
 
 
-def test_the_l4_failure_is_7_of_9_continuous_and_0_binary(monkeypatch):
+def test_the_l4_failure_is_8_of_10_continuous_and_0_binary(monkeypatch):
     """Change order: plate 20 mm longer, same margin. The typical failure
     resizes the plate but keeps the old hole pitch along the length."""
     base = EVAL_SPECS[0]
@@ -65,7 +65,9 @@ def test_the_l4_failure_is_7_of_9_continuous_and_0_binary(monkeypatch):
     failed = sorted(c.name for c in rep.checks if not c.passed)
     assert failed == ["R5:hole_pattern", "R7:edge_margin"]
     # the scorer rounds rewards to 4 decimals
-    assert spec_reward(code, target.id, {"spec_id": target.id}) == pytest.approx(7 / 9, abs=1e-4)
+    assert spec_reward(code, target.id, {"spec_id": target.id}) == pytest.approx(8 / 10, abs=1e-4)
+    # the same answer under the scorer run 1 was trained with: 7 of 9
+    assert score(code, target, "0.4.0").reward == pytest.approx(7 / 9, abs=1e-4)
     assert all_pass_reward(code, target.id, {"spec_id": target.id}) == 0.0
 
 

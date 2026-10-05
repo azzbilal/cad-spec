@@ -5,6 +5,77 @@ Scores are only comparable within one scorer version
 
 ## Unreleased
 
+### Scorer 0.5.0: a strict part contract (package 0.5.0)
+- **Contract:** a correct part is one rectangular plate with exactly four
+  through holes and nothing else. Tolerances are 0.1 mm on every dimension,
+  position, margin, datum and diameter (0.5 mm and 0.2 mm before): specs sit
+  on a 0.5 mm grid and hole centres on a 0.25 mm grid, so 0.5 mm accepted an
+  error of one grid step.
+- **New check R9, no other features.** Every face of the part must be one
+  of the six planes of its own envelope or one of its recognised bores. Only
+  surfaces stored as a plane or a cylinder count, each judged where it lies
+  across the part; a bore has one distance budget for axis and radius; the
+  edges must lie on the faces with every tolerance forced to the form
+  tolerance. That tolerance is the kernel's resolution, 1e-7 mm, stated as
+  a numerical equivalence. A volume comparison with the ideal part (0.001
+  mm3 outside a 0.005 mm band) runs as a second look and can only add a
+  failure. Dimensional values are compared unrounded, with 1e-9 mm of slack
+  (the form check adds none). The hole
+  pattern is matched one hole per position. Ten requirements.
+- **Three external audit rounds broke three drafts before merge** (5 October
+  2026; `audit/scorer-0.5-audit.md`, `scorer-0.5-v2-audit.md`,
+  `scorer-0.5-v3-audit.md`). Draft 1 judged R9 by a volume inside a 0.005 mm
+  band: a 5 micron pocket over 50 x 50 mm, a boss absorbed by the envelope,
+  a 13 micron through slot and a 10 micron chamfer scored 1.0; rounding let
+  0.100049 mm pass a 0.1 mm tolerance; two environments in one process
+  shared a scorer version; the legacy scorer paid for the new work. Draft 2
+  checked the form but trusted the kernel's approximate recovery of spline
+  surfaces (a spline with a 1 mm bump passed as a plane) and compared a
+  plane's stored origin (a pocket floor stored 9.8 km away passed). Draft 3
+  looked at faces only: an ordinary CadQuery cut 1.2e-6 mm deep at a bore
+  mouth came back as nominal faces joined by an edge lying off both, and
+  passed; bores tilted on the diagonal passed two separate X and Y
+  allowances. All are fixed and pinned as the `AUDIT_`, `AUDIT3_` and
+  `AUDIT4_` cases of `scripts/test_rubric_050.py`. Scorer 0.5.0 had not
+  recorded any result.
+- **A fourth round verified the result** (`audit/scorer-0.5-v4-audit.md`):
+  473 earlier parts rerun on Windows, no wrong part at full credit, no
+  correct non-spline part rejected, 180 further correct plates passed, 3,161
+  legacy answers identical to `main`. The edge check adds about 10% to the
+  time per answer. Recommendation: merge.
+- **Worker recovery.** After an answer crashed the kernel, the following
+  answers could fail with "scorer pipe broke" and score 0. A lost worker is
+  now replaced and the answer retried once; if that fails it is reported as
+  a scorer fault, not as a model failure. This is shared by both scorer
+  versions; it changes no geometry and no tolerance.
+- **Why:** the external audit of 3 October 2026 found a saved development
+  answer with four notches through its edges that 0.4.0 scored 1.0. It is
+  now a pinned case (`scripts/test_rubric_050.py`).
+- **Order of work:** the defect suite was committed first
+  (`scripts/validate_scorer.py`, suite 0.5.0, stating the contract itself),
+  and run against the unchanged scorer: 0.4.0 gives full credit to 1,320 of
+  the 1,646 parts that are wrong under the strict contract. Scorer 0.5.0
+  then, in its final form: 0 false full credit, 0 false rejection on 720
+  correct parts. These are counts on the suite's cases, not a proof that no
+  wrong part can pass.
+- **Nothing recorded changes.** Scorer 0.4.0 stays selectable
+  (`score(..., version="0.4.0")`, `load_environment(scorer_version="0.4.0")`)
+  and replay scores each file under the version it records: the 961 saved
+  evaluation answers replay with 0 mismatches and the verdict files are
+  byte-identical. The legacy scorer uses the legacy measurement, with none
+  of the new work.
+- **Sensitivity, descriptive only:** both evaluations re-scored under 0.5.0,
+  on each of the four states of the scorer (three drafts, then the final
+  one), with the same outcome each time. Six verdicts change (five base, one adapter,
+  hole centres off by 0.25 or 0.5 mm); L2 + L4 gain +41.7 and +40.8 points.
+- The leaderboard, the hint experiment and both training evaluations remain
+  scorer 0.4.0 results. The Prime Hub copy is still 0.4.5.
+- Corner fillets and a shallow pocket, which 0.4.0 accepted on purpose, now
+  fail R9: nobody asked for them. A correct plate converted to NURBS
+  surfaces still scores 0, as under 0.4.0: a deliberate false rejection.
+- Analysis scripts (`replay_eval`, `failure_modes`, `label_check`,
+  `verify_hub`) require the scorer version recorded in each file.
+
 ### L4 change-order parser baseline (4 October 2026)
 - New deterministic provider `parser-edit` (`scripts/run_baseline.py`):
   reads rev A's box, hole rectangle and diameter from the prompt's code,

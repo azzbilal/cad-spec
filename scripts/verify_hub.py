@@ -63,18 +63,36 @@ def main() -> int:
     except ImportError:  # packages before 0.4.1 have no test split
         pass
 
+    # Each saved answer is compared under the scorer version its file records.
+    # A package that has that version (0.5.0 and later keep 0.4.0) is asked for
+    # it; an older package can only replay its own.
+    import inspect
+
+    versioned = "version" in inspect.signature(score).parameters
     rows, timeouts = [], 0
     for f in files:
+        recorded = None
         with open(f, encoding="utf-8") as fh:
             for line in fh:
                 if not line.strip():
                     continue
                 row = json.loads(line)
-                if "meta" in row or "end" in row or row.get("spec_id") not in specs or "checks" not in row:
+                if "meta" in row:
+                    recorded = row["meta"].get("scorer_version")
+                    if recorded is None:
+                        raise SystemExit(f"{f}: the file does not record its scorer version")
+                    if not versioned and recorded != SCORER_VERSION:
+                        raise SystemExit(f"{f}: recorded under scorer {recorded}; the installed package only has "
+                                         f"{SCORER_VERSION}")
+                    continue
+                if "end" in row or row.get("spec_id") not in specs or "checks" not in row:
                     continue
                 if row.get("timeout"):
                     timeouts += 1
                     continue
+                if recorded is None:
+                    raise SystemExit(f"{f}: answers before any metadata; the scorer version is unknown")
+                row["_recorded_scorer"] = recorded
                 rows.append(row)
     rows.sort(key=lambda r: (r.get("run_id", ""), r["tier"], r["spec_id"], r.get("rollout", 0)))
     if args.n and args.n < len(rows):
@@ -86,7 +104,8 @@ def main() -> int:
           f"({timeouts} timeout answers skipped)")
     mismatches = []
     for i, row in enumerate(rows, 1):
-        report = score(row.get("completion") or "", specs[row["spec_id"]])
+        answer, spec = row.get("completion") or "", specs[row["spec_id"]]
+        report = score(answer, spec, row["_recorded_scorer"]) if versioned else score(answer, spec)
         checks = {c.name: c.passed for c in report.checks}
         if abs(report.reward - row["reward"]) > 1e-9 or checks != row["checks"]:
             mismatches.append((row, report.reward, checks))

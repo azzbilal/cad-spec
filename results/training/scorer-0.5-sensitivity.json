@@ -1,0 +1,193 @@
+{
+  "recorded_scorer": "0.4.0",
+  "sensitivity_scorer": "0.5.0",
+  "splits": {
+    "original test split": {
+      "per_tier": {
+        "L1": {
+          "n": 60,
+          "base_0.4.0": 52,
+          "base_0.5.0": 52,
+          "adapter_0.4.0": 60,
+          "adapter_0.5.0": 60
+        },
+        "L2": {
+          "n": 60,
+          "base_0.4.0": 50,
+          "base_0.5.0": 50,
+          "adapter_0.4.0": 60,
+          "adapter_0.5.0": 60
+        },
+        "L3": {
+          "n": 60,
+          "base_0.4.0": 45,
+          "base_0.5.0": 45,
+          "adapter_0.4.0": 59,
+          "adapter_0.5.0": 59
+        },
+        "L4": {
+          "n": 60,
+          "base_0.4.0": 22,
+          "base_0.5.0": 20,
+          "adapter_0.4.0": 60,
+          "adapter_0.5.0": 60
+        }
+      },
+      "l2_l4_gain_0.4.0": {
+        "tiers": [
+          "L2",
+          "L4"
+        ],
+        "base_all_pass": 0.6,
+        "adapter_all_pass": 1.0,
+        "difference": 0.4,
+        "ci95": [
+          0.325,
+          0.475
+        ],
+        "pairs": 120
+      },
+      "l2_l4_gain_0.5.0": {
+        "tiers": [
+          "L2",
+          "L4"
+        ],
+        "base_all_pass": 0.5833333333333334,
+        "adapter_all_pass": 1.0,
+        "difference": 0.4166666666666667,
+        "ci95": [
+          0.3416666666666667,
+          0.49166666666666664
+        ],
+        "pairs": 120
+      },
+      "base_changed": [
+        {
+          "tier": "L4",
+          "spec_id": "test-0007",
+          "recorded": 1,
+          "under_0.5.0": 0,
+          "failed_checks": [
+            "R5:hole_pattern",
+            "R7:edge_margin"
+          ]
+        },
+        {
+          "tier": "L4",
+          "spec_id": "test-0043",
+          "recorded": 1,
+          "under_0.5.0": 0,
+          "failed_checks": [
+            "R5:hole_pattern",
+            "R7:edge_margin"
+          ]
+        }
+      ],
+      "adapter_changed": []
+    },
+    "replication split": {
+      "per_tier": {
+        "L1": {
+          "n": 60,
+          "base_0.4.0": 42,
+          "base_0.5.0": 41,
+          "adapter_0.4.0": 60,
+          "adapter_0.5.0": 59
+        },
+        "L2": {
+          "n": 60,
+          "base_0.4.0": 50,
+          "base_0.5.0": 50,
+          "adapter_0.4.0": 60,
+          "adapter_0.5.0": 60
+        },
+        "L3": {
+          "n": 60,
+          "base_0.4.0": 47,
+          "base_0.5.0": 47,
+          "adapter_0.4.0": 58,
+          "adapter_0.5.0": 58
+        },
+        "L4": {
+          "n": 60,
+          "base_0.4.0": 22,
+          "base_0.5.0": 20,
+          "adapter_0.4.0": 59,
+          "adapter_0.5.0": 59
+        }
+      },
+      "l2_l4_gain_0.4.0": {
+        "tiers": [
+          "L2",
+          "L4"
+        ],
+        "base_all_pass": 0.6,
+        "adapter_all_pass": 0.9916666666666667,
+        "difference": 0.39166666666666666,
+        "ci95": [
+          0.31666666666666665,
+          0.4666666666666667
+        ],
+        "pairs": 120
+      },
+      "l2_l4_gain_0.5.0": {
+        "tiers": [
+          "L2",
+          "L4"
+        ],
+        "base_all_pass": 0.5833333333333334,
+        "adapter_all_pass": 0.9916666666666667,
+        "difference": 0.4083333333333333,
+        "ci95": [
+          0.3333333333333333,
+          0.48333333333333334
+        ],
+        "pairs": 120
+      },
+      "base_changed": [
+        {
+          "tier": "L1",
+          "spec_id": "rep-0037",
+          "recorded": 1,
+          "under_0.5.0": 0,
+          "failed_checks": [
+            "R5:hole_pattern",
+            "R7:edge_margin"
+          ]
+        },
+        {
+          "tier": "L4",
+          "spec_id": "rep-0005",
+          "recorded": 1,
+          "under_0.5.0": 0,
+          "failed_checks": [
+            "R5:hole_pattern",
+            "R7:edge_margin"
+          ]
+        },
+        {
+          "tier": "L4",
+          "spec_id": "rep-0034",
+          "recorded": 1,
+          "under_0.5.0": 0,
+          "failed_checks": [
+            "R5:hole_pattern",
+            "R7:edge_margin"
+          ]
+        }
+      ],
+      "adapter_changed": [
+        {
+          "tier": "L1",
+          "spec_id": "rep-0038",
+          "recorded": 1,
+          "under_0.5.0": 0,
+          "failed_checks": [
+            "R5:hole_pattern",
+            "R7:edge_margin"
+          ]
+        }
+      ]
+    }
+  }
+}

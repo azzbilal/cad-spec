@@ -30,7 +30,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "environments" / "cad_spec"))
 
-from cad_spec.rubric import SCORER_VERSION
+from cad_spec.rubric import SUPPORTED_VERSIONS
 from cad_spec.tasks import TASKS, edit_source, make_splits, prompt_for
 from summarize_results import load
 
@@ -45,13 +45,24 @@ def fmt_range(lo_hi: list[float]) -> str:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("paths", nargs="+", help="the run files the failure analysis was built from")
-    ap.add_argument("--failures", default=str(ROOT / "results" / f"failure-modes-{SCORER_VERSION}.json"))
+    ap.add_argument("--failures", default="",
+                    help="failure-modes JSON; default: results/failure-modes-<scorer version of the run files>.json")
     ap.add_argument("--seed", type=int, required=True, help="use a new seed for every check")
     ap.add_argument("-n", type=int, default=30)
     ap.add_argument("--out", default="label_check.md")
     args = ap.parse_args()
 
-    failures = json.loads(Path(args.failures).read_text())
+    metas, _, _ = load(args.paths)
+    recorded = {m.get("scorer_version") for m in metas.values()}
+    if len(recorded) != 1 or not recorded <= set(SUPPORTED_VERSIONS):
+        raise SystemExit("cad-spec: every run file must record the same known scorer version "
+                         f"(found {sorted(map(str, recorded))})")
+    version = next(iter(recorded))
+    failures_path = Path(args.failures) if args.failures else ROOT / "results" / f"failure-modes-{version}.json"
+    failures = json.loads(failures_path.read_text())
+    if failures.get("scorer_version") != version:
+        raise SystemExit(f"cad-spec: the failure labels are for scorer {failures.get('scorer_version')!r}, "
+                         f"the run files for {version!r}")
     pool = [r for r in failures["rows"] if r["label"] not in MECHANICAL and r["model"] not in DETERMINISTIC]
     if "run_id" not in (pool[0] if pool else {"run_id": 1}):
         raise SystemExit("this failure file predates run ids; rerun scripts/failure_modes.py first")
@@ -71,7 +82,7 @@ def main() -> int:
     eval_ids = {s.id for s in evals}
 
     out = [f"# Label check: {len(sample)} random failed answers (seed {args.seed})", "",
-           f"Scorer {SCORER_VERSION}. Pool: {len(pool)} failed answers with judgement labels "
+           f"Scorer {version}. Pool: {len(pool)} failed answers with judgement labels "
            "(mechanical failures such as API errors and syntax errors are left out).", "",
            "For each: does the LABEL name what the code and measurements show? The correct hole "
            "centres are worked out for you: (+/- pitch_x / 2, +/- pitch_y / 2). A plate whose X or Y "

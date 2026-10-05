@@ -28,7 +28,8 @@ requirements; measuring the gap between copying numbers (L0/L1), deriving one
 (L2), reading prose (L3) and editing an existing model (L4).
 
 ## Out of scope
-Other part families, tolerances tighter than the published ones, GD&T, fits,
+Other part families, tolerances tighter than the published ones (0.1 mm
+since scorer 0.5.0, 0.5 mm before), GD&T, fits,
 material selection, strength, manufacturability, assemblies. "R6 material" is
 a volume-consistency check.
 
@@ -39,6 +40,6 @@ a volume-consistency check.
 - Held-out wording in L3 is two templates; small, written by the same author
   as the training templates, and each states its numbers in a fixed order: a
   parser that knows all six templates scores 100% on L3 (`parser-template`).
-- Bores are recognised only as analytic cylinders; NURBS copies of correct
-  parts score 0.
+- Only analytic planes and cylinders are recognised: NURBS copies of
+  correct parts score 0 (a deliberate false rejection, see the README).
 - Prompts are English only.

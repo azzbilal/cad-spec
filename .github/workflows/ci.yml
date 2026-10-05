@@ -24,6 +24,9 @@ jobs:
         run: ruff check scripts
       - run: mypy cad_spec
       - run: pytest -q
+      - name: Hand-labelled cases for scorer 0.5.0 (strict contract)
+        working-directory: .
+        run: python scripts/test_rubric_050.py
       - name: Adversarial rubric harness
         working-directory: .
         run: python scripts/test_rubric.py

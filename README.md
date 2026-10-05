@@ -15,9 +15,9 @@ What this is, and what it is not:
 
 | Claim | Status |
 |---|---|
-| Scores a CadQuery part against 9 measurable requirements with partial credit | yes, one part family (4-hole mounting plate) |
+| Scores a CadQuery part against 10 measurable requirements with partial credit | yes, one part family (4-hole mounting plate). Scorer 0.5.0: a correct part is the plate and its four holes, nothing else, within 0.1 mm |
 | Measures the real geometry, not what the model's objects claim | yes since 0.4.0: model code hands over BREP geometry; a separate trusted process measures it on POSIX (`fork` mode). On Windows the default `reuse` mode measures in the process that ran the code, for trusted answers only ([SECURITY.md](SECURITY.md)) |
-| Scorer validated against labelled mutants | yes: 1,230 mutants, 0 false full credit on 600 wrong parts, 0 false rejection on 600 correct parts ([results](results/scorer-validation-0.4.0.md)) |
+| Scorer validated against labelled mutants | yes: 2,366 mutants, 0 false full credit on 1,646 wrong parts, 0 false rejection on 720 correct parts ([results](results/scorer-validation-0.5.0.md)). The suite was frozen before the scorer was changed; the previous scorer gives full credit to 1,320 of those wrong parts ([before](results/scorer-validation-0.4.0-under-suite-0.5.0.md)) |
 | Separates "copying numbers" from "reading a spec" | partly: five prompt tiers, reported separately; L0 to L2 are solved by simple parsers, L3 by a parser that knows its wording templates, and L4 by a change-order parser ([baselines](results/baselines-deterministic.md)) |
 | Runs untrusted model code safely | per-rollout sandbox on POSIX, container for untrusted scale ([SECURITY.md](SECURITY.md)) |
 | Ranks real models and shows *how* each one fails | yes: 16 models (15 hosted, 1 local), about $0.27 of API calls; failure labels checked by AI-assisted review of three fresh random samples: 28/30, 28/30, 27/30 ([leaderboard](#leaderboard)) |
@@ -33,7 +33,8 @@ What this is, and what it is not:
 ```bash
 git clone https://github.com/azzbilal/cad-spec && cd cad-spec
 pip install "cadquery==2.8.0"
-python scripts/test_rubric.py              # 37 hand-labelled cases
+python scripts/test_rubric_050.py          # 81 hand-labelled cases, scorer 0.5.0
+python scripts/test_rubric.py              # 37 cases pinning scorer 0.4.0 (kept for replay)
 ```
 
 **Full environment** (Verifiers, tests, validation):
@@ -43,7 +44,7 @@ cd environments/cad_spec
 pip install -c constraints.txt -e ".[dev]"
 pytest -q                                  # unit, sandbox, tier and harness tests
 cd ../..
-python scripts/validate_scorer.py          # mutation validation, ~90 s
+python scripts/validate_scorer.py          # mutation validation, a few minutes
 ```
 
 On Windows use `py` instead of `python` outside a virtual environment.
@@ -105,6 +106,20 @@ can handle change orders in general.
 
 ## Scoring
 
+**Two scorer versions live side by side.** 0.5.0 is the current one and
+judges every new run. 0.4.0 keeps its original geometry and tolerance
+policy (only the recovery from a crashed worker is shared), because **every
+result on this page recorded before 4 October 2026 (the leaderboard, the
+hint experiment, training run 1 and its replication) was scored under 0.4.0**
+and result files are replayed under the version they record. A recorded
+verdict is never rescored under a newer scorer; what 0.5.0 would say about
+the two training evaluations is a separate, labelled
+[sensitivity table](results/training/scorer-0.5-sensitivity.md).
+
+**The contract (0.5.0):** one rectangular plate with exactly four through
+holes and nothing else. No extra cut, notch, slot, pocket, cross-bore,
+chamfer or fillet, no material left inside a bore.
+
 **Gates** zero the reward. Each exists because of a specific cheat, and each
 cheat is a case in `scripts/test_rubric.py`:
 
@@ -116,20 +131,76 @@ cheat is a case in `scripts/test_rubric.py`:
 | `hole_count_sane` | swiss-cheesing the plate to hit a volume target |
 | `is_plate` | a shell or ellipse with the right bounding box (volume vs volume predicted from the measured geometry, 12% band) |
 
-**Requirements** give partial credit, reward = k/9:
+**Requirements** give partial credit, reward = k/10 (k/9 under 0.4.0, which
+has no R9):
 
-| Check | Tolerance | Referenced to |
-|---|---|---|
-| R1-R3 length, width, thickness | 0.5 mm | envelope size |
-| R4a hole count | exact | closed bores |
-| R4b hole diameter | 0.2 mm | each bore |
-| R5 hole pattern | 0.5 mm | the **origin** (the prompt fixes the part centred on it) |
-| R6 material | 3% | measured envelope minus nominal bores (volume only) |
-| R7 edge margin | 0.5 mm | the part's own **edges** |
-| R8 Z datum | 0.5 mm | plate mid-plane to **Z = 0** |
+| Check | 0.5.0 | 0.4.0 | Referenced to |
+|---|---|---|---|
+| R1-R3 length, width, thickness | 0.1 mm | 0.5 mm | envelope size |
+| R4a hole count | exact | exact | closed bores |
+| R4b hole diameter | 0.1 mm | 0.2 mm | each bore |
+| R5 hole pattern | 0.1 mm, one hole per position | 0.5 mm | the **origin** (the prompt fixes the part centred on it) |
+| R6 material | 3% | 3% | measured envelope minus nominal bores (volume only) |
+| R7 edge margin | 0.1 mm | 0.5 mm | the part's own **edges** |
+| R8 Z datum | 0.1 mm | 0.5 mm | plate mid-plane to **Z = 0** |
+| R9 no other features | every face is an envelope plane or a bore, edges on faces, within 1e-7 mm | not checked | the part's own envelope planes and bore cylinders |
 
-Tolerances are inclusive: 6.7 mm is inside 6.5 +/- 0.2 (comparisons carry a
-1e-6 mm numerical slack; 0.3.x failed it on floating-point rounding).
+Why 0.1 mm: specs sit on a 0.5 mm grid and hole centres on a 0.25 mm grid,
+so a 0.5 mm tolerance accepted an arithmetic slip of a whole grid step.
+
+R9 checks the form of the part. A plate with bores is bounded only by the
+six planes of its own envelope and by the cylinders of its recognised bores,
+so every face must be one of them. A notch, slot, pocket, boss, cross-bore,
+chamfer, fillet, draft, a lug in a bore or a plate turned off its axes each
+adds a face that is none of them. The check has four parts:
+
+- Only a surface the kernel stores as a plane or a cylinder counts. A spline
+  that looks like a plane does not.
+- A surface is judged by where it lies across the part, not by the point it
+  happens to be stored with. A bore has one distance budget for its axis and
+  its radius together.
+- The edges must lie on the faces. The kernel accepts a shape whose edges
+  sit off its faces by whatever tolerance the shape carries; the check is
+  repeated with every tolerance forced to the form tolerance.
+- The form tolerance is the kernel's own resolution, 1e-7 mm. That is a
+  numerical equivalence and it is stated as such: two surfaces closer than
+  0.1 nanometre are treated as the same surface.
+
+The envelope and the bores are the measured ones, not the spec's, so a wrong
+dimension does not fail R9: each check still fails for one reason. A volume
+comparison with the ideal part runs as a cruder second look (more than
+0.001 mm3 outside a 0.005 mm band fails) and can only add a failure.
+
+Four external audit rounds shaped it, and each found something real:
+
+1. A saved model answer with four notches through its edges that 0.4.0
+   scored 1.0 (`SAVED_dev_answer_gen_0021` in `scripts/test_rubric_050.py`).
+2. The first draft of 0.5.0 judged R9 by volume alone: a 5 micron pocket
+   over 50 x 50 mm, a 13 micron slot and a 10 micron chamfer scored 1.0
+   (the `AUDIT_` cases).
+3. The first form check trusted the kernel's approximate recovery of spline
+   surfaces and compared a plane's stored origin: a spline face with a 1 mm
+   bump and a pocket floor stored 9.8 km away scored 1.0 (`AUDIT3_`).
+4. The second form check looked at faces only: a cut 1.2e-6 mm deep at the
+   mouth of a bore, written in ordinary CadQuery, came back from the kernel
+   as the nominal faces joined by an edge lying off both, and scored 1.0
+   (`AUDIT4_`).
+
+A fifth pass then verified the result (`audit/scorer-0.5-v4-audit.md`): all
+473 parts of the earlier rounds were run again, no wrong part scored 1.0, no
+correct part with ordinary surfaces was rejected, and 180 further correct
+plates passed. Its recommendation was to merge.
+
+This is not a proof that no wrong part can pass. The main defects found in
+those reviews have pinned reproducing tests; the full external corpus is
+larger than the regression suite kept in this repository. Scorer 0.5.0 costs
+about twice the time of 0.4.0 per answer.
+
+Tolerances are inclusive: 6.6 mm is inside 6.5 +/- 0.1. Scorer 0.5.0
+compares unrounded measurements with 1e-9 mm of numerical slack, so
+6.600001 mm is outside. Scorer 0.4.0 rounds to 0.0001 mm and carries 1e-6 mm
+of slack, as it always did (0.3.x failed exact limits on floating-point
+rounding).
 
 Datums on purpose: a plate slid under its holes fails R7 only, a part moved
 in X or Y fails R5 only, a part moved in Z fails R8 only. Before 0.3.0 only
@@ -157,11 +228,18 @@ bore.
 **Known limitation:** a hole that breaks out through a side wall does not
 close, so it is reported in `Measurements.partial_bores` but not counted. The
 part then loses count and pattern, where an inspector would say "4 holes, one
-misplaced". Pinned as `LIMIT_hole_breakout`.
+misplaced". Pinned as `LIMIT_hole_breakout`. Under 0.5.0 it also fails R9.
+A second one: the bore detector probes each cylinder on its +X side, so a
+lug placed exactly there hides the bore; the part is still rejected (count,
+pattern and R9), but for more reasons than an inspector would give.
 
-**Known limitation:** bores are recognised only as analytic cylinders. The
-same correct part converted to NURBS surfaces (`toNURBS()`) scores 0. Models
-do not produce this unprompted. Pinned as `LIMIT_nurbs_surfaces`.
+**Known limitation, kept on purpose:** only analytic planes and cylinders
+are recognised, so the same correct part converted to NURBS surfaces
+(`toNURBS()`) scores 0, under 0.4.0 and under 0.5.0. A draft of 0.5.0
+accepted it by asking the kernel to recover the analytic form; the third
+audit showed that the same recovery accepts a spline with a 1 mm bump. A
+false rejection of an exotic representation is the safer error. Models do
+not produce this unprompted. Pinned as `LIMIT_nurbs_surfaces`.
 
 ## Leaderboard
 
@@ -327,12 +405,14 @@ model without training, both with the cheat-sheet:
   evaluations, 800 are the nominal part; six have a hole centre off by 0.25
   or 0.5 mm, which scorer 0.4.0 accepts (five base answers, one adapter
   answer). Neither verdict depends on them (+40.8 and +41.7 without them).
-- **Known scorer limit (external audit, 3 October 2026):** scorer 0.4.0 can
-  give full credit to a part with extra cuts. One saved development answer
-  has four notches through its edges and scores 1.0, because R6 tolerates
-  3% of missing material. No passing evaluation answer has this defect, but
-  reward 1 is not yet a guarantee of the requested part. A stricter scorer
-  0.5 is the next item on the [roadmap](ROADMAP.md).
+- **Scorer limit found by the external audit, fixed in 0.5.0:** scorer 0.4.0
+  can give full credit to a part with extra cuts. One saved development
+  answer has four notches through its edges and scores 1.0, because R6
+  tolerates 3% of missing material. Scorer 0.5.0 rejects it. Re-scoring both
+  evaluations under 0.5.0, as a sensitivity check that replaces no verdict,
+  changes six answers (five from the base model, one from the adapter, all
+  hole centres off by 0.25 or 0.5 mm) and gives +41.7 and +40.8 points
+  ([table](results/training/scorer-0.5-sensitivity.md)).
 - **Cost:** the run cost $13.87, of which about $7 paid for answers the
   filter discarded once most prompts were solved
   ([cost audit](audit/README.md), report `audit/run1-cost-report.md`).
@@ -341,6 +421,9 @@ model without training, both with the cheat-sheet:
 
 | File | What it shows |
 |---|---|
+| [`results/scorer-validation-0.5.0.md`](results/scorer-validation-0.5.0.md) | the current scorer against the 0.5.0 suite: 2,366 mutants over the 30 held-out specs, 0 false full credit on 1,646 wrong parts, 0 false rejection on 720 correct parts |
+| [`results/scorer-validation-0.4.0-under-suite-0.5.0.md`](results/scorer-validation-0.4.0-under-suite-0.5.0.md) | the same suite on the previous scorer, run before any scorer change: full credit to 1,320 of the 1,646 parts that are wrong under the strict contract |
+| [`results/training/scorer-0.5-sensitivity.md`](results/training/scorer-0.5-sensitivity.md) | both training evaluations re-scored under 0.5.0, descriptive only |
 | [`results/scorer-validation-0.4.0.md`](results/scorer-validation-0.4.0.md) | 1,230 one-change mutants over the 30 held-out specs (600 wrong parts, 600 correct, 30 documented-limitation cases excluded); ground truth from geometry parameters; 0 false full credit, 0 false rejection, 100% per-check agreement |
 | [`results/scorer-validation-0.3.0-under-suite-0.4.0.md`](results/scorer-validation-0.3.0-under-suite-0.4.0.md) | the 0.4.0 suite on the previous scorer: 15.0% false full credit (Z shift, membranes, cavities), 4.7% false rejection (exact-limit diameters). Shows the suite detects the defects the second audit found |
 | [`results/scorer-validation-0.2.0.md`](results/scorer-validation-0.2.0.md) | the original suite on 0.2.0: 5.9% false full credit, 12.5% false rejection |
@@ -473,7 +556,8 @@ environments/cad_spec/cad_spec/
   environment.py  the only file that imports verifiers
   __main__.py     the cad-spec CLI
 scripts/
-  test_rubric.py      37 hand-labelled cases, needs only cadquery
+  test_rubric_050.py  81 hand-labelled cases for scorer 0.5.0, needs only cadquery
+  test_rubric.py      37 hand-labelled cases pinning scorer 0.4.0
   validate_scorer.py  mutation suite -> results/scorer-validation-*.md
   rescore.py          replay saved answers through the current scorer
   failure_modes.py    label every failed answer (geometry + code)
