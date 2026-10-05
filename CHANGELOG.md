@@ -14,23 +14,33 @@ Scores are only comparable within one scorer version
 - **New check R9, no other features.** Every face of the part must be one
   of the six planes of its own envelope or one of its recognised bores. Only
   surfaces stored as a plane or a cylinder count, each judged where it lies
-  across the part, at the kernel's resolution (1e-7 mm; a shallower feature
-  is not seen, and that is stated as a numerical equivalence). A volume
-  comparison with the ideal part runs as a second look and can only add a
+  across the part; a bore has one distance budget for axis and radius; the
+  edges must lie on the faces with every tolerance forced to the form
+  tolerance. That tolerance is the kernel's resolution, 1e-7 mm, stated as
+  a numerical equivalence. A volume comparison with the ideal part (0.001
+  mm3 outside a 0.005 mm band) runs as a second look and can only add a
   failure. Values are compared unrounded, with 1e-9 mm of slack. The hole
   pattern is matched one hole per position. Ten requirements.
-- **Two external audits broke two drafts before merge** (5 October 2026,
-  `audit/scorer-0.5-audit.md` and `audit/scorer-0.5-v2-audit.md`). The first
-  draft judged R9 by a volume inside a 0.005 mm band: a 5 micron pocket over
-  50 x 50 mm, a boss absorbed by the envelope, a 13 micron through slot and
-  a 10 micron chamfer scored 1.0; rounding let 0.100049 mm pass a 0.1 mm
-  tolerance; two environments in one process shared a scorer version; the
-  legacy scorer paid for the new work. The second draft checked the form,
-  but trusted the kernel's approximate recovery of spline surfaces (a spline
-  with a 1 mm bump passed as a plane) and compared a plane's stored origin
-  with the envelope (a pocket floor stored 9.8 km away passed). All are
-  fixed and pinned as the `AUDIT_` and `AUDIT3_` cases of
-  `scripts/test_rubric_050.py`. Scorer 0.5.0 had not recorded any result.
+- **Three external audit rounds broke three drafts before merge** (5 October
+  2026; `audit/scorer-0.5-audit.md`, `scorer-0.5-v2-audit.md`,
+  `scorer-0.5-v3-audit.md`). Draft 1 judged R9 by a volume inside a 0.005 mm
+  band: a 5 micron pocket over 50 x 50 mm, a boss absorbed by the envelope,
+  a 13 micron through slot and a 10 micron chamfer scored 1.0; rounding let
+  0.100049 mm pass a 0.1 mm tolerance; two environments in one process
+  shared a scorer version; the legacy scorer paid for the new work. Draft 2
+  checked the form but trusted the kernel's approximate recovery of spline
+  surfaces (a spline with a 1 mm bump passed as a plane) and compared a
+  plane's stored origin (a pocket floor stored 9.8 km away passed). Draft 3
+  looked at faces only: an ordinary CadQuery cut 1.2e-6 mm deep at a bore
+  mouth came back as nominal faces joined by an edge lying off both, and
+  passed; bores tilted on the diagonal passed two separate X and Y
+  allowances. All are fixed and pinned as the `AUDIT_`, `AUDIT3_` and
+  `AUDIT4_` cases of `scripts/test_rubric_050.py`. Scorer 0.5.0 had not
+  recorded any result.
+- **Worker recovery.** After an answer crashed the kernel, the following
+  answers could fail with "scorer pipe broke" and score 0. A lost worker is
+  now replaced and the answer retried once; if that fails it is reported as
+  a scorer fault, not as a model failure.
 - **Why:** the external audit of 3 October 2026 found a saved development
   answer with four notches through its edges that 0.4.0 scored 1.0. It is
   now a pinned case (`scripts/test_rubric_050.py`).
@@ -48,7 +58,7 @@ Scores are only comparable within one scorer version
   byte-identical. The legacy scorer uses the legacy measurement, with none
   of the new work.
 - **Sensitivity, descriptive only:** both evaluations re-scored under 0.5.0,
-  on each of the three states of the scorer (two drafts, then the final
+  on each of the four states of the scorer (three drafts, then the final
   one), with the same outcome each time. Six verdicts change (five base, one adapter,
   hole centres off by 0.25 or 0.5 mm); L2 + L4 gain +41.7 and +40.8 points.
 - The leaderboard, the hint experiment and both training evaluations remain

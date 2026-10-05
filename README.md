@@ -33,7 +33,7 @@ What this is, and what it is not:
 ```bash
 git clone https://github.com/azzbilal/cad-spec && cd cad-spec
 pip install "cadquery==2.8.0"
-python scripts/test_rubric_050.py          # 77 hand-labelled cases, scorer 0.5.0
+python scripts/test_rubric_050.py          # 81 hand-labelled cases, scorer 0.5.0
 python scripts/test_rubric.py              # 37 cases pinning scorer 0.4.0 (kept for replay)
 ```
 
@@ -142,7 +142,7 @@ has no R9):
 | R6 material | 3% | 3% | measured envelope minus nominal bores (volume only) |
 | R7 edge margin | 0.1 mm | 0.5 mm | the part's own **edges** |
 | R8 Z datum | 0.1 mm | 0.5 mm | plate mid-plane to **Z = 0** |
-| R9 no other features | every face is an envelope plane or a bore, within 1e-7 mm | not checked | the part's own envelope planes and bore cylinders |
+| R9 no other features | every face is an envelope plane or a bore, edges on faces, within 1e-7 mm | not checked | the part's own envelope planes and bore cylinders |
 
 Why 0.1 mm: specs sit on a 0.5 mm grid and hole centres on a 0.25 mm grid,
 so a 0.5 mm tolerance accepted an arithmetic slip of a whole grid step.
@@ -151,32 +151,43 @@ R9 checks the form of the part. A plate with bores is bounded only by the
 six planes of its own envelope and by the cylinders of its recognised bores,
 so every face must be one of them. A notch, slot, pocket, boss, cross-bore,
 chamfer, fillet, draft, a lug in a bore or a plate turned off its axes each
-adds a face that is none of them. Three rules make the check sound:
+adds a face that is none of them. The check has four parts:
 
 - Only a surface the kernel stores as a plane or a cylinder counts. A spline
   that looks like a plane does not.
 - A surface is judged by where it lies across the part, not by the point it
-  happens to be stored with.
-- The comparison is made at the kernel's own resolution, 1e-7 mm. That is a
-  numerical equivalence and it is stated as such: a feature shallower than
-  0.1 nanometre is not seen.
+  happens to be stored with. A bore has one distance budget for its axis and
+  its radius together.
+- The edges must lie on the faces. The kernel accepts a shape whose edges
+  sit off its faces by whatever tolerance the shape carries; the check is
+  repeated with every tolerance forced to the form tolerance.
+- The form tolerance is the kernel's own resolution, 1e-7 mm. That is a
+  numerical equivalence and it is stated as such: two surfaces closer than
+  0.1 nanometre are treated as the same surface.
 
 The envelope and the bores are the measured ones, not the spec's, so a wrong
 dimension does not fail R9: each check still fails for one reason. A volume
-comparison with the ideal part runs as a cruder second look and can only add
-a failure.
+comparison with the ideal part runs as a cruder second look (more than
+0.001 mm3 outside a 0.005 mm band fails) and can only add a failure.
 
-Three external audits shaped it. The first found a saved model answer with
-four notches through its edges that 0.4.0 scored 1.0
-(`SAVED_dev_answer_gen_0021` in `scripts/test_rubric_050.py`). The second
-broke the first draft of 0.5.0, which judged R9 by volume alone: a 5 micron
-pocket over 50 x 50 mm, a 13 micron slot through the plate and a 10 micron
-chamfer all scored 1.0 (the `AUDIT_` cases). The third broke the first form
-check with hand-built kernel objects: a spline face with a 1 mm bump that
-the kernel "recovered" as a plane, and a pocket floor stored as a plane
-through a point 9.8 km away (the `AUDIT3_` cases). Each round found
-something real. What the validation shows is that the scorer handles the
-cases it has been given, not that no wrong part can pass.
+Four external audit rounds shaped it, and each found something real:
+
+1. A saved model answer with four notches through its edges that 0.4.0
+   scored 1.0 (`SAVED_dev_answer_gen_0021` in `scripts/test_rubric_050.py`).
+2. The first draft of 0.5.0 judged R9 by volume alone: a 5 micron pocket
+   over 50 x 50 mm, a 13 micron slot and a 10 micron chamfer scored 1.0
+   (the `AUDIT_` cases).
+3. The first form check trusted the kernel's approximate recovery of spline
+   surfaces and compared a plane's stored origin: a spline face with a 1 mm
+   bump and a pocket floor stored 9.8 km away scored 1.0 (`AUDIT3_`).
+4. The second form check looked at faces only: a cut 1.2e-6 mm deep at the
+   mouth of a bore, written in ordinary CadQuery, came back from the kernel
+   as the nominal faces joined by an edge lying off both, and scored 1.0
+   (`AUDIT4_`).
+
+This is not a proof that no wrong part can pass. It is a scorer that handles
+every case four rounds of review could build, with each case pinned as a
+test.
 
 Tolerances are inclusive: 6.6 mm is inside 6.5 +/- 0.1. Scorer 0.5.0
 compares unrounded measurements with 1e-9 mm of numerical slack, so
@@ -538,7 +549,7 @@ environments/cad_spec/cad_spec/
   environment.py  the only file that imports verifiers
   __main__.py     the cad-spec CLI
 scripts/
-  test_rubric_050.py  77 hand-labelled cases for scorer 0.5.0, needs only cadquery
+  test_rubric_050.py  81 hand-labelled cases for scorer 0.5.0, needs only cadquery
   test_rubric.py      37 hand-labelled cases pinning scorer 0.4.0
   validate_scorer.py  mutation suite -> results/scorer-validation-*.md
   rescore.py          replay saved answers through the current scorer

@@ -215,6 +215,10 @@ def require_cadquery() -> str:
     return str(getattr(cadquery, "__version__", "unknown"))
 
 
+class _WorkerLostError(Exception):
+    """The scoring worker was already gone before this answer was sent to it."""
+
+
 class BuildError(Exception):
     """Model code did not produce a usable solid."""
 
@@ -294,6 +298,7 @@ class Measurements:
     # or "could not be measured"; scorer 0.5.0 treats None as a failed check,
     # never as a pass, and `shape_error` says what went wrong.
     surface_conformance: bool | None = None  # every face on an envelope plane or a recognised bore
+    boundary_consistent: bool | None = None  # still a valid solid with all tolerances at FORM_LINEAR_TOL
     extra_volume: float | None = None     # mm^3 of material outside the ideal part
     missing_volume: float | None = None   # mm^3 of the ideal part that is absent
     shape_error: str | None = None
@@ -511,14 +516,41 @@ def _surface_conformance(solid: Any, bb: Any, holes: list[Hole]) -> bool:
             # Where the axis crosses the bottom and the top of the part.
             ends = [(origin.X() + (z - origin.Z()) / direction.Z() * direction.X(),
                      origin.Y() + (z - origin.Z()) / direction.Z() * direction.Y()) for z in (bb.zmin, bb.zmax)]
-            if not any(abs(2 * cylinder.Radius() - h.diameter) <= FORM_LINEAR_TOL
-                       and all(abs(x - h.x) <= FORM_LINEAR_TOL and abs(y - h.y) <= FORM_LINEAR_TOL
-                               for x, y in ends)
+            # One distance budget for the whole bore surface: how far its axis
+            # is from the recognised bore's, plus how far its radius is (the
+            # horizontal section of a tilted cylinder is an ellipse, hence the
+            # second radius term). Not X and Y each on their own allowance.
+            radius = cylinder.Radius()
+            section = radius / abs(direction.Z())
+            if not any(all(math.hypot(x - h.x, y - h.y)
+                           + max(abs(radius - h.diameter / 2), abs(section - h.diameter / 2)) <= FORM_LINEAR_TOL
+                           for x, y in ends)
                        for h in holes):
                 return False
         else:
             return False
     return True
+
+
+def _boundary_consistent(topo: Any) -> bool:
+    """Is the solid still valid when every stored tolerance is the form tolerance?
+
+    The kernel calls a shape valid when its edges lie on its faces WITHIN THE
+    TOLERANCES THE SHAPE CARRIES. A boolean that swallows a feature a
+    nanometre deep returns the nominal plane and cylinder joined by an edge
+    that sits 1.2e-6 mm off both, and records that as the edge's tolerance:
+    valid for the kernel, and every face is an allowed surface. So the check
+    is repeated on a copy whose tolerances are all forced to FORM_LINEAR_TOL.
+    A correct part whose tolerances were merely inflated still passes: its
+    edges do lie on its faces. The scored shape itself is not touched.
+    """
+    from OCP.BRepBuilderAPI import BRepBuilderAPI_Copy
+    from OCP.BRepCheck import BRepCheck_Analyzer
+    from OCP.ShapeFix import ShapeFix_ShapeTolerance
+
+    copy = BRepBuilderAPI_Copy(topo, True, False).Shape()
+    ShapeFix_ShapeTolerance().LimitTolerance(copy, FORM_LINEAR_TOL, FORM_LINEAR_TOL)
+    return bool(BRepCheck_Analyzer(copy, True, False, True).IsValid())
 
 
 def _z_aligned_cylinders(solid: Any, *, z_ref: float | None = None) -> list[tuple[float, float, float, Any]]:
@@ -813,11 +845,13 @@ def measure(solid: Any, *, strict: bool = False) -> Measurements:
     for h in holes:
         h.open = _bore_is_open(solid, h, bb.zmin, bb.zmax)
     conformance: bool | None = None
+    boundary: bool | None = None
     extra_volume = missing_volume = None
     shape_error: str | None = None
     if strict:
         try:
             conformance = _surface_conformance(solid, bb, holes)
+            boundary = _boundary_consistent(topo)
         except Exception as exc:
             shape_error = f"form check failed: {type(exc).__name__}: {exc}"[:200]
         extra_volume, missing_volume, residual_error = _shape_residual(solid, bb, holes)
@@ -845,6 +879,7 @@ def measure(solid: Any, *, strict: bool = False) -> Measurements:
         valid=bool(BRepCheck_Analyzer(topo).IsValid()),
         off_axis_bores=_off_axis_bore_count(solid),
         surface_conformance=conformance,
+        boundary_consistent=boundary,
         extra_volume=extra_volume,
         missing_volume=missing_volume,
         shape_error=shape_error,
@@ -1191,7 +1226,10 @@ class _Worker:
         try:
             self.conn.send(("measure", (code, _exec_timeout(), _mem_limit_mb(), strict)))
         except (BrokenPipeError, OSError) as exc:
-            raise BuildError(f"scorer pipe broke: {exc}") from exc
+            # The worker died earlier (an earlier answer crashed the kernel).
+            # That is not this answer's fault: the caller restarts and retries.
+            self.kill()
+            raise _WorkerLostError(str(exc)) from exc
         # In fork mode the worker enforces the budget itself and survives;
         # the outer window is a backstop for a wedged worker. In reuse mode
         # the outer window IS the budget, and a timeout kills the worker.
@@ -1202,6 +1240,7 @@ class _Worker:
         try:
             status, payload = self.conn.recv()
         except EOFError as exc:
+            self.kill()  # make sure the next answer gets a fresh worker, not this corpse
             raise BuildError("scorer worker died while executing model code") from exc
         if status == "error":
             raise BuildError(str(payload))
@@ -1279,7 +1318,14 @@ def build_and_measure(completion: str, *, strict: bool = False) -> Measurements:
         require_cadquery()
         return _measure_code(code, strict=strict)
     try:
-        return _get_worker().call(code, strict=strict)
+        try:
+            return _get_worker().call(code, strict=strict)
+        except _WorkerLostError:
+            shutdown_worker()  # one retry on a fresh worker
+            try:
+                return _get_worker().call(code, strict=strict)
+            except _WorkerLostError as exc:
+                raise ScorerUnavailableError(f"scoring worker could not be restarted: {exc}") from exc
     except (BuildError, ScorerUnavailableError):
         raise
     except Exception as exc:  # anything else means the worker is unwell

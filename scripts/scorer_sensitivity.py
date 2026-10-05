@@ -7,13 +7,13 @@ under scorer 0.4.0 and stay as they are. This script re-scores the same saved
 answers under 0.5.0 (strict contract, 0.1 mm tolerances) and reports what
 changes.
 
-Honest history: it was run three times. On 4 October 2026 against the first
-0.5.0 draft, and twice on 5 October after each of two external audits broke a
-draft with synthetic parts (shallow pockets, rounding, splines, displaced
-plane origins) and the scorer was reworked. Each rework was driven by those
-synthetic counterexamples and by train and dev parts, never by these answers:
-both splits are used and cannot serve to tune anything. The three runs
-changed the same six verdicts.
+Honest history: it was run four times. On 4 October 2026 against the first
+0.5.0 draft, and three times on 5 October, after each of three external audit
+rounds broke a draft with synthetic parts (shallow pockets, rounding,
+splines, displaced plane origins, edges off their faces) and the scorer was
+reworked. Each rework was driven by those synthetic counterexamples and by
+train and dev parts, never by these answers: both splits are used and cannot
+serve to tune anything. The four runs changed the same six verdicts.
 
 The paired bootstrap is the registered one (scripts/compare_training.py).
 """
@@ -69,7 +69,7 @@ def main() -> int:
         "",
         "**Descriptive, not a verdict.** The registered results were recorded under scorer 0.4.0 and are",
         "unchanged. Here the same saved answers are re-scored under 0.5.0 (strict contract, 0.1 mm",
-        "tolerances). Run on the final scorer 0.5.0 (5 October 2026). Two earlier runs, on two drafts",
+        "tolerances). Run on the final scorer 0.5.0 (5 October 2026). Three earlier runs, on three drafts",
         "that external audits then broke with synthetic parts, changed the same verdicts; the reworks",
         "were driven by those synthetic counterexamples, not by these answers.",
         "",

@@ -307,17 +307,21 @@ def _requirements(m: Measurements, spec: Spec, version: str) -> list[Check]:
         # reason only. The volume residual is a cruder second look at the
         # same question and can only add a failure, never remove one.
         extra, missing = m.extra_volume, m.missing_volume
-        if m.surface_conformance is None or extra is None or missing is None:
+        if m.surface_conformance is None or m.boundary_consistent is None or extra is None or missing is None:
             checks.append(Check("R9:no_other_features", False,  # could not check: never a pass
                                 f"the form of the part could not be checked ({m.shape_error or 'no detail'})"))
         else:
             residual_ok = extra <= SHAPE_VOLUME_TOL and missing <= SHAPE_VOLUME_TOL
+            if not m.surface_conformance:
+                form = "a face is neither a plane of the envelope nor a recognised bore"
+            elif not m.boundary_consistent:
+                form = "the edges do not lie on the faces at the form tolerance"
+            else:
+                form = "every face is a plane of the envelope or a bore"
             checks.append(Check(
                 "R9:no_other_features",
-                m.surface_conformance and residual_ok,
-                ("every face lies on the envelope or on a bore" if m.surface_conformance
-                 else "a face lies neither on the envelope nor on a recognised bore")
-                + f"; {extra:.3f} mm3 extra, {missing:.3f} mm3 missing outside a {SHAPE_BAND_MM} mm band",
+                m.surface_conformance and m.boundary_consistent and residual_ok,
+                f"{form}; {extra:.3f} mm3 extra, {missing:.3f} mm3 missing outside a {SHAPE_BAND_MM} mm band",
             ))
 
     return checks

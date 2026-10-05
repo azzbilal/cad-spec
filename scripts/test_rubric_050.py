@@ -215,6 +215,36 @@ CASES["AUDIT3_pocket_1_nanometre_deep"] = Case(  # 9.9e-7 mm over the whole top 
 CASES["AUDIT3_diameter_0.100001_over"] = Case(plate(d=6.600001), _f("R4b:hole_diameter"))
 CASES["AUDIT3_z_datum_0.100001"] = Case(REF + "result = result.translate((0, 0, 0.100001))\n", _f("R8:z_datum"))
 
+# --- group 2d: the fourth audit (5 October 2026). Ordinary CadQuery this time.
+# A cut 1.2e-6 mm deep at the mouth of a bore. The boolean swallows it and
+# returns the nominal plane and cylinder joined by an edge that sits off both,
+# recording the gap as the edge's tolerance: valid for the kernel, every face
+# allowed, 1.0 under the previous form check.
+CASES["AUDIT4_bore_mouth_cut_1.2e-6_deep"] = Case(
+    REF + 'result = result.cut(cq.Workplane("XY").workplane(offset=2.9999988).center(30, 20)'
+          '.circle(3.2500004).extrude(1.0000012))\n', _f(R9))
+CASES["AUDIT4_bore_mouth_cut_8e-7_deep"] = Case(
+    REF + 'result = result.cut(cq.Workplane("XY").workplane(offset=2.9999992).center(30, 20)'
+          '.circle(3.2500004).extrude(1.0000008))\n', _f(R9))
+# Bores tilted on the diagonal: each end moves 9.9e-8 mm in X and in Y, which
+# passed two separate allowances, but 1.4e-7 mm in distance.
+CASES["AUDIT4_bores_tilted_on_the_diagonal"] = Case("""
+import cadquery as cq
+result = cq.Workplane("XY").box(80, 60, 6)
+for x, y in [(-30, -20), (-30, 20), (30, -20), (30, 20)]:
+    cutter = cq.Workplane("XY").circle(3.25).extrude(8, both=True)
+    cutter = cutter.rotate((0, 0, 0), (-1, 1, 0), 2.673939458986605e-06).translate((x, y, 0))
+    result = result.cut(cutter)
+""", _f(R9))
+# Control: a correct plate whose stored tolerances are inflated a thousand
+# times is still a correct plate. Its edges do lie on its faces.
+CASES["AUDIT4_correct_plate_with_inflated_tolerances"] = Case(REF + """
+from OCP.ShapeFix import ShapeFix_ShapeTolerance
+shape = result.val()
+ShapeFix_ShapeTolerance().SetTolerance(shape.wrapped, 1e-3)
+result = shape
+""", _f())
+
 # --- group 3: the saved answer that 0.4.0 scored 1.0 ----------------------------
 def saved_gen_0021() -> Case:
     path = ROOT / "results" / "training" / "screening" / "qwen3.5-9b-t0.7-x8-2k.jsonl"

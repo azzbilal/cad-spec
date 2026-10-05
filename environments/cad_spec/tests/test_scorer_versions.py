@@ -155,3 +155,14 @@ def test_surfaces_are_judged_where_they_lie_across_the_part():
     (_, x_at_part, _, _), = _z_aligned_cylinders(far, z_ref=0.0)
     assert x_stored == pytest.approx(30.0, abs=1e-6) and x_at_part == pytest.approx(30.3, abs=1e-6)
 
+
+def test_a_lost_worker_is_replaced_and_the_next_answer_is_not_blamed():
+    """Fourth audit: after a kernel crash, later ordinary answers got 'scorer pipe broke' and 0."""
+    from cad_spec import measure
+
+    assert score(reference_solution(SPEC), SPEC).reward == 1.0
+    worker = measure._get_worker()
+    worker.conn.close()  # the process still counts as alive, but nothing can be sent to it
+    assert score(reference_solution(SPEC), SPEC).reward == 1.0
+    assert measure._get_worker() is not worker
+

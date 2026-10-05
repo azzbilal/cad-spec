@@ -2,7 +2,7 @@
 
 **Descriptive, not a verdict.** The registered results were recorded under scorer 0.4.0 and are
 unchanged. Here the same saved answers are re-scored under 0.5.0 (strict contract, 0.1 mm
-tolerances). Run on the final scorer 0.5.0 (5 October 2026). Two earlier runs, on two drafts
+tolerances). Run on the final scorer 0.5.0 (5 October 2026). Three earlier runs, on three drafts
 that external audits then broke with synthetic parts, changed the same verdicts; the reworks
 were driven by those synthetic counterexamples, not by these answers.
 
