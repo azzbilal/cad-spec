@@ -64,11 +64,13 @@ CHANGED = {
     # A hole breaking out through the side wall removes material that is not
     # a bore. 0.4.0 only saw the missing hole.
     "LIMIT_hole_breakout": _f("R4a:hole_count", "R5:hole_pattern", R9),
-    # The correct plate with every surface stored as a spline. 0.4.0 could not
-    # see its bores (a documented limit); 0.5.0 asks the kernel for the
-    # analytic form, finds six planes and four cylinders, and passes it.
-    "LIMIT_nurbs_surfaces": _f(),
 }
+# LIMIT_nurbs_surfaces keeps its 0.4.0 verdict: the correct plate with every
+# surface stored as a spline is rejected. A draft of 0.5.0 asked the kernel to
+# recover the analytic form and passed it; the third audit showed that the
+# same recovery accepts a spline with a 1 mm bump (AUDIT3 cases below). The
+# scorer now trusts only true planes and cylinders: a false rejection of an
+# exotic representation, never a false acceptance.
 CASES: dict[str, Case] = {
     name: Case(case.code, CHANGED.get(name, case.fails)) for name, case in legacy.CASES.items()
 }
@@ -162,6 +164,56 @@ CASES["AUDIT_part_moved_0.1007_diagonally"] = Case(  # rounds to (0.060, 0.080),
 CASES["AUDIT_z_datum_0.10004"] = Case(REF + "result = result.translate((0, 0, 0.10004))\n", _f("R8:z_datum"))
 CASES["AUDIT_at_the_limit_still_passes"] = Case(REF + "result = result.translate((0.1, 0, 0.1))\n", _f())
 CASES["AUDIT_plate_thinner_than_the_band"] = Case(plate(thick=0.009), _f("R3:thickness", R9))
+
+# --- group 2c: the counterexamples of the third audit (5 October 2026, on the form check)
+# Hand-built kernel objects. Each scored 1.0 under the first form check.
+CASES["AUDIT3_spline_top_with_1mm_bump"] = Case("""
+import cadquery as cq
+from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeFace
+from OCP.Geom import Geom_BezierSurface
+from OCP.GeomConvert import GeomConvert
+from OCP.TColgp import TColgp_Array2OfPnt
+from OCP.gp import gp_Pnt
+poles = TColgp_Array2OfPnt(1, 4, 1, 4)
+for i in range(1, 5):
+    for j in range(1, 5):
+        poles.SetValue(i, j, gp_Pnt(-40 + (i - 1) * 80 / 3, -30 + (j - 1) * 60 / 3, 3))
+surface = GeomConvert.SurfaceToBSplineSurface_s(Geom_BezierSurface(poles))
+for u in (0.332, 0.333, 0.334):
+    surface.InsertUKnot(u, 3, 1e-12)
+for v in (0.332, 0.333, 0.334):
+    surface.InsertVKnot(v, 3, 1e-12)
+p = surface.Pole(6, 6)
+surface.SetPole(6, 6, gp_Pnt(p.X(), p.Y(), p.Z() + 5))  # a local bump, almost 1 mm high
+top = cq.Face(BRepBuilderAPI_MakeFace(surface, 1e-7).Face())
+box = cq.Workplane("XY").box(80, 60, 6).val()
+faces = [f for f in box.Faces() if f.Center().z < 2.9] + [top]
+result = cq.Workplane(obj=cq.Solid.makeSolid(cq.Shell.makeShell(faces)))
+for x, y in [(-30, -20), (-30, 20), (30, -20), (30, 20)]:
+    result = result.cut(cq.Workplane("XY").center(x, y).circle(3.25).extrude(10, both=True))
+""", _f(R9))
+CASES["AUDIT3_pocket_floor_stored_far_away"] = Case(REF + """
+result = result.cut(cq.Workplane("XY").box(79.999999, 59.999999, 0.0049).translate((0, 0, 2.99755)))
+from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeFace
+from OCP.BRepTools import BRepTools_ReShape
+from OCP.gp import gp_Dir, gp_Pln, gp_Pnt
+from OCP.TopoDS import TopoDS
+shape = result.val()
+floor = min([f for f in shape.Faces() if f.geomType() == "PLANE" and abs(f.Center().z - 2.9951) < 1e-6],
+            key=lambda f: abs(f.Center().z - 2.9951))
+# the same floor, stored as a plane through a point 9.8 km away with a tilt of 5e-10 rad
+maker = BRepBuilderAPI_MakeFace(gp_Pln(gp_Pnt(-9800000.0, 0, 3), gp_Dir(5e-10, 0, 1)), floor.outerWire().wrapped, True)
+for wire in floor.innerWires():
+    maker.Add(wire.wrapped)
+change = BRepTools_ReShape()
+change.Replace(floor.wrapped, TopoDS.Face_s(maker.Face().Oriented(floor.wrapped.Orientation())))
+result = cq.Shape.cast(change.Apply(shape.wrapped))
+""", _f(R9))
+CASES["AUDIT3_pocket_1_nanometre_deep"] = Case(  # 9.9e-7 mm over the whole top face
+    REF + 'result = result.cut(cq.Workplane("XY").box(79.999999, 59.999999, 9.9e-07)'
+          '.translate((0, 0, 2.999999505)))\n', _f(R9))
+CASES["AUDIT3_diameter_0.100001_over"] = Case(plate(d=6.600001), _f("R4b:hole_diameter"))
+CASES["AUDIT3_z_datum_0.100001"] = Case(REF + "result = result.translate((0, 0, 0.100001))\n", _f("R8:z_datum"))
 
 # --- group 3: the saved answer that 0.4.0 scored 1.0 ----------------------------
 def saved_gen_0021() -> Case:

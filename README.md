@@ -33,7 +33,7 @@ What this is, and what it is not:
 ```bash
 git clone https://github.com/azzbilal/cad-spec && cd cad-spec
 pip install "cadquery==2.8.0"
-python scripts/test_rubric_050.py          # 72 hand-labelled cases, scorer 0.5.0
+python scripts/test_rubric_050.py          # 77 hand-labelled cases, scorer 0.5.0
 python scripts/test_rubric.py              # 37 cases pinning scorer 0.4.0 (kept for replay)
 ```
 
@@ -142,35 +142,47 @@ has no R9):
 | R6 material | 3% | 3% | measured envelope minus nominal bores (volume only) |
 | R7 edge margin | 0.1 mm | 0.5 mm | the part's own **edges** |
 | R8 Z datum | 0.1 mm | 0.5 mm | plate mid-plane to **Z = 0** |
-| R9 no other features | every face on the envelope or on a bore | not checked | the part's own envelope planes and bore cylinders |
+| R9 no other features | every face is an envelope plane or a bore, within 1e-7 mm | not checked | the part's own envelope planes and bore cylinders |
 
 Why 0.1 mm: specs sit on a 0.5 mm grid and hole centres on a 0.25 mm grid,
 so a 0.5 mm tolerance accepted an arithmetic slip of a whole grid step.
 
 R9 checks the form of the part. A plate with bores is bounded only by the
 six planes of its own envelope and by the cylinders of its recognised bores,
-so every face must lie on one of them (within 1e-6 mm and 1e-9 rad, which is
-kernel noise, not a feature allowance). A notch, slot, pocket, boss,
-cross-bore, chamfer, fillet, draft, a lug in a bore or a plate turned off
-its axes each adds a face that lies on none of them, whatever its size. The
-envelope and the bores are the measured ones, not the spec's, so a wrong
+so every face must be one of them. A notch, slot, pocket, boss, cross-bore,
+chamfer, fillet, draft, a lug in a bore or a plate turned off its axes each
+adds a face that is none of them. Three rules make the check sound:
+
+- Only a surface the kernel stores as a plane or a cylinder counts. A spline
+  that looks like a plane does not.
+- A surface is judged by where it lies across the part, not by the point it
+  happens to be stored with.
+- The comparison is made at the kernel's own resolution, 1e-7 mm. That is a
+  numerical equivalence and it is stated as such: a feature shallower than
+  0.1 nanometre is not seen.
+
+The envelope and the bores are the measured ones, not the spec's, so a wrong
 dimension does not fail R9: each check still fails for one reason. A volume
 comparison with the ideal part runs as a cruder second look and can only add
 a failure.
 
-Two external audits shaped it. The first found a saved model answer with
+Three external audits shaped it. The first found a saved model answer with
 four notches through its edges that 0.4.0 scored 1.0
 (`SAVED_dev_answer_gen_0021` in `scripts/test_rubric_050.py`). The second
 broke the first draft of 0.5.0, which judged R9 by volume alone: a 5 micron
 pocket over 50 x 50 mm, a 13 micron slot through the plate and a 10 micron
-chamfer all scored 1.0. Those are pinned as the `AUDIT_` cases of the same
-file. What the validation shows is that the scorer handles the cases it was
-given, not that no wrong part can pass.
+chamfer all scored 1.0 (the `AUDIT_` cases). The third broke the first form
+check with hand-built kernel objects: a spline face with a 1 mm bump that
+the kernel "recovered" as a plane, and a pocket floor stored as a plane
+through a point 9.8 km away (the `AUDIT3_` cases). Each round found
+something real. What the validation shows is that the scorer handles the
+cases it has been given, not that no wrong part can pass.
 
-Tolerances are inclusive: 6.6 mm is inside 6.5 +/- 0.1 (comparisons carry a
-1e-6 mm numerical slack; 0.3.x failed it on floating-point rounding). Scorer
-0.5.0 compares unrounded measurements, so 6.600049 mm is outside; 0.4.0
-rounds to 0.0001 mm first, as it always did.
+Tolerances are inclusive: 6.6 mm is inside 6.5 +/- 0.1. Scorer 0.5.0
+compares unrounded measurements with 1e-9 mm of numerical slack, so
+6.600001 mm is outside. Scorer 0.4.0 rounds to 0.0001 mm and carries 1e-6 mm
+of slack, as it always did (0.3.x failed exact limits on floating-point
+rounding).
 
 Datums on purpose: a plate slid under its holes fails R7 only, a part moved
 in X or Y fails R5 only, a part moved in Z fails R8 only. Before 0.3.0 only
@@ -203,11 +215,13 @@ A second one: the bore detector probes each cylinder on its +X side, so a
 lug placed exactly there hides the bore; the part is still rejected (count,
 pattern and R9), but for more reasons than an inspector would give.
 
-**Known limitation of 0.4.0, lifted in 0.5.0:** 0.4.0 recognises bores only
-as analytic cylinders, so the same correct part converted to NURBS surfaces
-(`toNURBS()`) scores 0 under it. Scorer 0.5.0 asks the kernel for the
-analytic form of each face and passes that part. Pinned as
-`LIMIT_nurbs_surfaces`.
+**Known limitation, kept on purpose:** only analytic planes and cylinders
+are recognised, so the same correct part converted to NURBS surfaces
+(`toNURBS()`) scores 0, under 0.4.0 and under 0.5.0. A draft of 0.5.0
+accepted it by asking the kernel to recover the analytic form; the third
+audit showed that the same recovery accepts a spline with a 1 mm bump. A
+false rejection of an exotic representation is the safer error. Models do
+not produce this unprompted. Pinned as `LIMIT_nurbs_surfaces`.
 
 ## Leaderboard
 
@@ -524,7 +538,7 @@ environments/cad_spec/cad_spec/
   environment.py  the only file that imports verifiers
   __main__.py     the cad-spec CLI
 scripts/
-  test_rubric_050.py  72 hand-labelled cases for scorer 0.5.0, needs only cadquery
+  test_rubric_050.py  77 hand-labelled cases for scorer 0.5.0, needs only cadquery
   test_rubric.py      37 hand-labelled cases pinning scorer 0.4.0
   validate_scorer.py  mutation suite -> results/scorer-validation-*.md
   rescore.py          replay saved answers through the current scorer

@@ -27,12 +27,13 @@ Design notes:
     with exactly four through holes and NOTHING ELSE. 0.4.0 gave full credit
     to a saved answer with four extra notches through its edges (external
     audit, 3 October 2026), because R6 tolerates 3% of missing material. R9
-    checks the FORM of the part: every face must lie on one of the six planes
-    of the part's own envelope or on one of its recognised bores. A second
-    audit (5 October 2026) showed that a volume comparison alone cannot do
-    this job: shallow pockets and bosses hide inside any band, and tiny
-    features under any volume threshold. The volume comparison stays as a
-    cruder second look. Tolerances drop from 0.5 mm to 0.1 mm, compared on
+    checks the FORM of the part: every face must be a plane of the part's own
+    envelope or one of its recognised bores. Two audits of this check (5
+    October 2026) shaped it. A volume comparison alone cannot do the job:
+    shallow pockets and bosses hide inside any band, tiny features under any
+    volume threshold. And the form check must trust only what the kernel
+    stores as a plane or a cylinder, measured where it lies across the part.
+    The volume comparison stays as a cruder second look. Tolerances drop from 0.5 mm to 0.1 mm, compared on
     unrounded measurements: specs sit on a 0.5 mm grid and hole centres on a
     0.25 mm grid, so 0.5 mm accepted an error of a whole grid step. The hole
     pattern is matched one to one.
@@ -57,13 +58,17 @@ class Tolerances:
     position: float   # mm, on hole centres (R5)
     margin: float     # mm, hole centre to nearest edge (R7)
     datum: float      # mm, plate mid-plane to Z = 0 (R8)
+    eps: float        # mm, numerical slack added to each tolerance (they are inclusive)
 
 
 # One entry per scorer version that can still be asked for. An entry is never
 # edited: a change that can move a score is a new version.
 TOLERANCES: dict[str, Tolerances] = {
-    "0.4.0": Tolerances(linear=0.5, hole=0.2, position=0.5, margin=0.5, datum=0.5),
-    "0.5.0": Tolerances(linear=0.1, hole=0.1, position=0.1, margin=0.1, datum=0.1),
+    # 0.4.0 rounds its measurements to 1e-4 mm and needs 1e-6 of slack. 0.5.0
+    # compares raw kernel values, whose noise is near 1e-13 mm: 1e-9 keeps an
+    # exact limit inside (6.6 against 6.5 +/- 0.1) and 6.600001 outside.
+    "0.4.0": Tolerances(linear=0.5, hole=0.2, position=0.5, margin=0.5, datum=0.5, eps=1e-6),
+    "0.5.0": Tolerances(linear=0.1, hole=0.1, position=0.1, margin=0.1, datum=0.1, eps=1e-9),
 }
 
 # Bump on ANY change that can move a score. Recorded in every results file so
@@ -196,8 +201,8 @@ def _gates(m: Measurements, spec: Spec) -> list[Check]:
 
 
 def _one_to_one(expected: list[tuple[float, float]], holes: list[Hole], tol: float) -> int:
-    """Largest number of expected positions matched to DISTINCT holes within tol."""
-    near = [[i for i, h in enumerate(holes) if math.dist((h.x, h.y), e) <= tol + NUM_EPS] for e in expected]
+    """Largest number of expected positions matched to DISTINCT holes within tol (inclusive)."""
+    near = [[i for i, h in enumerate(holes) if math.dist((h.x, h.y), e) <= tol] for e in expected]
     owner: dict[int, int] = {}  # hole index -> expected position it is matched to
 
     def augment(k: int, seen: set[int]) -> bool:
@@ -217,12 +222,16 @@ def _one_to_one(expected: list[tuple[float, float]], holes: list[Hole], tol: flo
 def _requirements(m: Measurements, spec: Spec, version: str) -> list[Check]:
     tol = TOLERANCES[version]
     strict = version != "0.4.0"
+
+    def close(actual: float, target: float, limit: float) -> bool:
+        return abs(actual - target) <= limit + tol.eps
+
     checks = [
-        Check("R1:length", _close(m.length, spec.length, tol.linear),
+        Check("R1:length", close(m.length, spec.length, tol.linear),
               f"{m.length} vs {spec.length} mm"),
-        Check("R2:width", _close(m.width, spec.width, tol.linear),
+        Check("R2:width", close(m.width, spec.width, tol.linear),
               f"{m.width} vs {spec.width} mm"),
-        Check("R3:thickness", _close(m.thickness, spec.thickness, tol.linear),
+        Check("R3:thickness", close(m.thickness, spec.thickness, tol.linear),
               f"{m.thickness} vs {spec.thickness} mm"),
         Check("R4a:hole_count", m.hole_count == spec.hole_count,
               f"{m.hole_count} vs {spec.hole_count}"),
@@ -231,7 +240,7 @@ def _requirements(m: Measurements, spec: Spec, version: str) -> list[Check]:
     diameters = [h.diameter for h in m.holes]
     checks.append(Check(
         "R4b:hole_diameter",
-        bool(diameters) and all(_close(d, spec.hole_diameter, tol.hole) for d in diameters),
+        bool(diameters) and all(close(d, spec.hole_diameter, tol.hole) for d in diameters),
         f"{sorted(set(round(d, 2) for d in diameters))} vs {spec.hole_diameter} mm",
     ))
 
@@ -240,11 +249,11 @@ def _requirements(m: Measurements, spec: Spec, version: str) -> list[Check]:
         for sx in (-1, 1) for sy in (-1, 1)
     }
     if strict:  # each measured hole may satisfy one expected position only
-        matched = _one_to_one(sorted(expected), m.holes, tol.position)
+        matched = _one_to_one(sorted(expected), m.holes, tol.position + tol.eps)
     else:
         matched = 0
         for hx, hy in expected:
-            if any(math.dist((h.x, h.y), (hx, hy)) <= tol.position + NUM_EPS for h in m.holes):
+            if any(math.dist((h.x, h.y), (hx, hy)) <= tol.position + tol.eps for h in m.holes):
                 matched += 1
     checks.append(Check(
         "R5:hole_pattern",
@@ -273,7 +282,7 @@ def _requirements(m: Measurements, spec: Spec, version: str) -> list[Check]:
         worst = max(worst, abs(dx - spec.edge_margin), abs(dy - spec.edge_margin))
     checks.append(Check(
         "R7:edge_margin",
-        bool(m.holes) and worst <= tol.margin + NUM_EPS,
+        bool(m.holes) and worst <= tol.margin + tol.eps,
         f"worst deviation {worst:.2f} mm from {spec.edge_margin} mm margin"
         if m.holes else "no bores to measure",
     ))
@@ -284,7 +293,7 @@ def _requirements(m: Measurements, spec: Spec, version: str) -> list[Check]:
     z_mid = (m.z_min + m.z_max) / 2
     checks.append(Check(
         "R8:z_datum",
-        abs(z_mid) <= tol.datum + NUM_EPS,
+        abs(z_mid) <= tol.datum + tol.eps,
         f"mid-plane at Z = {z_mid:.3f} mm (nominal 0)",
     ))
 

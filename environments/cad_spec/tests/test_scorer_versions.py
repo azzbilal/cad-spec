@@ -28,7 +28,9 @@ def test_current_version_is_strict_and_legacy_is_kept():
     assert SCORER_VERSION == "0.5.0"
     assert SUPPORTED_VERSIONS == ("0.4.0", "0.5.0")
     assert TOLERANCES["0.4.0"].linear == 0.5 and TOLERANCES["0.4.0"].hole == 0.2
-    assert set(vars(TOLERANCES["0.5.0"]).values()) == {0.1}
+    strict = vars(TOLERANCES["0.5.0"])
+    assert {v for k, v in strict.items() if k != "eps"} == {0.1} and strict["eps"] == 1e-9
+    assert TOLERANCES["0.4.0"].eps == 1e-6
 
 
 def test_reference_passes_both_versions_with_9_and_10_requirements():
@@ -110,3 +112,46 @@ def test_hole_pattern_is_matched_one_to_one():
     # many candidate holes: the answer comes at once (the first draft enumerated every combination)
     crowd = [Hole(diameter=5.0 + i * 1e-4, x=x, y=0.0, depth=5.0) for x in (0.0, 10.0, 20.0, 30.0) for i in range(60)]
     assert _one_to_one([(0.0, 0.0), (10.0, 0.0), (20.0, 0.0), (30.0, 0.0)], crowd, 0.1) == 4
+
+
+def test_surfaces_are_judged_where_they_lie_across_the_part():
+    """Third audit, V2-B2: a stored origin far away with a slight tilt must not hide a displaced surface."""
+    import cadquery as cq
+    from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeFace
+    from OCP.gp import gp_Ax3, gp_Cylinder, gp_Dir, gp_Pln, gp_Pnt
+
+    from cad_spec.measure import _surface_conformance, _z_aligned_cylinders
+
+    class Part:  # just enough of a solid for the two functions
+        def __init__(self, *faces):
+            self._faces = [cq.Face(f) for f in faces]
+
+        def Faces(self):  # noqa: N802 - the name the measurement code calls
+            return self._faces
+
+    class Box:
+        xmin, xmax, ymin, ymax, zmin, zmax = -40.0, 40.0, -30.0, 30.0, -3.0, 3.0
+
+    def plane(origin, normal):
+        return BRepBuilderAPI_MakeFace(gp_Pln(gp_Pnt(*origin), gp_Dir(*normal)), -1, 1, -1, 1).Face()
+
+    assert _surface_conformance(Part(plane((0, 0, 3), (0, 0, 1))), Box, [])
+    assert _surface_conformance(Part(plane((12345.0, -777.0, 3), (0, 0, 1))), Box, [])   # origin is arbitrary
+    assert not _surface_conformance(Part(plane((0, 0, 2.9951), (0, 0, 1))), Box, [])      # a pocket floor
+    # the audit's plane: origin reads Z = 3, but 9.8 km away with a tilt, so it sits at 2.9951 over the part
+    assert not _surface_conformance(Part(plane((-9800000.0, 0, 3), (5e-10, 0, 1))), Box, [])
+
+    def bore(origin, direction):
+        axis = gp_Ax3(gp_Pnt(*origin), gp_Dir(*direction))
+        return BRepBuilderAPI_MakeFace(gp_Cylinder(axis, 3.25), 0, 6.28, -1, 1).Face()
+
+    hole = Hole(diameter=6.5, x=30.0, y=20.0, depth=6.0)
+    assert _surface_conformance(Part(bore((30, 20, 0), (0, 0, 1))), Box, [hole])
+    assert not _surface_conformance(Part(bore((30.001, 20, 0), (0, 0, 1))), Box, [hole])
+    # an axis stored 3,000 km below the part with a 1e-7 rad tilt: its location reads x = 30, the bore is at 30.3
+    far = Part(bore((30.0, 20, -3.0e6), (1e-7, 0, 1)))
+    assert not _surface_conformance(far, Box, [hole])
+    (_, x_stored, _, _), = _z_aligned_cylinders(far)
+    (_, x_at_part, _, _), = _z_aligned_cylinders(far, z_ref=0.0)
+    assert x_stored == pytest.approx(30.0, abs=1e-6) and x_at_part == pytest.approx(30.3, abs=1e-6)
+

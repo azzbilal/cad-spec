@@ -111,11 +111,16 @@ OPEN_PROBE_RADIUS_FRACTION = 0.5
 OPEN_VOLUME_TOL = 1e-6
 # Strict form (0.5.0). A part that is a plate with bores is bounded ONLY by
 # the six planes of its own envelope and by the cylinders of its recognised
-# bores. `_surface_conformance` checks exactly that, face by face, at these
-# numerical tolerances: they describe kernel noise, not a feature allowance
-# (a 0.001 mm pocket is rejected). This is what decides R9.
-FORM_LINEAR_TOL = 1e-6    # mm: a face against its envelope plane or bore surface
-FORM_ANGULAR_TOL = 1e-9   # rad: a plane normal or bore axis against its axis
+# bores. `_surface_conformance` checks exactly that, face by face. This is
+# what decides R9.
+#
+# The tolerance is the kernel's own resolution (Precision::Confusion, 1e-7
+# mm): two surfaces closer than this are the same surface as far as the
+# kernel is concerned. It is a numerical equivalence, stated plainly: a
+# feature shallower than 0.1 nanometre is not seen. There is no separate
+# angular tolerance: a tilted plane or bore axis is judged by where it
+# actually lies across the part.
+FORM_LINEAR_TOL = 1e-7    # mm
 # Shape residual (0.5.0), a second and cruder look at the same question: the
 # volume of material outside, and missing from, the ideal plate-with-bores
 # built from the measured envelope and bores. To be robust to kernel noise on
@@ -456,89 +461,92 @@ def build(code: str) -> Any:
     return load_brep(build_brep(code))
 
 
-def _analytic_adaptor(face: Any) -> Any:
-    """The face's surface as a plane or a cylinder, however it is stored.
-
-    A plane or cylinder stored as a spline (after a NURBS conversion) is still
-    a plane or a cylinder: the kernel is asked to recover the analytic form at
-    its own precision. Anything that is not exactly one of the two gives None.
-    """
-    from OCP.BRep import BRep_Tool
-    from OCP.BRepAdaptor import BRepAdaptor_Surface
-    from OCP.GeomAbs import GeomAbs_SurfaceType
-    from OCP.GeomAdaptor import GeomAdaptor_Surface
-    from OCP.GeomConvert import GeomConvert_SurfToAnaSurf
-    from OCP.Precision import Precision
-
-    wanted = (GeomAbs_SurfaceType.GeomAbs_Plane, GeomAbs_SurfaceType.GeomAbs_Cylinder)
-    adaptor = BRepAdaptor_Surface(face.wrapped)
-    if adaptor.GetType() in wanted:
-        return adaptor
-    try:
-        analytical = GeomConvert_SurfToAnaSurf(BRep_Tool.Surface_s(face.wrapped)).ConvertToAnalytical(
-            Precision.Confusion_s())
-    except Exception:
-        return None
-    if analytical is None:
-        return None
-    recovered = GeomAdaptor_Surface(analytical)
-    return recovered if recovered.GetType() in wanted else None
-
-
 def _surface_conformance(solid: Any, bb: Any, holes: list[Hole]) -> bool:
     """Is every face on one of the six envelope planes or on a recognised bore?
 
     A valid single solid bounded only by those surfaces is the plate with its
     bores: a pocket, boss, notch, slot, chamfer, fillet, draft, a lug in a
-    bore or a plate turned by a fraction of a degree each adds a face that
-    lies on none of them, whatever its size.
+    bore or a plate turned off its axes each adds a face that lies on none of
+    them.
+
+    Two rules come from the second audit of this check (5 October 2026):
+
+    * Only surfaces the kernel stores as a plane or a cylinder are accepted.
+      A spline that merely looks like a plane is not: asking the kernel to
+      "recover" an analytic form is an approximation, and a spline with a
+      local 1 mm bump was recovered as a plane. The cost is a false
+      rejection, never a false acceptance: a correct part converted to
+      splines fails, as it did under 0.4.0.
+    * A surface is judged by where it lies ACROSS THE PART, not by the point
+      and direction it happens to be stored with. A plane stored with its
+      origin 10 km away and a tilt of 5e-10 rad sits 5 microns lower at the
+      part; comparing the stored origin with the envelope missed that.
     """
+    from OCP.BRepAdaptor import BRepAdaptor_Surface
     from OCP.GeomAbs import GeomAbs_SurfaceType
 
-    limits = ((bb.xmin, bb.xmax), (bb.ymin, bb.ymax), (bb.zmin, bb.zmax))
+    lo, hi = (bb.xmin, bb.ymin, bb.zmin), (bb.xmax, bb.ymax, bb.zmax)
     for face in solid.Faces():
-        adaptor = _analytic_adaptor(face)
-        if adaptor is None:
-            return False
-        if adaptor.GetType() == GeomAbs_SurfaceType.GeomAbs_Plane:
+        adaptor = BRepAdaptor_Surface(face.wrapped)
+        kind = adaptor.GetType()
+        if kind == GeomAbs_SurfaceType.GeomAbs_Plane:
             plane = adaptor.Plane()
             normal, origin = plane.Axis().Direction(), plane.Location()
             n = (normal.X(), normal.Y(), normal.Z())
             p = (origin.X(), origin.Y(), origin.Z())
             axis = max(range(3), key=lambda k: abs(n[k]))
-            if any(abs(n[k]) > FORM_ANGULAR_TOL for k in range(3) if k != axis):
+            a, b = (k for k in range(3) if k != axis)
+            # The plane's coordinate along `axis` at the four corners of the
+            # part's extent in the other two directions.
+            levels = [p[axis] - (n[a] * (u - p[a]) + n[b] * (v - p[b])) / n[axis]
+                      for u in (lo[a], hi[a]) for v in (lo[b], hi[b])]
+            if not any(all(abs(level - edge) <= FORM_LINEAR_TOL for level in levels)
+                       for edge in (lo[axis], hi[axis])):
                 return False
-            if min(abs(p[axis] - edge) for edge in limits[axis]) > FORM_LINEAR_TOL:
-                return False
-        else:
+        elif kind == GeomAbs_SurfaceType.GeomAbs_Cylinder:
             cylinder = adaptor.Cylinder()
             direction, origin = cylinder.Axis().Direction(), cylinder.Axis().Location()
-            if abs(direction.X()) > FORM_ANGULAR_TOL or abs(direction.Y()) > FORM_ANGULAR_TOL:
+            if abs(direction.Z()) < 0.5:
                 return False
-            if not any(abs(origin.X() - h.x) <= FORM_LINEAR_TOL
-                       and abs(origin.Y() - h.y) <= FORM_LINEAR_TOL
-                       and abs(2 * cylinder.Radius() - h.diameter) <= FORM_LINEAR_TOL
+            # Where the axis crosses the bottom and the top of the part.
+            ends = [(origin.X() + (z - origin.Z()) / direction.Z() * direction.X(),
+                     origin.Y() + (z - origin.Z()) / direction.Z() * direction.Y()) for z in (bb.zmin, bb.zmax)]
+            if not any(abs(2 * cylinder.Radius() - h.diameter) <= FORM_LINEAR_TOL
+                       and all(abs(x - h.x) <= FORM_LINEAR_TOL and abs(y - h.y) <= FORM_LINEAR_TOL
+                               for x, y in ends)
                        for h in holes):
                 return False
+        else:
+            return False
     return True
 
 
-def _z_aligned_cylinders(solid: Any, *, strict: bool = False) -> list[tuple[float, float, float, Any]]:
-    """Exact kernel geometry for every Z-parallel cylindrical face."""
+def _z_aligned_cylinders(solid: Any, *, z_ref: float | None = None) -> list[tuple[float, float, float, Any]]:
+    """Exact kernel geometry for every Z-parallel cylindrical face.
+
+    The centre is the stored axis location, as scorer 0.4.0 recorded it. With
+    `z_ref` (strict measurement) it is where the axis crosses that height: an
+    axis stored far from the part with a slight tilt must be measured at the
+    part.
+    """
     from OCP.BRepAdaptor import BRepAdaptor_Surface
     from OCP.GeomAbs import GeomAbs_SurfaceType
 
     out: list[tuple[float, float, float, Any]] = []
     for face in solid.Faces():
-        adaptor = _analytic_adaptor(face) if strict else BRepAdaptor_Surface(face.wrapped)
-        if adaptor is None or adaptor.GetType() != GeomAbs_SurfaceType.GeomAbs_Cylinder:
+        adaptor = BRepAdaptor_Surface(face.wrapped)
+        if adaptor.GetType() != GeomAbs_SurfaceType.GeomAbs_Cylinder:
             continue
         cylinder = adaptor.Cylinder()
         direction = cylinder.Axis().Direction()
         if abs(direction.X()) > AXIS_TOL or abs(direction.Y()) > AXIS_TOL:
             continue  # horizontal or angled cylinder: not a drilled bore
         location = cylinder.Axis().Location()
-        out.append((cylinder.Radius(), location.X(), location.Y(), face))
+        cx, cy = location.X(), location.Y()
+        if z_ref is not None:
+            t = (z_ref - location.Z()) / direction.Z()
+            cx, cy = cx + t * direction.X(), cy + t * direction.Y()
+        out.append((cylinder.Radius(), cx, cy, face))
     return out
 
 
@@ -611,7 +619,8 @@ def _merge_intervals(intervals: list[tuple[float, float]]) -> list[tuple[float, 
     return [(lo, hi) for lo, hi in merged]
 
 
-def _classify_cylinders(solid: Any, *, strict: bool = False) -> tuple[list[Hole], list[PartialBore]]:
+def _classify_cylinders(solid: Any, *, strict: bool = False,
+                        z_ref: float | None = None) -> tuple[list[Hole], list[PartialBore]]:
     """Closed internal bores, plus rejected concave groups as diagnostics.
 
     Two independent discriminators, because hollow geometry defeats either
@@ -642,7 +651,7 @@ def _classify_cylinders(solid: Any, *, strict: bool = False) -> tuple[list[Hole]
     # Unrounded axis and diameter of each group (its first face), for the
     # strict scorer: a tolerance must not be widened by display rounding.
     raw: dict[tuple[tuple[float, float], float], tuple[float, float, float]] = {}
-    for radius, cx, cy, face in _z_aligned_cylinders(solid, strict=strict):
+    for radius, cx, cy, face in _z_aligned_cylinders(solid, z_ref=z_ref if strict else None):
         fbb = face.BoundingBox()
         if fbb.zlen <= 0:
             continue
@@ -775,8 +784,8 @@ def measure(solid: Any, *, strict: bool = False) -> Measurements:
     strict=False is the measurement scorer 0.4.0 was recorded with: values
     rounded as they always were, and none of the 0.5.0 work is done, so its
     results and its running time are unchanged. strict=True (scorer 0.5.0)
-    keeps unrounded values, recovers analytic surfaces stored as splines, and
-    adds the form check and the shape residual.
+    keeps unrounded values, measures each bore where its axis crosses the
+    part, and adds the form check and the shape residual.
     """
     from OCP.BRepCheck import BRepCheck_Analyzer
     from OCP.TopAbs import TopAbs_EDGE, TopAbs_FACE, TopAbs_SHELL, TopAbs_SOLID, TopAbs_VERTEX
@@ -800,7 +809,7 @@ def measure(solid: Any, *, strict: bool = False) -> Measurements:
         + _count(topo, TopAbs_EDGE, TopAbs_FACE)
         + _count(topo, TopAbs_VERTEX, TopAbs_EDGE)
     )
-    holes, partial = _classify_cylinders(solid, strict=strict)
+    holes, partial = _classify_cylinders(solid, strict=strict, z_ref=(bb.zmin + bb.zmax) / 2)
     for h in holes:
         h.open = _bore_is_open(solid, h, bb.zmin, bb.zmax)
     conformance: bool | None = None

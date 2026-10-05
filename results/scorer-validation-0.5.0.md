@@ -70,4 +70,4 @@
 - `gen-0212` `bore_burr`: oracle ['R9:no_other_features'], scorer ['R4a:hole_count', 'R5:hole_pattern', 'R9:no_other_features']
 - `gen-0037` `bore_burr`: oracle ['R9:no_other_features'], scorer ['R4a:hole_count', 'R5:hole_pattern', 'R9:no_other_features']
 
-Runtime 607.7 s, sandbox `fork`.
+Runtime 774.5 s, sandbox `fork`.

@@ -40,6 +40,6 @@ a volume-consistency check.
 - Held-out wording in L3 is two templates; small, written by the same author
   as the training templates, and each states its numbers in a fixed order: a
   parser that knows all six templates scores 100% on L3 (`parser-template`).
-- Scorer 0.4.0 recognises bores only as analytic cylinders: NURBS copies of
-  correct parts score 0 under it. Scorer 0.5.0 recovers the analytic form.
+- Only analytic planes and cylinders are recognised: NURBS copies of
+  correct parts score 0 (a deliberate false rejection, see the README).
 - Prompts are English only.
