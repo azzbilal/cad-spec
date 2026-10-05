@@ -19,7 +19,8 @@ Scores are only comparable within one scorer version
   tolerance. That tolerance is the kernel's resolution, 1e-7 mm, stated as
   a numerical equivalence. A volume comparison with the ideal part (0.001
   mm3 outside a 0.005 mm band) runs as a second look and can only add a
-  failure. Values are compared unrounded, with 1e-9 mm of slack. The hole
+  failure. Dimensional values are compared unrounded, with 1e-9 mm of slack
+  (the form check adds none). The hole
   pattern is matched one hole per position. Ten requirements.
 - **Three external audit rounds broke three drafts before merge** (5 October
   2026; `audit/scorer-0.5-audit.md`, `scorer-0.5-v2-audit.md`,
@@ -37,10 +38,16 @@ Scores are only comparable within one scorer version
   allowances. All are fixed and pinned as the `AUDIT_`, `AUDIT3_` and
   `AUDIT4_` cases of `scripts/test_rubric_050.py`. Scorer 0.5.0 had not
   recorded any result.
+- **A fourth round verified the result** (`audit/scorer-0.5-v4-audit.md`):
+  473 earlier parts rerun on Windows, no wrong part at full credit, no
+  correct non-spline part rejected, 180 further correct plates passed, 3,161
+  legacy answers identical to `main`. The edge check adds about 10% to the
+  time per answer. Recommendation: merge.
 - **Worker recovery.** After an answer crashed the kernel, the following
   answers could fail with "scorer pipe broke" and score 0. A lost worker is
   now replaced and the answer retried once; if that fails it is reported as
-  a scorer fault, not as a model failure.
+  a scorer fault, not as a model failure. This is shared by both scorer
+  versions; it changes no geometry and no tolerance.
 - **Why:** the external audit of 3 October 2026 found a saved development
   answer with four notches through its edges that 0.4.0 scored 1.0. It is
   now a pinned case (`scripts/test_rubric_050.py`).

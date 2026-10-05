@@ -107,7 +107,8 @@ can handle change orders in general.
 ## Scoring
 
 **Two scorer versions live side by side.** 0.5.0 is the current one and
-judges every new run. 0.4.0 is kept exactly as it was, because **every
+judges every new run. 0.4.0 keeps its original geometry and tolerance
+policy (only the recovery from a crashed worker is shared), because **every
 result on this page recorded before 4 October 2026 (the leaderboard, the
 hint experiment, training run 1 and its replication) was scored under 0.4.0**
 and result files are replayed under the version they record. A recorded
@@ -185,9 +186,15 @@ Four external audit rounds shaped it, and each found something real:
    as the nominal faces joined by an edge lying off both, and scored 1.0
    (`AUDIT4_`).
 
-This is not a proof that no wrong part can pass. It is a scorer that handles
-every case four rounds of review could build, with each case pinned as a
-test.
+A fifth pass then verified the result (`audit/scorer-0.5-v4-audit.md`): all
+473 parts of the earlier rounds were run again, no wrong part scored 1.0, no
+correct part with ordinary surfaces was rejected, and 180 further correct
+plates passed. Its recommendation was to merge.
+
+This is not a proof that no wrong part can pass. The main defects found in
+those reviews have pinned reproducing tests; the full external corpus is
+larger than the regression suite kept in this repository. Scorer 0.5.0 costs
+about twice the time of 0.4.0 per answer.
 
 Tolerances are inclusive: 6.6 mm is inside 6.5 +/- 0.1. Scorer 0.5.0
 compares unrounded measurements with 1e-9 mm of numerical slack, so
