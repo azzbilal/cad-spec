@@ -35,7 +35,7 @@ one is frozen and audited.
 ## 3. M1 record: what the observation map does
 
 Code: `cad_spec/l5/observation.py` (observation version 1, built on scorer
-0.5.0 by name). Gate: `scripts/test_l5_observation.py` (46 cases, in CI).
+0.5.0 by name). Gate: `scripts/test_l5_observation.py` (58 cases, in CI).
 Result: `results/l5/m1-observation-suite.md`.
 
 **Four verdicts.** `ok`; `form_violation` (the part has a feature nobody
@@ -64,12 +64,12 @@ of guessing. The scorer does not read those fields.
 | Orientation | L along X, W along Y. Turned 90 or 270 degrees about Z, they swap. Turned by any other angle beyond the form tolerance, the form fails (a turn of 1e-10 rad is inside it) | design note 7.2; the form check |
 | What n counts | Through holes along Z only: one open, uninterrupted cylinder from the bottom face to the top face, within the form tolerance. A blind hole is not counted. A fifth hole is counted (n = 5), not hidden | the contract decides, the map only measures |
 | px, py | The extent of the hole centres along X and Y. For the four-corner pattern that is the pitch; for any other pattern it is only the extent, and `rectangular` is then False | the design note defines pitch for the family only |
-| Hole centre | Measured where the axis crosses the mid-plane of the plate. The design note says the top face; the two agree within 1e-11 mm because any tilted hole is refused | one measurement shared with the scorer |
+| Hole centre | Measured where the axis crosses the mid-plane of the plate. The design note says the top face. For an accepted axis the two differ by at most (T / 2) x 1e-12: 7e-12 mm for the thickest generated plate (14 mm) | one measurement shared with the scorer |
 | No hole | D, mx, my, px, py are `None`, never zero | a missing variable is not a value |
-| Stepped, counterbored or offset hole | `out_of_scope`: two different cylinders, one with its axis inside the other. Judged on the unrounded axis and diameter of every concave cylinder face | D is not one number. The scorer's grouping rounds diameters to 1e-4 mm and hid a 1e-6 step |
-| Holes of different diameters | `out_of_scope` when they differ by more than the dimension slack, 1e-9 mm | D is one number in v1; the verdict must not depend on which hole comes first |
-| Tilted or cross hole | `out_of_scope` for any concave cylinder whose axis is not along Z beyond floating-point slack (1e-12 rad) | a 1e-8 rad tilt was `ok` with a margin wrong by 2e-8 mm |
-| Supported size | `out_of_scope` when any cylindrical face is under 0.01 mm in diameter | the probe that tells a hole from a boss cannot classify smaller ones; refusing is honest, reporting n = 0 was not |
+| Stepped, counterbored or offset hole | `out_of_scope`: two different cylinders, one with its axis strictly inside the other (two 10 mm holes 5.0 mm apart are not nested; 4.999 mm apart they are). Judged on the unrounded axis and diameter of every concave cylinder face | D is not one number. The scorer's grouping rounds diameters to 1e-4 mm and hid a 1e-6 step |
+| Holes of different diameters | `out_of_scope` when the measured diameters differ by more than the dimension slack, 1e-9 mm. Values are binary doubles: holes written 10 and 10.000000001 measure 1.00000008e-9 apart and are refused | D is one number in v1; the verdict must not depend on which hole comes first |
+| Tilted or cross hole | `out_of_scope` for any concave cylinder whose axis is not along Z beyond floating-point slack (1e-12 rad). At that slack every variable is still right to about 1e-11 mm (the kernel reads T = 4.00000000001 on a 4 mm plate with 10 mm holes) | a 1e-8 rad tilt was `ok` with a margin wrong by 2e-8 mm |
+| Supported size | `out_of_scope` when any cylindrical face is under 0.01 mm in diameter (exactly 0.01 mm is measured). This comes before the form check, so a fillet under that size is a size refusal, not the `form_violation` of amendment 1 | the probe that tells a hole from a boss cannot classify smaller ones; refusing is honest, reporting n = 0 was not |
 | Failed scope scan | `out_of_scope`, with the reason | it used to raise an exception out of the map |
 | Spline surfaces | `form_violation`, with no hole recognised. A known false rejection kept on purpose (scorer review round 3). The kernel pads a spline bounding box by 2e-7 mm, so L, W and T of such a part are not exact | soundness over coverage |
 
@@ -88,6 +88,14 @@ Report: `audit/l5-m1-audit.md`. It reproduced the gate (27 of 27), found no
 score change on 3,161 saved answers under either scorer version, checked 180
 ordinary constructions to 1e-9 mm, and required five changes. All are made
 and pinned as `review_` cases of the gate.
+
+A second review (`audit/l5-m1-v2-audit.md`) read the changes and confirmed
+all five in the source, but ran in an environment that held only the
+incremental bundle, so it could execute nothing from the repository. Its
+boundary probes of the kernel agreed with the rules, and it asked for the
+exact boundaries to be pinned and for two statements to be made precise.
+Both are done: twelve `boundary_` cases, and the rows above on the hole
+centre, on diameters and on the supported size.
 
 | # | Finding | Change |
 |---|---|---|

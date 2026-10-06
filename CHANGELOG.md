@@ -30,9 +30,10 @@ Scores are only comparable within one scorer version
   by 2e-8 mm; a 1e-6 mm radius step and a 1e-8 mm diameter difference were
   not refused; a 0.2 micron cross bore was missed; a failed scope scan
   raised instead of refusing.
-- **Gate:** `scripts/test_l5_observation.py`, 46 hand-built cases, in CI
+- **Gate:** `scripts/test_l5_observation.py`, 58 hand-built cases, in CI
   (`results/l5/m1-observation-suite.md`). Every `ok` case states every
-  variable.
+  variable, and the exact boundary of each rule is pinned (tilt, nested
+  cylinders, supported size, equal diameters).
 - One deviation from the design note, recorded for approval: an extra pocket
   or slot is a `form_violation`, not `out_of_scope`.
 

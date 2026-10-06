@@ -206,6 +206,57 @@ CASES: dict[str, tuple[str, str, dict, str]] = {
     "review_closed_cavity": (
         BASE + 'result = result.cut(cq.Workplane("XY").box(4, 4, 1))\n', "form_violation", NOMINAL,
         "a void inside the plate"),
+    # --- the exact boundaries of the rules, asked for by the second review
+    "boundary_tilt_1e-12_rad_is_accepted": (
+        HEAD + 'result = cq.Workplane("XY").box(100, 80, 4)\n'
+               f"for x, y in {CORNERS}:\n"
+               '    tool = cq.Workplane("XY").circle(5).extrude(10, both=True)'
+               ".rotate((0, 0, 0), (0, 1, 0), 5.729577951308232e-11)\n"
+               "    result = result.cut(tool.translate((x, y, 0)))\n",
+        "ok", NOMINAL, "floating-point slack: every variable is still right to 1e-10 mm (T reads 4.00000000001)"),
+    "boundary_tilt_1e-11_rad_is_refused": (
+        HEAD + 'result = cq.Workplane("XY").box(100, 80, 4)\n'
+               f"for x, y in {CORNERS}:\n"
+               '    tool = cq.Workplane("XY").circle(5).extrude(10, both=True)'
+               ".rotate((0, 0, 0), (0, 1, 0), 5.729577951308232e-10)\n"
+               "    result = result.cut(tool.translate((x, y, 0)))\n",
+        "out_of_scope", {"L": 100.0, "W": 80.0}, "ten times the slack"),
+    "boundary_axis_on_the_other_rim": (
+        holes_at("[(-2.5, 0), (2.5, 0)]"), "form_violation", {**ENVELOPE, "n": 0},
+        "two 10 mm holes 5.0 mm apart: each axis is ON the other rim, not inside it, so not a stepped hole"),
+    "boundary_axis_inside_the_other_rim": (
+        holes_at("[(-2.4995, 0), (2.4995, 0)]"), "out_of_scope", ENVELOPE,
+        "4.999 mm apart: each axis is inside the other cylinder"),
+    "boundary_holes_of_0.009_mm": (
+        HEAD + 'result = cq.Workplane("XY").box(100, 80, 4).faces(">Z").workplane()'
+               f".pushPoints({CORNERS}).hole(0.009)\n",
+        "out_of_scope", ENVELOPE, "just under the supported size"),
+    "boundary_holes_of_0.010_mm": (
+        HEAD + 'result = cq.Workplane("XY").box(100, 80, 4).faces(">Z").workplane()'
+               f".pushPoints({CORNERS}).hole(0.01)\n",
+        "ok", full(D=0.01), "exactly the supported size: measured"),
+    "boundary_fillets_of_0.009_mm": (
+        holes_at(CORNERS, '.edges("|Z").fillet(0.0045)'), "out_of_scope", ENVELOPE,
+        "a fillet under the supported size is refused before the form check can call it a fillet"),
+    "boundary_fillets_of_0.011_mm": (
+        holes_at(CORNERS, '.edges("|Z").fillet(0.0055)'), "form_violation", NOMINAL,
+        "just over it: measured, and the form fails"),
+    "boundary_cross_bore_of_0.010_mm": (
+        BASE + 'result = result.cut(cq.Workplane("YZ").circle(0.005).extrude(200, both=True))\n',
+        "out_of_scope", ENVELOPE, "at the supported size the off-axis rule refuses it"),
+    "boundary_diameters_5e-10_apart": (
+        holes_at("[(-35, -25), (-35, 25), (35, -25)]")
+        + 'result = result.faces(">Z").workplane().pushPoints([(35, 25)]).hole(10.0000000005)\n',
+        "ok", NOMINAL, "inside the dimension slack: one D"),
+    "boundary_diameters_written_1e-9_apart": (
+        holes_at("[(-35, -25), (-35, 25), (35, -25)]")
+        + 'result = result.faces(">Z").workplane().pushPoints([(35, 25)]).hole(10.000000001)\n',
+        "out_of_scope", {**ENVELOPE, "n": 4},
+        "written exactly 1e-9 apart, measured 1.00000008e-9 apart: values are binary doubles, so this is refused"),
+    "boundary_diameters_2e-9_apart": (
+        holes_at("[(-35, -25), (-35, 25), (35, -25)]")
+        + 'result = result.faces(">Z").workplane().pushPoints([(35, 25)]).hole(10.000000002)\n',
+        "out_of_scope", {**ENVELOPE, "n": 4}, "outside the slack"),
     # --- nothing to measure
     "two_solids": (
         BASE + 'result = cq.Compound.makeCompound([result.val(), cq.Solid.makeBox(5, 5, 5, cq.Vector(200, 0, 0))])\n',

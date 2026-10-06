@@ -2,7 +2,7 @@
 
 Scorer 0.5.0. Dimension slack 1e-09 mm, form tolerance 1e-07 mm, both imported from the scorer.
 
-**46 of 46 cases as expected.** Reference part: 100 x 80 x 4 mm plate, four 10 mm through holes, 15 mm from the side faces.
+**58 of 58 cases as expected.** Reference part: 100 x 80 x 4 mm plate, four 10 mm through holes, 15 mm from the side faces.
 
 | Case | Expected verdict | Verdict | Result | Why the case exists |
 |---|---|---|---|---|
@@ -50,5 +50,17 @@ Scorer 0.5.0. Dimension slack 1e-09 mm, form tolerance 1e-07 mm, both imported f
 | `review_two_overlapping_holes` | form_violation | form_violation | pass | two separate holes that overlap: a form matter, not a stepped hole |
 | `review_boss_on_top` | form_violation | form_violation | pass | the boss raises the envelope: the reported numbers are those of the whole solid, for diagnosis only |
 | `review_closed_cavity` | form_violation | form_violation | pass | a void inside the plate |
+| `boundary_tilt_1e-12_rad_is_accepted` | ok | ok | pass | floating-point slack: every variable is still right to 1e-10 mm (T reads 4.00000000001) |
+| `boundary_tilt_1e-11_rad_is_refused` | out_of_scope | out_of_scope | pass | ten times the slack |
+| `boundary_axis_on_the_other_rim` | form_violation | form_violation | pass | two 10 mm holes 5.0 mm apart: each axis is ON the other rim, not inside it, so not a stepped hole |
+| `boundary_axis_inside_the_other_rim` | out_of_scope | out_of_scope | pass | 4.999 mm apart: each axis is inside the other cylinder |
+| `boundary_holes_of_0.009_mm` | out_of_scope | out_of_scope | pass | just under the supported size |
+| `boundary_holes_of_0.010_mm` | ok | ok | pass | exactly the supported size: measured |
+| `boundary_fillets_of_0.009_mm` | out_of_scope | out_of_scope | pass | a fillet under the supported size is refused before the form check can call it a fillet |
+| `boundary_fillets_of_0.011_mm` | form_violation | form_violation | pass | just over it: measured, and the form fails |
+| `boundary_cross_bore_of_0.010_mm` | out_of_scope | out_of_scope | pass | at the supported size the off-axis rule refuses it |
+| `boundary_diameters_5e-10_apart` | ok | ok | pass | inside the dimension slack: one D |
+| `boundary_diameters_written_1e-9_apart` | out_of_scope | out_of_scope | pass | written exactly 1e-9 apart, measured 1.00000008e-9 apart: values are binary doubles, so this is refused |
+| `boundary_diameters_2e-9_apart` | out_of_scope | out_of_scope | pass | outside the slack |
 | `two_solids` | not_single_solid | not_single_solid | pass | an unfused second body |
 | `no_result` | build_error | build_error | pass | the answer binds no part: gate G1, not the map |
