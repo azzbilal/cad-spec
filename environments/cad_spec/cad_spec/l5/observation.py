@@ -7,38 +7,54 @@ The map answers one question: "what are L, W, T, n, D, mx, my, px, py of this
 part?", and it gives one of four verdicts with the numbers:
 
   ok                the variables are measured and the part has no other face
-  form_violation    the variables are measured, but the part has a feature
-                    nobody asked for. Measurable does not mean acceptable.
+  form_violation    the part has a feature nobody asked for. The numbers are
+                    reported for diagnosis only: with a boss, a spline face
+                    or loose geometry they may not describe the plate.
   out_of_scope      a variable cannot be measured without guessing (a stepped
-                    hole, a tilted hole, holes of different diameters). The
-                    map refuses loudly instead of returning a wrong number.
+                    hole, a tilted hole, holes of different diameters, a
+                    feature too small to classify). The map refuses loudly
+                    instead of returning a wrong number.
   not_single_solid  zero or several solids: nothing to measure
+
+Only `ok` lets a contract be evaluated. `ok` is not compliance: it says the
+numbers can be trusted, and the contract (including the family rules that a
+hole lies inside the plate and that holes do not overlap) is the next gate.
 
 Nothing is re-measured here. The numbers come from the strict measurement of
 scorer 0.5.0 (measure(strict=True)) and the form verdict IS that scorer's R9
-(rubric.form_verdict). Tolerances are imported from the scorer, never copied,
-so the two cannot drift apart.
+(rubric.form_verdict). Tolerances are imported from scorer 0.5.0 by name,
+never copied and never following a later default.
 
 Position is not a contract variable in L5 v1: a plate moved off the origin
 measures the same. Orientation is: L is read along X and W along Y, so a
 plate turned 90 degrees about Z has L and W swapped.
+
+px and py are the extent of the hole centres along X and Y. For the family's
+four-corner pattern that is the pitch; for any other pattern it is only the
+extent, and `rectangular` says which case applies.
 """
 
 from __future__ import annotations
 
 import math
+from collections.abc import Mapping
 from dataclasses import dataclass, field
+from types import MappingProxyType
 
 from ..measure import FORM_LINEAR_TOL, Hole, Measurements, build_and_measure
-from ..rubric import SCORER_VERSION, TOLERANCES, form_verdict
+from ..rubric import TOLERANCES, form_verdict
 
-# One source of truth: the validated scorer's own constants.
-EPS_DIM_MM: float = TOLERANCES[SCORER_VERSION].eps  # slack when a predicate compares a dimension
-EPS_FORM_MM: float = FORM_LINEAR_TOL                # two positions closer than this are the same position
+OBSERVATION_VERSION = "1"
+SCORER_BASIS = "0.5.0"  # the validated scorer this map is built on; pinned, not "the current one"
 
-# Two cylinders whose axes are closer than this are "at one hole position".
-# It only decides what counts as a stepped hole; it is far below any hole size.
-_SAME_AXIS_MM = 1e-3
+# One source of truth: that scorer's own constants.
+EPS_DIM_MM: float = TOLERANCES[SCORER_BASIS].eps  # two dimensions closer than this are the same dimension
+EPS_FORM_MM: float = FORM_LINEAR_TOL              # two positions closer than this are the same position
+
+# Supported size. The inward probe that tells a hole from a boss cannot
+# classify a cylinder much smaller than this, so the map refuses instead of
+# missing it. The generator's smallest hole is 3 mm.
+MIN_CYLINDER_DIAMETER_MM = 0.01
 
 OK = "ok"
 FORM_VIOLATION = "form_violation"
@@ -46,27 +62,28 @@ OUT_OF_SCOPE = "out_of_scope"
 NOT_SINGLE_SOLID = "not_single_solid"
 
 Value = float | int | bool | None
+_NO_VALUES: Mapping[str, Value] = MappingProxyType({})
 
 
 @dataclass(frozen=True)
 class Observation:
     """Contract variables of one part, with the verdict on how far to trust them.
 
-    `values` holds L, W, T (bounding box), n (through holes along Z), D, mx,
-    my, px, py, and the booleans rectangular, centered, symmetric. A variable
-    that does not exist (D with no hole) is None. With `out_of_scope` only the
-    variables measured before the refusal are present.
+    `values` (read-only) holds L, W, T (bounding box), n (through holes along
+    Z), D, mx, my, px, py, and the booleans rectangular, centered, symmetric.
+    A variable that does not exist (D with no hole) is None. With
+    `out_of_scope` only the variables measured before the refusal are present.
     """
 
     status: str
     reason: str = ""
-    values: dict[str, Value] = field(default_factory=dict)
+    values: Mapping[str, Value] = field(default_factory=lambda: _NO_VALUES)
     centre: tuple[float, float, float] | None = None  # bounding-box centre, for information
 
     @property
-    def measurable(self) -> bool:
-        """Can the contract predicates be evaluated on `values`?"""
-        return self.status in (OK, FORM_VIOLATION)
+    def ok(self) -> bool:
+        """May a contract be evaluated on `values`? Only then."""
+        return self.status == OK
 
 
 def _through(hole: Hole, m: Measurements) -> bool:
@@ -75,46 +92,57 @@ def _through(hole: Hole, m: Measurements) -> bool:
             and abs(hole.z_min - m.z_min) <= EPS_FORM_MM and abs(hole.z_max - m.z_max) <= EPS_FORM_MM)
 
 
-def _positions(holes: list[Hole]) -> list[list[Hole]]:
-    """Cylinders grouped by axis position."""
-    groups: list[list[Hole]] = []
-    for hole in holes:
-        for group in groups:
-            if math.hypot(hole.x - group[0].x, hole.y - group[0].y) <= _SAME_AXIS_MM:
-                group.append(hole)
-                break
-        else:
-            groups.append([hole])
-    return groups
-
-
 def _same(a: float, b: float) -> bool:
     return abs(a - b) <= EPS_FORM_MM
 
 
+def _nested(axes: list[tuple[float, float, float]]) -> bool:
+    """Do two DIFFERENT concave Z cylinders share one hole position?
+
+    Two faces of the same cylinder (same axis, same diameter) are one
+    cylinder. Otherwise, when the axis of one lies inside the other, they form
+    a counterbore, a stepped hole or an offset step: D is not one number.
+    Two separate holes that merely overlap are not nested (a form matter).
+    """
+    for i, (x, y, d) in enumerate(axes):
+        for u, v, e in axes[i + 1:]:
+            distance = math.hypot(x - u, y - v)
+            if distance <= EPS_FORM_MM and abs(d - e) <= EPS_DIM_MM:
+                continue
+            if distance < max(d, e) / 2:
+                return True
+    return False
+
+
 def observe(m: Measurements) -> Observation:
     """Map a STRICT measurement (measure(strict=True)) to contract variables."""
+    if not m.strict:
+        raise ValueError("observe() needs a strict measurement: measure(solid, strict=True)")
     if m.solid_count != 1:
         return Observation(NOT_SINGLE_SOLID, f"{m.solid_count} solids, exactly one is required")
 
     centre = ((m.x_min + m.x_max) / 2, (m.y_min + m.y_max) / 2, (m.z_min + m.z_max) / 2)
     values: dict[str, Value] = {"L": m.length, "W": m.width, "T": m.thickness}
 
-    def refuse(reason: str) -> Observation:
-        return Observation(OUT_OF_SCOPE, reason, dict(values), centre)
+    def done(status: str, reason: str = "") -> Observation:
+        return Observation(status, reason, MappingProxyType(dict(values)), centre)
 
-    # Scope: anything that would make a hole variable a guess.
-    if m.off_axis_concave is None:
-        raise ValueError("observe() needs a strict measurement: measure(solid, strict=True)")
+    # Scope: anything that would make a hole variable a guess. Refusals come
+    # before any hole variable is written.
+    if m.scope_error or m.off_axis_concave is None or m.scope_axes is None:
+        return done(OUT_OF_SCOPE, f"the scope checks could not be completed ({m.scope_error or 'no detail'})")
+    if m.min_cylinder_diameter is not None and m.min_cylinder_diameter < MIN_CYLINDER_DIAMETER_MM:
+        return done(OUT_OF_SCOPE, f"a cylindrical face under {MIN_CYLINDER_DIAMETER_MM} mm in diameter: "
+                                  "below the supported size")
     if m.off_axis_bores or m.off_axis_concave:
-        return refuse("a hole whose axis is not parallel to Z")
-    groups = _positions(m.holes)
-    if any(len(group) > 1 for group in groups):
-        return refuse("two or more coaxial cylinders at one hole position (counterbore or stepped hole)")
-    through = [group[0] for group in groups if _through(group[0], m)]
+        return done(OUT_OF_SCOPE, "a hole whose axis is not parallel to Z")
+    if _nested(m.scope_axes):
+        return done(OUT_OF_SCOPE, "two different cylinders at one hole position "
+                                  "(counterbore, stepped or offset hole)")
+    through = [h for h in m.holes if _through(h, m)]
     values["n"] = len(through)
-    if through and max(h.diameter for h in through) - min(h.diameter for h in through) > EPS_FORM_MM:
-        return refuse("through holes of different diameters: D is not one number")
+    if through and max(h.diameter for h in through) - min(h.diameter for h in through) > EPS_DIM_MM:
+        return done(OUT_OF_SCOPE, "through holes of different diameters: D is not one number")
 
     if through:
         xs, ys = sorted(h.x for h in through), sorted(h.y for h in through)
@@ -136,11 +164,9 @@ def observe(m: Measurements) -> Observation:
 
     # Form: measurable does not mean acceptable. Same verdict as scorer 0.5.0.
     if not (m.valid and m.shell_count == 1 and m.loose_count == 0):
-        return Observation(FORM_VIOLATION, "not one clean, valid, single-shell solid", values, centre)
+        return done(FORM_VIOLATION, "not one clean, valid, single-shell solid")
     passed, why = form_verdict(m)
-    if not passed:
-        return Observation(FORM_VIOLATION, why, values, centre)
-    return Observation(OK, "", values, centre)
+    return done(OK) if passed else done(FORM_VIOLATION, why)
 
 
 def observe_code(completion: str) -> Observation:

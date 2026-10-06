@@ -14,16 +14,25 @@ Scores are only comparable within one scorer version
   rectangular, centered, symmetric, with one of four verdicts: `ok`,
   `form_violation`, `out_of_scope`, `not_single_solid`. Measurable does not
   mean acceptable: a filleted plate is measured and fails the form. A
-  variable that would be a guess (stepped hole, tilted hole, two diameters)
-  is refused, not approximated.
+  variable that would be a guess (stepped hole, any tilted hole, two
+  diameters, a feature under 0.01 mm) is refused, not approximated. Only
+  `ok` lets a contract be evaluated.
 - **One form check.** R9 of scorer 0.5.0 is now the function
   `rubric.form_verdict`, used by the scorer and by the map. No verdict
   changes: frozen suite 0 of 1,646 and 0 of 720, 81 and 37 hand-labelled
   cases, 961 saved answers replayed.
-- **Strict measurement** gains `off_axis_concave` (concave cylindrical faces
-  not along Z). The legacy measurement is untouched.
-- **Gate:** `scripts/test_l5_observation.py`, 27 hand-built cases, in CI
-  (`results/l5/m1-observation-suite.md`).
+- **Strict measurement** gains scope information the scorer does not read:
+  every concave Z cylinder unrounded, the smallest cylindrical face, and the
+  count of concave cylinders not exactly along Z. The legacy measurement is
+  untouched.
+- **External review before merge** (`audit/l5-m1-audit.md`): five required
+  changes, all made. A hole tilted by 1e-8 rad was `ok` with a margin wrong
+  by 2e-8 mm; a 1e-6 mm radius step and a 1e-8 mm diameter difference were
+  not refused; a 0.2 micron cross bore was missed; a failed scope scan
+  raised instead of refusing.
+- **Gate:** `scripts/test_l5_observation.py`, 46 hand-built cases, in CI
+  (`results/l5/m1-observation-suite.md`). Every `ok` case states every
+  variable.
 - One deviation from the design note, recorded for approval: an extra pocket
   or slot is a `form_violation`, not `out_of_scope`.
 
