@@ -23,7 +23,10 @@ piece for RL-environment and evaluation work.
 - The story in one document: `docs/REPORT.md`.
 - Next work is in `ROADMAP.md`, section "After the external audit of
   3 October 2026". Items 1 (scorer 0.5) and 2 (L4 parser baseline) are done.
-  Next: item 3, a harder edit tier on fresh specs.
+  Item 3 is being built as L5 v1 (region-graded change orders). Governing
+  design and amendments: `docs/design/`. Milestone M1 (observation map,
+  `cad_spec/l5/`) is built; M2 (contract compiler) starts only after M1 is
+  audited and merged. Do not reopen the architecture of the design note.
 
 ## Rules that are never broken
 

@@ -35,9 +35,18 @@ first. Both evaluation splits are used and are never a selection set.
    `scripts/test_parser_edit.py`. Frozen on train and dev, then run once:
    L4 all-pass train 200/200, dev 30/30, test 60/60, replication 60/60
    (`results/baselines-deterministic.md`).
-3. **A harder tier on fresh specs (free to build).** Three or four coupled
-   edits, several forms of rev A code, two-stage change orders; references
-   and an "unedited rev A fails" check for every task; sealed evaluation set.
+3. **A harder tier on fresh specs (free to build). In progress as L5 v1,
+   region-graded change orders** (governing design:
+   `docs/design/L5-region-graded-change-orders-v1.0.md`, amendments and
+   milestone record: `docs/design/L5-amendments.md`). A revision passes if it
+   lies in the region of valid revisions of the revised contract, moves
+   nothing no conflict required, and keeps the parametric behaviour of rev
+   A; impossible orders must be rejected with a minimal conflict. Five
+   milestones, each audited before the next starts. **M1 (observation map
+   and form check) is built**; M2 to M5 are not started. The original item:
+   three or four coupled edits, several forms of rev A code, two-stage
+   change orders; references and an "unedited rev A fails" check for every
+   task; sealed evaluation set.
 4. **A true route control (paid, small, only if it can be bounded).** Base
    weights, a verified zero-delta adapter and the trained adapter on one
    serving stack. The 5-step smoke adapter is not a null control.

@@ -299,6 +299,14 @@ class Measurements:
     # never as a pass, and `shape_error` says what went wrong.
     surface_conformance: bool | None = None  # every face on an envelope plane or a recognised bore
     boundary_consistent: bool | None = None  # still a valid solid with all tolerances at FORM_LINEAR_TOL
+    # Scope information for the L5 observation map (strict measurement only).
+    # The scorer does not read these. They keep what the hole grouping above
+    # rounds away, so that the map can refuse instead of guessing.
+    strict: bool = False                   # produced by measure(strict=True)
+    off_axis_concave: int | None = None    # concave cylindrical faces whose axis is not exactly along Z
+    scope_axes: list[tuple[float, float, float]] | None = None  # every concave Z cylinder face: x, y, raw diameter
+    min_cylinder_diameter: float | None = None  # smallest cylindrical face of any kind, mm (None: no cylinder)
+    scope_error: str | None = None         # why the scope information could not be collected
     extra_volume: float | None = None     # mm^3 of material outside the ideal part
     missing_volume: float | None = None   # mm^3 of the ideal part that is absent
     shape_error: str | None = None
@@ -532,6 +540,63 @@ def _surface_conformance(solid: Any, bb: Any, holes: list[Hole]) -> bool:
     return True
 
 
+# A bore axis tilted from the Z line by more than this angle is "not along Z"
+# for the L5 observation map. It is floating-point slack, not a tolerance on
+# tilt: at 1e-12 rad a hole moves 1e-11 mm across a 10 mm plate, a hundred
+# times below the slack on a dimension. Rotations about Z, mirrors and
+# translations leave a Z axis exactly on Z.
+STRICT_AXIS_SLACK = 1e-12
+
+
+def _scope_scan(solid: Any) -> tuple[int, float | None]:
+    """What the L5 observation map must know before it trusts the holes.
+
+    Returns (concave cylindrical faces not exactly along Z, smallest diameter
+    of any cylindrical face). The first is a tilted or cross hole, whole or
+    partial: `off_axis_bores` (0.4.0, diagnostics) only counts bores that
+    close into a full cylinder, which a tilted hole through a thin plate does
+    not, and it accepts tilts up to 1e-6 rad. The second lets the map refuse
+    features too small for the inward probe to classify.
+
+    The probe goes at most half a radius inward (the 0.4.0 detectors use a
+    fixed minimum that can cross a very small bore), and a point that is
+    neither clearly inside nor clearly outside the material is an error, not
+    a guess. Strict measurement only.
+    """
+    from OCP.BRepAdaptor import BRepAdaptor_Surface
+    from OCP.BRepClass3d import BRepClass3d_SolidClassifier
+    from OCP.GeomAbs import GeomAbs_SurfaceType
+    from OCP.gp import gp_Pnt
+    from OCP.TopAbs import TopAbs_State
+
+    classifier = BRepClass3d_SolidClassifier(solid.wrapped)
+    count, smallest = 0, None
+    for face in solid.Faces():
+        adaptor = BRepAdaptor_Surface(face.wrapped)
+        if adaptor.GetType() != GeomAbs_SurfaceType.GeomAbs_Cylinder:
+            continue
+        cylinder = adaptor.Cylinder()
+        d, loc, r = cylinder.Axis().Direction(), cylinder.Axis().Location(), cylinder.Radius()
+        smallest = 2 * r if smallest is None else min(smallest, 2 * r)
+        # The tilt ANGLE, not X and Y each on their own allowance: a diagonal
+        # tilt of 1.3e-12 rad passed two separate component checks.
+        if math.hypot(d.X(), d.Y()) <= math.sin(STRICT_AXIS_SLACK):
+            continue  # exactly along Z: a hole, or a matter for the form check
+        p = adaptor.Value((adaptor.FirstUParameter() + adaptor.LastUParameter()) / 2,
+                          (adaptor.FirstVParameter() + adaptor.LastVParameter()) / 2)
+        t = (p.X() - loc.X()) * d.X() + (p.Y() - loc.Y()) * d.Y() + (p.Z() - loc.Z()) * d.Z()
+        foot = (loc.X() + t * d.X(), loc.Y() + t * d.Y(), loc.Z() + t * d.Z())
+        k = min(max(r * PROBE_INSET_FRACTION, PROBE_INSET_MIN_MM), r / 2) / r
+        classifier.Perform(gp_Pnt(p.X() + (foot[0] - p.X()) * k, p.Y() + (foot[1] - p.Y()) * k,
+                                  p.Z() + (foot[2] - p.Z()) * k), min(1e-6, r / 4))
+        state = classifier.State()
+        if state == TopAbs_State.TopAbs_OUT:
+            count += 1  # no material just inward: a concave face, so part of a hole
+        elif state != TopAbs_State.TopAbs_IN:
+            raise RuntimeError("a cylindrical face could not be classified as concave or convex")
+    return count, smallest
+
+
 def _boundary_consistent(topo: Any) -> bool:
     """Is the solid still valid when every stored tolerance is the form tolerance?
 
@@ -651,8 +716,9 @@ def _merge_intervals(intervals: list[tuple[float, float]]) -> list[tuple[float, 
     return [(lo, hi) for lo, hi in merged]
 
 
-def _classify_cylinders(solid: Any, *, strict: bool = False,
-                        z_ref: float | None = None) -> tuple[list[Hole], list[PartialBore]]:
+def _classify_cylinders(solid: Any, *, strict: bool = False, z_ref: float | None = None,
+                        scope_axes: list[tuple[float, float, float]] | None = None,
+                        ) -> tuple[list[Hole], list[PartialBore]]:
     """Closed internal bores, plus rejected concave groups as diagnostics.
 
     Two independent discriminators, because hollow geometry defeats either
@@ -692,6 +758,8 @@ def _classify_cylinders(solid: Any, *, strict: bool = False,
         classifier.Perform(probe, 1e-6)
         if classifier.State() == TopAbs_State.TopAbs_IN:
             continue  # material immediately inward => convex round/fillet/boss/wall
+        if scope_axes is not None:
+            scope_axes.append((cx, cy, 2 * radius))  # before any rounding or grouping
         key = (round(cx, COAXIAL_DP), round(cy, COAXIAL_DP))
         diameter = round(2 * radius, 4)
         raw.setdefault((key, diameter), (2 * radius, cx, cy))
@@ -841,11 +909,16 @@ def measure(solid: Any, *, strict: bool = False) -> Measurements:
         + _count(topo, TopAbs_EDGE, TopAbs_FACE)
         + _count(topo, TopAbs_VERTEX, TopAbs_EDGE)
     )
-    holes, partial = _classify_cylinders(solid, strict=strict, z_ref=(bb.zmin + bb.zmax) / 2)
+    scope_axes: list[tuple[float, float, float]] | None = [] if strict else None
+    holes, partial = _classify_cylinders(solid, strict=strict, z_ref=(bb.zmin + bb.zmax) / 2,
+                                         scope_axes=scope_axes)
     for h in holes:
         h.open = _bore_is_open(solid, h, bb.zmin, bb.zmax)
     conformance: bool | None = None
     boundary: bool | None = None
+    off_axis_concave: int | None = None
+    min_cylinder: float | None = None
+    scope_error: str | None = None
     extra_volume = missing_volume = None
     shape_error: str | None = None
     if strict:
@@ -856,6 +929,10 @@ def measure(solid: Any, *, strict: bool = False) -> Measurements:
             shape_error = f"form check failed: {type(exc).__name__}: {exc}"[:200]
         extra_volume, missing_volume, residual_error = _shape_residual(solid, bb, holes)
         shape_error = shape_error or residual_error
+        try:  # on its own: a failed scope scan must not disturb the form verdict
+            off_axis_concave, min_cylinder = _scope_scan(solid)
+        except Exception as exc:
+            scope_error = f"{type(exc).__name__}: {exc}"[:200]
 
     def kept(value: float) -> float:
         return value if strict else round(value, 4)
@@ -880,6 +957,11 @@ def measure(solid: Any, *, strict: bool = False) -> Measurements:
         off_axis_bores=_off_axis_bore_count(solid),
         surface_conformance=conformance,
         boundary_consistent=boundary,
+        strict=strict,
+        off_axis_concave=off_axis_concave,
+        scope_axes=scope_axes,
+        min_cylinder_diameter=min_cylinder,
+        scope_error=scope_error,
         extra_volume=extra_volume,
         missing_volume=missing_volume,
         shape_error=shape_error,
