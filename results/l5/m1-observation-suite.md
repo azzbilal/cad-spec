@@ -2,7 +2,7 @@
 
 Scorer 0.5.0. Dimension slack 1e-09 mm, form tolerance 1e-07 mm, both imported from the scorer.
 
-**58 of 58 cases as expected.** Reference part: 100 x 80 x 4 mm plate, four 10 mm through holes, 15 mm from the side faces.
+**60 of 60 cases as expected.** Reference part: 100 x 80 x 4 mm plate, four 10 mm through holes, 15 mm from the side faces.
 
 | Case | Expected verdict | Verdict | Result | Why the case exists |
 |---|---|---|---|---|
@@ -52,6 +52,8 @@ Scorer 0.5.0. Dimension slack 1e-09 mm, form tolerance 1e-07 mm, both imported f
 | `review_closed_cavity` | form_violation | form_violation | pass | a void inside the plate |
 | `boundary_tilt_1e-12_rad_is_accepted` | ok | ok | pass | floating-point slack: every variable is still right to 1e-10 mm (T reads 4.00000000001) |
 | `boundary_tilt_1e-11_rad_is_refused` | out_of_scope | out_of_scope | pass | ten times the slack |
+| `boundary_diagonal_tilt_1.3e-12_rad_is_refused` | out_of_scope | out_of_scope | pass | third review: each direction component is 9.2e-13, under the slack, but the angle is 1.3e-12 |
+| `boundary_diagonal_tilt_0.9e-12_rad_is_accepted` | ok | ok | pass | the same diagonal tilt inside the slack |
 | `boundary_axis_on_the_other_rim` | form_violation | form_violation | pass | two 10 mm holes 5.0 mm apart: each axis is ON the other rim, not inside it, so not a stepped hole |
 | `boundary_axis_inside_the_other_rim` | out_of_scope | out_of_scope | pass | 4.999 mm apart: each axis is inside the other cylinder |
 | `boundary_holes_of_0.009_mm` | out_of_scope | out_of_scope | pass | just under the supported size |

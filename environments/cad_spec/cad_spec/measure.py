@@ -540,7 +540,7 @@ def _surface_conformance(solid: Any, bb: Any, holes: list[Hole]) -> bool:
     return True
 
 
-# A bore axis whose X or Y direction component exceeds this is "not along Z"
+# A bore axis tilted from the Z line by more than this angle is "not along Z"
 # for the L5 observation map. It is floating-point slack, not a tolerance on
 # tilt: at 1e-12 rad a hole moves 1e-11 mm across a 10 mm plate, a hundred
 # times below the slack on a dimension. Rotations about Z, mirrors and
@@ -578,7 +578,9 @@ def _scope_scan(solid: Any) -> tuple[int, float | None]:
         cylinder = adaptor.Cylinder()
         d, loc, r = cylinder.Axis().Direction(), cylinder.Axis().Location(), cylinder.Radius()
         smallest = 2 * r if smallest is None else min(smallest, 2 * r)
-        if abs(d.X()) <= STRICT_AXIS_SLACK and abs(d.Y()) <= STRICT_AXIS_SLACK:
+        # The tilt ANGLE, not X and Y each on their own allowance: a diagonal
+        # tilt of 1.3e-12 rad passed two separate component checks.
+        if math.hypot(d.X(), d.Y()) <= math.sin(STRICT_AXIS_SLACK):
             continue  # exactly along Z: a hole, or a matter for the form check
         p = adaptor.Value((adaptor.FirstUParameter() + adaptor.LastUParameter()) / 2,
                           (adaptor.FirstVParameter() + adaptor.LastVParameter()) / 2)

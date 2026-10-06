@@ -221,6 +221,21 @@ CASES: dict[str, tuple[str, str, dict, str]] = {
                ".rotate((0, 0, 0), (0, 1, 0), 5.729577951308232e-10)\n"
                "    result = result.cut(tool.translate((x, y, 0)))\n",
         "out_of_scope", {"L": 100.0, "W": 80.0}, "ten times the slack"),
+    "boundary_diagonal_tilt_1.3e-12_rad_is_refused": (
+        HEAD + 'result = cq.Workplane("XY").box(100, 80, 4)\n'
+               f"for x, y in {CORNERS}:\n"
+               '    tool = cq.Workplane("XY").circle(5).extrude(8, both=True)'
+               ".rotate((0, 0, 0), (1, 1, 0), 7.448451336700702e-11)\n"
+               "    result = result.cut(tool.translate((x, y, 0)))\n",
+        "out_of_scope", {"L": 100.0, "W": 80.0},
+        "third review: each direction component is 9.2e-13, under the slack, but the angle is 1.3e-12"),
+    "boundary_diagonal_tilt_0.9e-12_rad_is_accepted": (
+        HEAD + 'result = cq.Workplane("XY").box(100, 80, 4)\n'
+               f"for x, y in {CORNERS}:\n"
+               '    tool = cq.Workplane("XY").circle(5).extrude(8, both=True)'
+               ".rotate((0, 0, 0), (1, 1, 0), 5.156620156177409e-11)\n"
+               "    result = result.cut(tool.translate((x, y, 0)))\n",
+        "ok", NOMINAL, "the same diagonal tilt inside the slack"),
     "boundary_axis_on_the_other_rim": (
         holes_at("[(-2.5, 0), (2.5, 0)]"), "form_violation", {**ENVELOPE, "n": 0},
         "two 10 mm holes 5.0 mm apart: each axis is ON the other rim, not inside it, so not a stepped hole"),

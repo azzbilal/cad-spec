@@ -29,8 +29,10 @@ Scores are only comparable within one scorer version
   changes, all made. A hole tilted by 1e-8 rad was `ok` with a margin wrong
   by 2e-8 mm; a 1e-6 mm radius step and a 1e-8 mm diameter difference were
   not refused; a 0.2 micron cross bore was missed; a failed scope scan
-  raised instead of refusing.
-- **Gate:** `scripts/test_l5_observation.py`, 58 hand-built cases, in CI
+  raised instead of refusing. A final local verification
+  (`audit/l5-m1-v3-audit.md`) found one more: the tilt limit was applied to
+  the X and Y components separately. It is now on the angle.
+- **Gate:** `scripts/test_l5_observation.py`, 60 hand-built cases, in CI
   (`results/l5/m1-observation-suite.md`). Every `ok` case states every
   variable, and the exact boundary of each rule is pinned (tilt, nested
   cylinders, supported size, equal diameters).
