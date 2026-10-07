@@ -62,6 +62,30 @@ piece for RL-environment and evaluation work.
    Write files with LF line endings (`newline="\n"` in Python).
 8. **Verification writes to a temporary folder**, never over a tracked file.
 
+## Expert skills (metrology reasoning layer)
+
+Before modifying or reviewing anything that measures, compares or decides
+(measurement, the L5 observation map, contracts and change orders,
+feasibility and conflict sets, tolerances and slack, gates and the reward,
+tests and artefacts, datums, GD&T, meshes or scans), read
+`.claude/skills/cad-spec-metrology-router/SKILL.md` and every skill it
+selects. Then state, before the first substantial decision:
+
+```text
+Skills consulted:
+- <skill>: <why>
+Relevant principles:
+- <P-id or FP-id>: <how it changes this task>
+```
+
+If none applies: `Skills consulted: none. Reason: ...`. A skill counts as
+used only if a principle visibly changes a decision, the code or a test.
+The research behind the skills is in `research/` (start with
+`research/expert-corpus-index.md`). Two rules from it apply to every test
+already: expected values come from construction or hand derivation, never
+from running the code under test; and no field or doc calls numerical slack
+an "uncertainty".
+
 ## Environment (Windows, Git Bash)
 
 ```bash

@@ -5,6 +5,19 @@ Scores are only comparable within one scorer version
 
 ## Unreleased
 
+### Metrology research and expert skills (no code or scoring change)
+- **`research/`**: reasoning extracted from eleven metrology sources (Forbes,
+  NPL; Phillips, NIST; Krystek, PTB; TraCIM): corpus index with provenance,
+  principle registry P01 to P44 and knowledge graph, gap analysis against
+  cad-spec, glossary, failure patterns FP01 to FP27, Expert Decision Records
+  EDR-001 to EDR-009 (all proposed), priorities and an architecture review.
+- **`.claude/skills/cad-spec-*`**: eight project skills (router,
+  specification constraints, geometric observation, geometric fitting,
+  datum and GD&T reasoning, uncertainty and error, conformity decision,
+  numerical validation with an artefact ladder).
+- **`CLAUDE.md`**: agents read the router skill and state the skills
+  consulted before work that measures, compares or decides.
+
 ### L5 v1, milestone M1: observation map (no scoring change)
 - **Governing design** for the next tier, region-graded change orders:
   `docs/design/L5-region-graded-change-orders-v1.0.md`, with the kickoff
