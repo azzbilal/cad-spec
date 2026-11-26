@@ -17,7 +17,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
-      - run: pip install -e ".[dev]"
+      # Pin only verifiers (0.4.1 has no verifiers.Rubric). constraints.txt
+      # cannot be used here: its numpy==2.5.3 needs Python 3.12 or later.
+      # The full pinned set is tested by the pinned-validation job.
+      - run: pip install -e ".[dev]" "verifiers==0.3.1"
       - run: ruff check .
       - name: Lint repo scripts
         working-directory: .
