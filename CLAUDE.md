@@ -12,12 +12,12 @@ Tiers L1 to L4 (L4 is an engineering change order). The owner, Bilal Azzouzi,
 is an aerospace structures and CAD engineer building this as a portfolio
 piece for RL-environment and evaluation work.
 
-## State on 5 October 2026
+## State on 26 November 2026
 
 - Released as `v0.5.0`. Package cad-spec 0.5.0, scorer 0.5.0 (strict
   contract, reviewed in four external rounds before merge). Scorer 0.4.0 is
   kept selectable: everything published before 4 October 2026 was scored
-  under it. The Prime Hub copy is still 0.4.5.
+  under it. The Prime Hub copy was 0.4.5 on 5 October (not rechecked since).
 - Training run 1 (Qwen3.5-9B LoRA) and its replication are done, registered
   and audited: +40.0 and +39.2 points on L2 + L4, under scorer 0.4.0.
 - The story in one document: `docs/REPORT.md`.
@@ -25,8 +25,17 @@ piece for RL-environment and evaluation work.
   3 October 2026". Items 1 (scorer 0.5) and 2 (L4 parser baseline) are done.
   Item 3 is being built as L5 v1 (region-graded change orders). Governing
   design and amendments: `docs/design/`. Milestone M1 (observation map,
-  `cad_spec/l5/`) is built; M2 (contract compiler) starts only after M1 is
-  audited and merged. Do not reopen the architecture of the design note.
+  `cad_spec/l5/`) is merged (PR #35, after three review rounds in
+  `audit/l5-m1-*.md`) but not yet counted as audited: five advisory
+  findings of the first review are open and no review ran after the last
+  fix (C1). M2 (contract compiler) starts only after M1 is audited. Do not
+  reopen the architecture of the design note.
+- Since v0.5.0, merged and unreleased: L5 M1 and the metrology reasoning
+  layer (`research/`, `.claude/skills/cad-spec-*`, PR #36). See CHANGELOG
+  "Unreleased".
+- Working notes for agents: `.workshop/NOW.md` (what is true now) and
+  `.workshop/PROMISES.md` (DRAFT promises), loaded by the agent-workshop
+  plugin.
 
 ## Rules that are never broken
 
@@ -89,8 +98,8 @@ an "uncertainty".
 ## Environment (Windows, Git Bash)
 
 ```bash
-source $HOME/cadspec.sh          # venv, CadQuery check
-cd ~/dev/cad-spec-env
+source $HOME/cadspec.sh          # cd to the repo, repo-root .venv, CadQuery check
+cd /d/10_PROJECTS/cad-engineering/cad-spec-env
 export PYTHONIOENCODING=utf-8 PRIME_DISABLE_VERSION_CHECK=1
 ```
 

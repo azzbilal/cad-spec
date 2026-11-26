@@ -1,0 +1,8 @@
+{
+  "shell": "bash",
+  "onEdit": "export PATH=\"$PWD/.venv/Scripts:$PATH\"; ruff check --force-exclude {file}",
+  "onEditGlobs": ["scripts/**/*.py", "environments/cad_spec/**/*.py"],
+  "onStop": "export PYTHONIOENCODING=utf-8 PRIME_DISABLE_VERSION_CHECK=1 PATH=\"$PWD/.venv/Scripts:$PATH\"; ruff check scripts && cd environments/cad_spec && ruff check . && pytest -q -p no:cacheprovider -m \"not slow\" --ignore=tests/test_environment.py --ignore=tests/test_training_prep.py",
+  "timeoutSec": 120,
+  "maxStopBlocks": 3
+}
