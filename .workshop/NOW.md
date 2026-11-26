@@ -5,7 +5,7 @@
      Machine-specific details live in .workshop/local.md (git-ignored, not loaded). -->
 
 ## Product and mode
-- Mode: promise-keeping. Released v0.5.0; the promises in PROMISES.md are DRAFT until Bilal confirms them.
+- Mode: promise-keeping. Released v0.5.0; the promises in PROMISES.md were confirmed by Bilal on 2026-11-26.
 - Users: Bilal only, for now. Later: CadQuery and OCCT users, and people building CAD
   benchmarks (Gauge).
 

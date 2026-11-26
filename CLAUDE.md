@@ -34,7 +34,7 @@ piece for RL-environment and evaluation work.
   layer (`research/`, `.claude/skills/cad-spec-*`, PR #36). See CHANGELOG
   "Unreleased".
 - Working notes for agents: `.workshop/NOW.md` (what is true now) and
-  `.workshop/PROMISES.md` (DRAFT promises), loaded by the agent-workshop
+  `.workshop/PROMISES.md` (confirmed promises), loaded by the agent-workshop
   plugin.
 
 ## Rules that are never broken

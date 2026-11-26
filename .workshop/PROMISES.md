@@ -2,7 +2,7 @@
 <!-- Brownfield promises: properties we must not regress. Titles (## P-xx) are loaded at
      session start. A promise without a measurement is a wish.
      Standing instruction: the same, but faster, cheaper, safer. Never trade one for another.
-     Every promise below is DRAFT until Bilal confirms it. Each one restates a gate or a rule
+     Every promise below was confirmed by Bilal on 2026-11-26. Each one restates a gate or a rule
      that already exists in CI or CLAUDE.md; none adds a new threshold. P-04 is the only new
      measurement: a git command that checks rules 3 and 4 of CLAUDE.md. -->
 
