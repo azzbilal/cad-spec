@@ -20,3 +20,5 @@ probe_check.py
 .opencode/
 out.txt
 .vibe-wise/
+# agent-workshop: machine-specific notes stay local
+.workshop/local.md

@@ -5,6 +5,9 @@ Scores are only comparable within one scorer version
 
 ## Unreleased
 
+### Agent working notes (no code or scoring change)
+- **`.workshop/`** (agent-workshop plugin, no code or scoring change): `NOW.md`, six confirmed promises in `PROMISES.md`, and `checks.json` (ruff on each edited file; ruff plus a fast pytest subset, 26 to 28 s, at the end of each turn). `CLAUDE.md` state updated to 26 November 2026.
+
 ### Metrology research and expert skills (no code or scoring change)
 - **`research/`**: reasoning extracted from eleven metrology sources (Forbes,
   NPL; Phillips, NIST; Krystek, PTB; TraCIM): corpus index with provenance,
