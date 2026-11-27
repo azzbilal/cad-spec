@@ -29,8 +29,10 @@
 - CI only (Linux): fork sandbox replays, verdict diffs, GL-less scoring, docker sandbox, mutation gate.
 
 ## Open threads
-- L5 M1 is merged (PR #35) but NOT counted as audited: every required finding (R1 to R5, V1, C1,
-  C2) is fixed, but five advisory findings from the first review are still open, and no review
-  ran after the C1 fix. M2 waits. Owner: Bilal.
+- L5 M1 is counted as audited after the fourth round (`audit/l5-m1-v4-audit.md`, 27 November
+  2026), once branch `fix/l5-m1-audit` is merged. M2 may start. Observation version 2. Deferred:
+  scope-scan probe point (M3), two scorer-path defects (next scorer version).
+- Rare `worker fault: MemoryError` from the Windows reuse worker on ordinary gate cases (2 of 73
+  in one gate run, none in the reruns). measure.py was not touched; cause unknown. Owner: Bilal.
 - agent-workshop hook bug (session marked edited before the path filter): fix drafted, not
   applied. Owner: Bilal.

@@ -5,6 +5,18 @@ Scores are only comparable within one scorer version
 
 ## Unreleased
 
+### Release plan
+- **L5 M1 ships in the next package release, together with verifiers 0.4
+  support** (owner's ruling, 27 November 2026). Until then the package
+  stays at 0.5.0, although `cad_spec/l5/`, the strict measurement in
+  `measure.py` and `rubric.py` (the form check extracted as `form_verdict`,
+  no verdict change) have changed since that release. No scorer version
+  and no recorded verdict changes. The observation map is at version 2
+  (`OBSERVATION_VERSION`): `centered`, two refusals and the check that D is
+  one number changed after version 1, so the same part can observe
+  differently, and M2 items will record the version they were compiled
+  against. Version 1 was never released.
+
 ### Agent working notes (no code or scoring change)
 - **`.workshop/`** (agent-workshop plugin, no code or scoring change): `NOW.md`, six confirmed promises in `PROMISES.md`, and `checks.json` (ruff on each edited file; ruff plus a fast pytest subset, 26 to 28 s, at the end of each turn). `CLAUDE.md` state updated to 26 November 2026.
 
@@ -48,11 +60,27 @@ Scores are only comparable within one scorer version
   raised instead of refusing. A final local verification
   (`audit/l5-m1-v3-audit.md`) found one more: the tilt limit was applied to
   the X and Y components separately. It is now on the angle.
-- **Gate:** `scripts/test_l5_observation.py`, 60 hand-built cases, in CI
-  (`results/l5/m1-observation-suite.md`). Every `ok` case states every
-  variable, and the exact boundary of each rule is pinned (tilt, nested
-  cylinders, supported size, equal diameters).
-- One deviation from the design note, recorded for approval: an extra pocket
+- **Fourth review** (`audit/l5-m1-v4-audit.md`, 27 November 2026), after
+  which M1 counts as audited. One hole cut as two stacked halves was `ok`
+  with n = 3 when the halves sat on either side of the measurement's
+  rounding key, and `ok` with an mx wrong by 8e-8 mm when they sat 8e-8 mm
+  apart on one side; a hole whose faces disagree on its axis by more than
+  0.5e-9 mm, or fall into two hole groups, is now `out_of_scope`, so px and
+  py stay within 1e-9 mm whichever faces are read. The check that D is one
+  number compares every face of the through holes: comparing one face per
+  hole gave `ok` with a D 1.8e-9 mm from another hole's face. `centered`
+  uses the straight-line distance from the mean hole centre to the plate
+  centre. The diagonal tilt limit stays 1e-12 rad and is now bracketed by
+  a case refused at 1.05e-12 rad. Deferred: the scope-scan probe point
+  (M3) and two scorer-path defects that fail closed (next scorer
+  version).
+- **Gate:** `scripts/test_l5_observation.py`, 77 hand-built cases, in CI.
+  It writes `results/l5/m1-observation-suite.md`, which is generated and
+  rewritten in place (the one file named in the exceptions to CLAUDE.md
+  rules 3 and 8). Every `ok` case states every variable, and the exact boundary
+  of each rule is pinned (tilt, nested cylinders, supported size, equal
+  diameters, centred pattern, one axis per hole).
+- One deviation from the design note, approved by the owner on 27 November 2026: an extra pocket
   or slot is a `form_violation`, not `out_of_scope`.
 
 ## 0.5.0 (2026-10-05)

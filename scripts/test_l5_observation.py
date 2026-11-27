@@ -10,6 +10,10 @@ Design note section 7.2, plus the counterexamples of the four scorer review
 rounds. Run it on every change to the map or to the measurement:
 
     python scripts/test_l5_observation.py [--out results/l5/m1-observation-suite.md]
+
+results/l5/m1-observation-suite.md is generated: this script rewrites it in
+place and writes a header saying so (CLAUDE.md, rules 3 and 8 name this one
+file). Verification runs write --out to a temporary folder.
 """
 
 from __future__ import annotations
@@ -42,6 +46,38 @@ def full(**changed) -> dict:
 def holes_at(points: str, extra: str = "") -> str:
     return (HEAD + f'result = cq.Workplane("XY").box(100, 80, 4){extra}'
             + f'.faces(">Z").workplane().pushPoints({points}).hole(10)\n')
+
+
+def shifted(s: float) -> str:
+    """The reference pattern moved by (s, s): its centre is s * sqrt(2) from the plate centre."""
+    return holes_at(f"[(-35+{s!r}, -25+{s!r}), (-35+{s!r}, 25+{s!r}), (35+{s!r}, -25+{s!r}), (35+{s!r}, 25+{s!r})]")
+
+
+def split_hole(lower: tuple[float, ...], upper: tuple[float, ...], d: float = 10) -> str:
+    """Three corner holes of diameter d, and a fourth hole cut as two half-depth cylinders,
+    (x, diameter[, y]) = lower for z in [-2, 0] and upper for z in [0, 2] (y is 25 unless
+    given), kept as separate faces (clean=False)."""
+    (xl, dl, yl), (xu, du, yu) = (*lower, 25)[:3], (*upper, 25)[:3]
+    return (HEAD + 'result = cq.Workplane("XY").box(100, 80, 4).faces(">Z").workplane()'
+            f'.pushPoints([(-35, -25), (-35, 25), (35, -25)]).hole({d!r})\n'
+            f'result = result.cut(cq.Workplane("XY").workplane(offset=-3).center({xl!r}, {yl!r})'
+            f'.circle({dl / 2!r}).extrude(3), clean=False)\n'
+            f'result = result.cut(cq.Workplane("XY").center({xu!r}, {yu!r})'
+            f'.circle({du / 2!r}).extrude(3), clean=False)\n')
+
+
+def split_holes(plain: str, *halves: tuple[tuple[float, ...], tuple[float, ...]]) -> str:
+    """10 mm holes at the plain points, and one hole per entry of halves cut as two half-depth
+    cylinders, (x, y[, diameter]) = lower for z in [-2, 0] and upper for z in [0, 2] (diameter 10
+    unless given), kept as separate faces (clean=False)."""
+    code = HEAD + f'result = cq.Workplane("XY").box(100, 80, 4).faces(">Z").workplane().pushPoints({plain}).hole(10)\n'
+    for lower, upper in halves:
+        (xl, yl, dl), (xu, yu, du) = (*lower, 10)[:3], (*upper, 10)[:3]
+        code += (f'result = result.cut(cq.Workplane("XY").workplane(offset=-3).center({xl!r}, {yl!r})'
+                 f'.circle({dl / 2!r}).extrude(3), clean=False)\n'
+                 f'result = result.cut(cq.Workplane("XY").center({xu!r}, {yu!r})'
+                 f'.circle({du / 2!r}).extrude(3), clean=False)\n')
+    return code
 
 
 # name -> (code, expected verdict, expected values (a subset is enough), why this case exists)
@@ -236,6 +272,21 @@ CASES: dict[str, tuple[str, str, dict, str]] = {
                ".rotate((0, 0, 0), (1, 1, 0), 5.156620156177409e-11)\n"
                "    result = result.cut(tool.translate((x, y, 0)))\n",
         "ok", NOMINAL, "the same diagonal tilt inside the slack"),
+    "boundary_diagonal_tilt_1.05e-12_rad_is_refused": (
+        HEAD + 'result = cq.Workplane("XY").box(100, 80, 4)\n'
+               f"for x, y in {CORNERS}:\n"
+               '    tool = cq.Workplane("XY").circle(5).extrude(8, both=True)'
+               ".rotate((0, 0, 0), (1, 1, 0), 6.016056848873644e-11)\n"
+               "    result = result.cut(tool.translate((x, y, 0)))\n",
+        "out_of_scope", {"L": 100.0, "W": 80.0},
+        "fourth review: components 7.4e-13, angle 1.05e-12; the diagonal limit is bracketed to [1.0e-12, 1.05e-12)"),
+    "boundary_pattern_0.99e-7_off_centre_is_centered": (
+        shifted(0.7e-7), "ok", full(mx=15 - 0.7e-7, my=15 - 0.7e-7, symmetric=False),
+        "pattern moved (7e-8, 7e-8): 0.99e-7 from the centre in a straight line, inside the form tolerance. "
+        "A mirrored hole is 1.4e-7 off, so not symmetric"),
+    "boundary_pattern_1.02e-7_off_centre_is_not_centered": (
+        shifted(0.72e-7), "ok", full(mx=15 - 0.72e-7, my=15 - 0.72e-7, centered=False, symmetric=False),
+        "fourth review: 7.2e-8 along each axis, under the tolerance, but 1.02e-7 in a straight line, over it"),
     "boundary_axis_on_the_other_rim": (
         holes_at("[(-2.5, 0), (2.5, 0)]"), "form_violation", {**ENVELOPE, "n": 0},
         "two 10 mm holes 5.0 mm apart: each axis is ON the other rim, not inside it, so not a stepped hole"),
@@ -272,6 +323,59 @@ CASES: dict[str, tuple[str, str, dict, str]] = {
         holes_at("[(-35, -25), (-35, 25), (35, -25)]")
         + 'result = result.faces(">Z").workplane().pushPoints([(35, 25)]).hole(10.000000002)\n',
         "out_of_scope", {**ENVELOPE, "n": 4}, "outside the slack"),
+    # --- found by the fourth review (27 November 2026): one hole made of two faces
+    "review_hole_split_across_position_key": (
+        split_hole((20.0004999996, 10), (20.0005000004, 10)), "out_of_scope", ENVELOPE,
+        "two halves of one hole, axes 8e-10 apart on either side of x = 20.0005: was `ok` with n = 3"),
+    "review_hole_split_across_position_key_under_the_spread_limit": (
+        split_hole((20.0004999998, 10), (20.0005000002, 10)), "out_of_scope", ENVELOPE,
+        "axes 4e-10 apart, inside the spread limit, on either side of x = 20.0005: only the grouping rule refuses it"),
+    "review_hole_split_across_diameter_key": (
+        split_hole((20, 10.0000499996), (20, 10.0000500004), d=10.00005), "out_of_scope", ENVELOPE,
+        "two halves of one hole, diameters 8e-10 apart on either side of 10.00005: was `ok` with n = 3"),
+    "review_hole_halves_8e-8_apart_at_a_corner": (
+        split_hole((35.0, 10), (35.00000008, 10)), "out_of_scope", ENVELOPE,
+        "was `ok` with mx = 14.99999992 in this cut order and 15.0 in the other: the axis was the first face's"),
+    "review_hole_halves_8e-8_apart_other_order": (
+        split_hole((35.00000008, 10), (35.0, 10)), "out_of_scope", ENVELOPE,
+        "the same part, other order: the verdict must not depend on it"),
+    "boundary_hole_halves_0.45e-9_apart": (
+        split_hole((35.0, 10), (35.00000000045, 10)), "ok", NOMINAL,
+        "inside the spread limit (half the dimension slack, 0.5e-9): the position is right to 0.5e-9 "
+        "whichever face is read"),
+    "boundary_hole_halves_0.55e-9_apart": (
+        split_hole((35.0, 10), (35.00000000055, 10)), "out_of_scope", ENVELOPE, "just outside the spread limit"),
+    "boundary_hole_halves_0.57e-9_apart_on_the_diagonal": (
+        split_hole((35.0, 10, 25.0), (35.0000000004, 10, 25.0000000004)), "out_of_scope", ENVELOPE,
+        "4e-10 along X and along Y, each inside the limit; 0.57e-9 in a straight line, outside it"),
+    "review_two_holes_with_halves_0.45e-9_apart": (
+        split_holes("[(-35, -25), (35, -25)]",
+                    ((-35.0, 25), (-35.00000000045, 25)), ((35.0, 25), (35.00000000045, 25))),
+        "ok", NOMINAL,
+        "two holes split on X in opposite directions: whichever faces are read, px is within 0.9e-9 of 70"),
+    "review_two_holes_with_halves_0.45e-9_apart_other_order": (
+        split_holes("[(-35, -25), (35, -25)]",
+                    ((-35.00000000045, 25), (-35.0, 25)), ((35.00000000045, 25), (35.0, 25))),
+        "ok", NOMINAL, "the same part, other cut order"),
+    "review_two_holes_with_halves_0.49e-9_apart_on_the_diagonal": (
+        split_holes("[(-35, 25), (35, -25)]", ((-35.0, -25.0), (-35.00000000035, -25.00000000035)),
+                    ((35.0, 25.0), (35.00000000035, 25.00000000035))),
+        "ok", NOMINAL,
+        "opposite corners split outwards by (3.5e-10, 3.5e-10): px and py are each within 0.7e-9 of the nominal"),
+    "review_face_diameters_spread_over_two_holes": (
+        split_holes("[(35, -25), (35, 25)]", ((-35, -25, 10.0), (-35, -25, 10.0000000009)),
+                    ((-35, 25, 9.9999999991), (-35, 25, 10.0))),
+        "out_of_scope", {**ENVELOPE, "n": 4},
+        "faces from 9.9999999991 to 10.0000000009: was `ok` with D = 10.0000000009, "
+        "1.8e-9 from a face of the other hole"),
+    "review_face_diameters_spread_over_two_holes_other_order": (
+        split_holes("[(35, -25), (35, 25)]", ((-35, -25, 10.0000000009), (-35, -25, 10.0)),
+                    ((-35, 25, 9.9999999991), (-35, 25, 10.0))),
+        "out_of_scope", {**ENVELOPE, "n": 4}, "the same faces, other cut order: was `ok` with D = 10.0"),
+    "boundary_face_diameters_0.9e-9_apart_over_two_holes": (
+        split_holes("[(35, -25), (35, 25)]", ((-35, -25, 10.0), (-35, -25, 10.0000000009)),
+                    ((-35, 25, 10.0), (-35, 25, 10.0000000009))),
+        "ok", NOMINAL, "faces from 10 to 10.0000000009, inside the slack: D is right to 1e-9 whichever face is read"),
     # --- nothing to measure
     "two_solids": (
         BASE + 'result = cq.Compound.makeCompound([result.val(), cq.Solid.makeBox(5, 5, 5, cq.Vector(200, 0, 0))])\n',
@@ -279,6 +383,37 @@ CASES: dict[str, tuple[str, str, dict, str]] = {
     "no_result": (HEAD + 'plate = cq.Workplane("XY").box(100, 80, 4)\n', "build_error", {},
                   "the answer binds no part: gate G1, not the map"),
 }
+
+
+# Cases built from separate faces: the rule their refusal must come from (None
+# for an `ok` case), the number of holes the measurement must make (five for
+# the grouping rule, so the map's copy of the grouping key keeps agreeing with
+# the measurement), and the number of concave cylinder faces the kernel must
+# keep (one more per split hole, or the case would test nothing).
+REASONS: dict[str, tuple[str | None, int | None, int]] = {
+    "review_hole_split_across_position_key": ("two hole groups", 5, 5),
+    "review_hole_split_across_position_key_under_the_spread_limit": ("two hole groups", 5, 5),
+    "review_hole_split_across_diameter_key": ("two hole groups", 5, 5),
+    "review_face_diameters_spread_over_two_holes": ("different diameters", None, 6),
+    "review_face_diameters_spread_over_two_holes_other_order": ("different diameters", None, 6),
+    "boundary_face_diameters_0.9e-9_apart_over_two_holes": (None, None, 6),
+    "review_hole_halves_8e-8_apart_at_a_corner": ("axes more than", None, 5),
+    "review_hole_halves_8e-8_apart_other_order": ("axes more than", None, 5),
+    "boundary_hole_halves_0.45e-9_apart": (None, None, 5),
+    "boundary_hole_halves_0.55e-9_apart": ("axes more than", None, 5),
+    "boundary_hole_halves_0.57e-9_apart_on_the_diagonal": ("axes more than", None, 5),
+    "review_two_holes_with_halves_0.45e-9_apart": (None, None, 6),
+    "review_two_holes_with_halves_0.45e-9_apart_other_order": (None, None, 6),
+    "review_two_holes_with_halves_0.49e-9_apart_on_the_diagonal": (None, None, 6),
+}
+
+
+def measured(code: str) -> tuple[int, int]:
+    """Holes made by the strict measurement, and concave Z cylinder faces it saw."""
+    from cad_spec.measure import build_and_measure
+
+    m = build_and_measure(code, strict=True)
+    return len(m.holes), len(m.scope_axes or [])
 
 
 def run(code: str) -> tuple[str, dict, str]:
@@ -308,7 +443,7 @@ def main() -> int:
     ap.add_argument("--out", help="write the result table to this markdown file")
     args = ap.parse_args()
 
-    from cad_spec.l5 import EPS_DIM_MM, EPS_FORM_MM
+    from cad_spec.l5 import EPS_DIM_MM, EPS_FORM_MM, OBSERVATION_VERSION
     from cad_spec.measure import FORM_LINEAR_TOL
     from cad_spec.rubric import SCORER_VERSION, TOLERANCES
 
@@ -324,6 +459,15 @@ def main() -> int:
         if verdict == "ok" and set(want) != ALL_KEYS:
             bad.append("an `ok` case must state every variable")
         bad += matches(got, want)
+        if name in REASONS:
+            phrase, holes, faces = REASONS[name]
+            got_holes, got_faces = measured(code)
+            if phrase is not None and phrase not in reason:
+                bad.append(f"reason: expected the rule '{phrase}', got '{reason}'")
+            if holes is not None and got_holes != holes:
+                bad.append(f"the measurement made {got_holes} holes, expected {holes}")
+            if got_faces != faces:
+                bad.append(f"the kernel kept {got_faces} cylinder faces, expected {faces}: the case tests nothing")
         failures += bool(bad)
         print(f"[{'BAD' if bad else 'ok '}] {name:36s} {got_verdict}" + ("".join(f"\n        {b}" for b in bad)))
         rows.append((name, verdict, got_verdict, "pass" if not bad else "FAIL", why))
@@ -334,7 +478,10 @@ def main() -> int:
         out = Path(args.out)
         out.parent.mkdir(parents=True, exist_ok=True)
         lines = ["# L5 observation map: adversarial suite (milestone M1)", "",
-                 f"Scorer {SCORER_VERSION}. Dimension slack {EPS_DIM_MM:g} mm, form tolerance {EPS_FORM_MM:g} mm, "
+                 "Generated by `scripts/test_l5_observation.py --out results/l5/m1-observation-suite.md`. "
+                 "Do not edit by hand: rerun the script.", "",
+                 f"Observation version {OBSERVATION_VERSION}. Scorer {SCORER_VERSION}. "
+                 f"Dimension slack {EPS_DIM_MM:g} mm, form tolerance {EPS_FORM_MM:g} mm, "
                  "both imported from the scorer.", "",
                  f"**{len(CASES) - case_failures} of {len(CASES)} cases as expected.** "
                  "Reference part: 100 x 80 x 4 mm plate, four 10 mm through holes, 15 mm from the side faces.", "",
