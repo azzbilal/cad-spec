@@ -12,7 +12,9 @@ part?", and it gives one of four verdicts with the numbers:
                     or loose geometry they may not describe the plate.
   out_of_scope      a variable cannot be measured without guessing (a stepped
                     hole, a tilted hole, holes of different diameters, a
-                    feature too small to classify). The map refuses loudly
+                    feature too small to classify, one hole split across
+                    the measurement's grouping or whose faces disagree on
+                    its axis). The map refuses loudly
                     instead of returning a wrong number.
   not_single_solid  zero or several solids: nothing to measure
 
@@ -41,10 +43,10 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from types import MappingProxyType
 
-from ..measure import FORM_LINEAR_TOL, Hole, Measurements, build_and_measure
+from ..measure import COAXIAL_DP, FORM_LINEAR_TOL, Hole, Measurements, build_and_measure
 from ..rubric import TOLERANCES, form_verdict
 
-OBSERVATION_VERSION = "1"
+OBSERVATION_VERSION = "2"  # 2: straight-line centered; split, spread and all-face D checks (fourth review)
 SCORER_BASIS = "0.5.0"  # the validated scorer this map is built on; pinned, not "the current one"
 
 # One source of truth: that scorer's own constants.
@@ -55,6 +57,17 @@ EPS_FORM_MM: float = FORM_LINEAR_TOL              # two positions closer than th
 # classify a cylinder much smaller than this, so the map refuses instead of
 # missing it. The generator's smallest hole is 3 mm.
 MIN_CYLINDER_DIAMETER_MM = 0.01
+
+# The strict measurement groups cylinder faces into holes by axis position
+# rounded to COAXIAL_DP decimals and by diameter rounded to 4 decimals. The 4
+# is a literal in measure._classify_cylinders (no name to import), so it is
+# restated here. The gate cases review_hole_split_across_* pin it, and check
+# that the measurement really splits those parts.
+_DIAMETER_KEY_DP = 4
+
+# The faces of one hole must agree on its axis to half the dimension slack, so
+# that an extent combining two holes (px, py) stays within the slack.
+SPREAD_LIMIT_MM: float = EPS_DIM_MM / 2
 
 OK = "ok"
 FORM_VIOLATION = "form_violation"
@@ -71,6 +84,9 @@ class Observation:
 
     `values` (read-only) holds L, W, T (bounding box), n (through holes along
     Z), D, mx, my, px, py, and the booleans rectangular, centered, symmetric.
+    `centered` compares the straight-line distance from the mean hole centre
+    to the bounding-box centre with the form tolerance. `rectangular` and
+    `symmetric` match positions coordinate by coordinate at that tolerance.
     A variable that does not exist (D with no hole) is None. With
     `out_of_scope` only the variables measured before the refusal are present.
     """
@@ -96,6 +112,60 @@ def _same(a: float, b: float) -> bool:
     return abs(a - b) <= EPS_FORM_MM
 
 
+def _same_cylinder(a: tuple[float, float, float], b: tuple[float, float, float]) -> bool:
+    """Two concave Z faces of one cylinder: axes within the form tolerance, diameters within the slack."""
+    (x, y, d), (u, v, e) = a, b
+    return math.hypot(x - u, y - v) <= EPS_FORM_MM and abs(d - e) <= EPS_DIM_MM
+
+
+def _group_key(x: float, y: float, d: float) -> tuple[float, float, float]:
+    """The key under which the strict measurement groups a face into a hole."""
+    return (round(x, COAXIAL_DP), round(y, COAXIAL_DP), round(d, _DIAMETER_KEY_DP))
+
+
+def _split(axes: list[tuple[float, float, float]]) -> bool:
+    """Is one cylinder split across two hole groups of the measurement?
+
+    Two faces of one cylinder (by the rule of _same_cylinder) can lie on
+    either side of a rounding key: axes 8e-10 mm apart around x = 20.0005, or
+    diameters 8e-10 mm apart around 10.00005. The measurement then makes two
+    half-depth holes, neither of which is a through hole, and n would be one
+    short under `ok`. The map refuses instead.
+    """
+    return any(_same_cylinder(a, b) and _group_key(*a) != _group_key(*b)
+               for i, a in enumerate(axes) for b in axes[i + 1:])
+
+
+def _axis_spread(axes: list[tuple[float, float, float]]) -> bool:
+    """Do two faces of one cylinder have axes more than half the dimension slack apart?
+
+    The measurement reads a hole's axis from one of its faces, whichever comes
+    first. With faces 8e-8 mm apart at a corner, mx was 14.99999992 or 15.0
+    depending on the order of the cuts. The faces of one hole must agree on
+    its axis to half the dimension slack, 0.5e-9 mm, or the map refuses. Under
+    `ok` each hole's position is then right to 0.5e-9 mm, and px or py, which
+    combine two holes, to 1e-9 mm: every variable is within the slack
+    whichever face is read.
+    """
+    return any(_same_cylinder(a, b) and math.hypot(a[0] - b[0], a[1] - b[1]) > SPREAD_LIMIT_MM
+               for i, a in enumerate(axes) for b in axes[i + 1:])
+
+
+def _through_face_diameters(through: list[Hole], axes: list[tuple[float, float, float]]) -> list[float]:
+    """The diameter of every concave Z face that belongs to a through hole.
+
+    A hole reports the diameter of one of its faces, and the faces of one hole
+    may differ by up to the dimension slack. Comparing one face per hole made
+    the "one D" verdict depend on the order of the cuts, and could report `ok`
+    with a D 1.8e-9 mm from another hole's face. Every face is compared instead.
+
+    Valid only after _nested and _split have passed: only then is "the same
+    cylinder as a hole's own face" the same as "a face of that hole's group".
+    The caller also adds each hole's own diameter, as a guard.
+    """
+    return [a[2] for a in axes if any(_same_cylinder((h.x, h.y, h.diameter), a) for h in through)]
+
+
 def _nested(axes: list[tuple[float, float, float]]) -> bool:
     """Do two DIFFERENT concave Z cylinders share one hole position?
 
@@ -106,10 +176,9 @@ def _nested(axes: list[tuple[float, float, float]]) -> bool:
     """
     for i, (x, y, d) in enumerate(axes):
         for u, v, e in axes[i + 1:]:
-            distance = math.hypot(x - u, y - v)
-            if distance <= EPS_FORM_MM and abs(d - e) <= EPS_DIM_MM:
+            if _same_cylinder((x, y, d), (u, v, e)):
                 continue
-            if distance < max(d, e) / 2:
+            if math.hypot(x - u, y - v) < max(d, e) / 2:
                 return True
     return False
 
@@ -139,9 +208,16 @@ def observe(m: Measurements) -> Observation:
     if _nested(m.scope_axes):
         return done(OUT_OF_SCOPE, "two different cylinders at one hole position "
                                   "(counterbore, stepped or offset hole)")
+    if _split(m.scope_axes):
+        return done(OUT_OF_SCOPE, "one cylinder split across two hole groups of the measurement "
+                                  "(faces within the tolerances, on either side of a rounding key)")
+    if _axis_spread(m.scope_axes):
+        return done(OUT_OF_SCOPE, f"the faces of one hole have axes more than {SPREAD_LIMIT_MM:g} mm apart: "
+                                  "its position is not one number")
     through = [h for h in m.holes if _through(h, m)]
     values["n"] = len(through)
-    if through and max(h.diameter for h in through) - min(h.diameter for h in through) > EPS_DIM_MM:
+    diameters = _through_face_diameters(through, m.scope_axes) + [h.diameter for h in through]
+    if diameters and max(diameters) - min(diameters) > EPS_DIM_MM:
         return done(OUT_OF_SCOPE, "through holes of different diameters: D is not one number")
 
     if through:
@@ -153,7 +229,9 @@ def observe(m: Measurements) -> Observation:
         corners = [(x, y) for x in (xs[0], xs[-1]) for y in (ys[0], ys[-1])]
         values["rectangular"] = len(through) == 4 and all(
             sum(_same(h.x, x) and _same(h.y, y) for h in through) == 1 for x, y in corners)
-        values["centered"] = (_same(sum(xs) / len(xs), centre[0]) and _same(sum(ys) / len(ys), centre[1]))
+        # Straight-line distance from the mean hole centre to the bounding-box
+        # centre, as for the tilt limit: a 2D offset is judged by its length.
+        values["centered"] = math.hypot(sum(xs) / len(xs) - centre[0], sum(ys) / len(ys) - centre[1]) <= EPS_FORM_MM
         values["symmetric"] = all(
             any(_same(o.x, 2 * centre[0] - h.x) and _same(o.y, h.y) for o in through)
             and any(_same(o.x, h.x) and _same(o.y, 2 * centre[1] - h.y) for o in through)

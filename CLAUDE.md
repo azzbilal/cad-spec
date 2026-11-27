@@ -12,7 +12,7 @@ Tiers L1 to L4 (L4 is an engineering change order). The owner, Bilal Azzouzi,
 is an aerospace structures and CAD engineer building this as a portfolio
 piece for RL-environment and evaluation work.
 
-## State on 26 November 2026
+## State on 27 November 2026
 
 - Released as `v0.5.0`. Package cad-spec 0.5.0, scorer 0.5.0 (strict
   contract, reviewed in four external rounds before merge). Scorer 0.4.0 is
@@ -25,11 +25,12 @@ piece for RL-environment and evaluation work.
   3 October 2026". Items 1 (scorer 0.5) and 2 (L4 parser baseline) are done.
   Item 3 is being built as L5 v1 (region-graded change orders). Governing
   design and amendments: `docs/design/`. Milestone M1 (observation map,
-  `cad_spec/l5/`) is merged (PR #35, after three review rounds in
-  `audit/l5-m1-*.md`) but not yet counted as audited: five advisory
-  findings of the first review are open and no review ran after the last
-  fix (C1). M2 (contract compiler) starts only after M1 is audited. Do not
-  reopen the architecture of the design note.
+  `cad_spec/l5/`) is merged (PR #35) and counted as audited after a fourth
+  review round (`audit/l5-m1-v4-audit.md`, 27 November 2026). M2
+  (contract compiler) may start. Deferred: the scope-scan probe point
+  (M3) and two scorer-path defects (next scorer version), listed in
+  `docs/design/L5-amendments.md` section 4. Do not reopen the
+  architecture of the design note.
 - Since v0.5.0, merged and unreleased: L5 M1 and the metrology reasoning
   layer (`research/`, `.claude/skills/cad-spec-*`, PR #36). See CHANGELOG
   "Unreleased".
@@ -52,7 +53,11 @@ piece for RL-environment and evaluation work.
    `results/` are records. Never rewrite them. A correction is a dated
    section appended below, with the original text kept. Any change to a
    plan, a budget or an analysis is a dated amendment written before the
-   outcome it could influence.
+   outcome it could influence. One exception (ruled 27 November 2026):
+   `results/l5/m1-observation-suite.md` is generated output of the L5 gate.
+   `scripts/test_l5_observation.py --out results/l5/m1-observation-suite.md`
+   rewrites it in place, and the file says so in its header. No other file
+   under `results/` is covered.
 4. **Frozen code.** Do not edit `scripts/compare_training.py`,
    `scripts/compare_replication.py`, `scripts/bridge_check.py` or
    `scripts/replication_split.py`. Recorded verdicts are historical: a new
@@ -62,6 +67,12 @@ piece for RL-environment and evaluation work.
    `environments/cad_spec/cad_spec/` unless the task is explicitly a new
    release with a version bump. A scorer change starts with the defect suite
    (`scripts/validate_scorer.py`), committed before the scorer. New evaluation logic goes in `scripts/`.
+   One exception (ruled 27 November 2026): `cad_spec/l5/` (the L5
+   observation map, not yet released) may change before the next package
+   release, which ships it. Each change is listed under "Unreleased" in
+   `CHANGELOG.md`, and a change in meaning bumps `OBSERVATION_VERSION`. The
+   exception does not cover `measure.py`, `rubric.py`, `environment.py`,
+   `tasks.py` or any scorer version.
 6. **Git.** One branch per task, never commit on `main`, never push, merge,
    rebase or force anything. Bilal pushes and opens the pull request. Leave
    these untracked paths alone: `audit/scratch/run1-breps/`,
@@ -70,6 +81,10 @@ piece for RL-environment and evaluation work.
 7. **Text.** No em dashes anywhere: code, comments, docs, commit messages.
    Write files with LF line endings (`newline="\n"` in Python).
 8. **Verification writes to a temporary folder**, never over a tracked file.
+   One exception (ruled 27 November 2026): regenerating
+   `results/l5/m1-observation-suite.md` with the command named in rule 3 is
+   not verification and writes over that file on purpose. Verification runs
+   of the gate write `--out` to a temporary folder.
 
 ## Expert skills (metrology reasoning layer)
 
